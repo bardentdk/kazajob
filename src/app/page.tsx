@@ -187,13 +187,13 @@ export default async function LandingPage() {
       )}
 
       {/* OFFRES VEDETTES — vraies offres ───────────────────── */}
-      <section className="py-12 lg:py-20 relative overflow-visible" style={{ background: KZ.cream2 }}>
+      <section className="py-12 lg:py-20 relative overflow-hidden" style={{ background: KZ.cream2 }}>
         {/* Perso 1 — masqué sur mobile */}
-        <div className="hidden xl:block absolute left-[-150px] top-[-20px] z-10 pointer-events-none select-none" style={{ width: '22vw' }}>
+        <div className="hidden xl:block absolute left-[-100px] top-[0px]  overflow-hidden z-10 pointer-events-none select-none" style={{ width: '22vw' }}>
           <img src="/assets/img/homepage/perso1.png" alt="" aria-hidden className="w-full object-contain object-bottom drop-shadow-xl" />
         </div>
         {/* Perso 2 — masqué sur mobile */}
-        <div className="hidden xl:block absolute right-[-180px] bottom-[-30px] z-10 pointer-events-none select-none" style={{ width: '22vw' }}>
+        <div className="hidden xl:block absolute right-[-100px] top-[0px] overflow-hidden  z-10 pointer-events-none select-none" style={{ width: '22vw' }}>
           <img src="/assets/img/homepage/perso2.png" alt="" aria-hidden className="w-full object-contain object-bottom drop-shadow-xl" />
         </div>
 
