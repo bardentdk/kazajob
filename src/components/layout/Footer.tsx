@@ -5,49 +5,51 @@ const FOOTER_LINKS = [
   {
     title: 'Candidats',
     links: [
-      { label: 'Offres d\'emploi', href: '/candidate/jobs' },
-      { label: 'Mon profil', href: '/candidate/profile' },
-      { label: 'Mes candidatures', href: '/candidate/applications' },
-      { label: 'Favoris', href: '/candidate/favorites' },
+      { label: "Offres d'emploi", href: '/candidate/jobs' },
+      { label: 'Mon profil',      href: '/candidate/profile' },
+      { label: 'Candidatures',   href: '/candidate/applications' },
+      { label: 'Favoris',        href: '/candidate/favorites' },
     ],
   },
   {
     title: 'Recruteurs',
     links: [
-      { label: 'Publier une offre', href: '/auth/register?role=recruiter' },
-      { label: 'Espace recruteur', href: '/recruiter/dashboard' },
-      { label: 'Candidats', href: '/recruiter/candidates' },
+      { label: 'Publier une offre',    href: '/auth/register?role=recruiter' },
+      { label: 'Espace recruteur',     href: '/recruiter/dashboard' },
+      { label: 'Voir les candidats',   href: '/recruiter/applications' },
     ],
   },
   {
     title: 'Entreprise',
     links: [
       { label: 'A propos', href: '#' },
-      { label: 'Blog', href: '#' },
-      { label: 'Contact', href: '#' },
+      { label: 'Blog',     href: '#' },
+      { label: 'Contact',  href: '#' },
     ],
   },
   {
     title: 'Legal',
     links: [
-      { label: 'CGU', href: '#' },
+      { label: 'CGU',             href: '#' },
       { label: 'Confidentialite', href: '#' },
-      { label: 'Cookies', href: '#' },
+      { label: 'Cookies',         href: '#' },
     ],
   },
 ]
 
 export function Footer() {
   return (
-    <footer className="bg-[#1A1410] text-[#FFF7EE] pt-12 pb-8 px-16">
-      <div className="grid grid-cols-5 gap-8 mb-8">
-        <div>
-          <Logo size={32} mono color="#FFF7EE" accentColor="#FF6B35" href="/" />
-          <p className="text-sm opacity-70 mt-4 max-w-[280px] leading-relaxed">
-            La plateforme d&apos;emploi nouvelle generation pour La Reunion. Fait avec{' '}
-            <span className="text-[#FF6B35]">amour</span> a Saint-Denis.
+    <footer className="bg-[#1A1410] text-[#FFF7EE] pt-10 lg:pt-12 pb-6 lg:pb-8 px-4 sm:px-8 lg:px-16">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 mb-8">
+        {/* Logo + description */}
+        <div className="col-span-2 sm:col-span-3 lg:col-span-1">
+          <Logo size={28} mono color="#FFF7EE" accentColor="#FF6B35" href="/" />
+          <p className="text-sm opacity-70 mt-3 max-w-[280px] leading-relaxed">
+            La plateforme d&apos;emploi nouvelle generation pour La Reunion.
+            Fait avec <span className="text-[#FF6B35]">amour</span> a Saint-Denis.
           </p>
         </div>
+
         {FOOTER_LINKS.map((col) => (
           <div key={col.title}>
             <div className="text-xs font-bold text-[#FF6B35] mb-3 uppercase tracking-widest">
@@ -68,7 +70,8 @@ export function Footer() {
           </div>
         ))}
       </div>
-      <div className="pt-5 border-t border-white/10 flex justify-between text-xs opacity-50">
+
+      <div className="pt-5 border-t border-white/10 flex flex-col sm:flex-row justify-between gap-2 text-xs opacity-50">
         <span>© 2026 Kazajob SAS · La Reunion 974</span>
         <span>Fait avec passion dans le 974</span>
       </div>

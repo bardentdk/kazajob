@@ -106,47 +106,47 @@ export default async function LandingPage() {
       <NavLanding />
 
       {/* HERO ──────────────────────────────────────────────── */}
-      <section className="px-16 pt-20 pb-0 relative overflow-hidden" style={{ background: KZ.cream }}>
-        <div className="absolute top-16 left-4 opacity-60"><Sparkle size={36} color={KZ.violet} /></div>
-        <div className="absolute bottom-56 right-10 opacity-60"><Sparkle size={28} color={KZ.green} /></div>
+      <section className="px-4 sm:px-8 lg:px-16 pt-10 lg:pt-20 pb-0 relative overflow-hidden" style={{ background: KZ.cream }}>
+        <div className="absolute top-16 left-4 opacity-40 hidden lg:block"><Sparkle size={36} color={KZ.violet} /></div>
+        <div className="absolute bottom-56 right-10 opacity-40 hidden lg:block"><Sparkle size={28} color={KZ.green} /></div>
 
-        <div className="grid grid-cols-2 gap-16 items-center max-w-[1280px] mx-auto relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center max-w-[1280px] mx-auto relative z-10">
           <div>
-            <Badge color="orange" size="lg" icon={<MapPin size={12} />} className="mb-6">
+            <Badge color="orange" size="lg" icon={<MapPin size={12} />} className="mb-5">
               974 · La Reunion
             </Badge>
-            <h1 className="text-[80px] font-extrabold tracking-[-0.04em] leading-[0.92] text-[#1A1410] mb-6">
+            <h1 className="text-[48px] sm:text-[64px] lg:text-[80px] font-extrabold tracking-[-0.04em] leading-[0.92] text-[#1A1410] mb-5">
               Ton kaz<br />
               <span style={{ color: KZ.orange }}>ton job</span><br />
               ton pei.
             </h1>
-            <p className="text-lg leading-relaxed text-[#2A2018] max-w-[520px] mb-8">
+            <p className="text-base lg:text-lg leading-relaxed text-[#2A2018] max-w-[520px] mb-6">
               La plateforme d&apos;emploi qui matche vraiment les talents reunionnais
               avec les meilleures opportunites locales. Avec un peu d&apos;IA et beaucoup de soleil.
             </p>
 
             {/* Barre de recherche */}
             <div
-              className="flex gap-2 items-center p-2 mb-5 rounded-xl border-[1.5px] border-[#1A1410]"
+              className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center p-2 mb-4 rounded-xl border-[1.5px] border-[#1A1410]"
               style={{ background: KZ.paper, boxShadow: '5px 5px 0 #1A1410' }}
             >
-              <div className="flex-1 flex items-center gap-2 px-3 py-1">
+              <div className="flex-1 flex items-center gap-2 px-3 py-2 sm:py-1">
                 <Search size={18} className="text-[#6B5A4A] shrink-0" />
                 <span className="text-sm text-[#6B5A4A]">Metier, mot-cle...</span>
               </div>
-              <div className="w-px h-7 bg-[#E8DDC9]" />
-              <div className="flex-1 flex items-center gap-2 px-3 py-1">
+              <div className="hidden sm:block w-px h-7 bg-[#E8DDC9]" />
+              <div className="hidden sm:flex flex-1 items-center gap-2 px-3 py-1">
                 <MapPin size={18} className="text-[#6B5A4A] shrink-0" />
                 <span className="text-sm text-[#2A2018]">Toute la Reunion</span>
               </div>
               <Link href="/candidate/jobs">
-                <Button kind="primary" size="lg">Rechercher</Button>
+                <Button kind="primary" size="md" className="w-full sm:w-auto">Rechercher</Button>
               </Link>
             </div>
 
             <div className="flex gap-2 flex-wrap items-center">
               <span className="text-xs text-[#6B5A4A]">Populaire :</span>
-              {['Developpeur', 'Commercial', 'BTP', 'Tourisme', 'Comptable', 'Infirmier'].map((k) => (
+              {['Developpeur', 'BTP', 'Tourisme', 'Comptable', 'Infirmier'].map((k) => (
                 <Link key={k} href={`/candidate/jobs?q=${k}`}>
                   <Tag color="cream">{k}</Tag>
                 </Link>
@@ -154,18 +154,18 @@ export default async function LandingPage() {
             </div>
           </div>
 
-          <div className="flex justify-center">
+          <div className="hidden lg:flex justify-center">
             <HeroIllustrationNew />
           </div>
         </div>
       </section>
 
       {/* STATS BAND — vraies données ────────────────────────── */}
-      <section className="px-16 py-8 border-y border-[#1A1410]" style={{ background: KZ.ink }}>
-        <div className="grid grid-cols-4 gap-8 max-w-[1280px] mx-auto">
+      <section className="px-4 sm:px-8 lg:px-16 py-6 lg:py-8 border-y border-[#1A1410]" style={{ background: KZ.ink }}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-[1280px] mx-auto">
           {STATS_BAND.map((s) => (
             <div key={s.l}>
-              <div className="text-[44px] font-extrabold tracking-tighter leading-none" style={{ color: KZ.orange }}>{s.v}</div>
+              <div className="text-[32px] lg:text-[44px] font-extrabold tracking-tighter leading-none" style={{ color: KZ.orange }}>{s.v}</div>
               <div className="text-sm opacity-70 mt-1" style={{ color: KZ.cream }}>{s.l}</div>
             </div>
           ))}
@@ -174,7 +174,7 @@ export default async function LandingPage() {
 
       {/* LOGOS ENTREPRISES — vraies entreprises ─────────────── */}
       {companies.length > 0 && (
-        <section className="px-16 py-10" style={{ background: KZ.cream }}>
+        <section className="px-4 sm:px-8 lg:px-16 py-8 lg:py-10" style={{ background: KZ.cream }}>
           <p className="kz-eyebrow text-[#6B5A4A] text-center mb-6">Ils recrutent sur Kazajob</p>
           <div className="flex justify-center items-center gap-10 flex-wrap max-w-[1280px] mx-auto">
             {companies.map((c) => (
@@ -187,23 +187,23 @@ export default async function LandingPage() {
       )}
 
       {/* OFFRES VEDETTES — vraies offres ───────────────────── */}
-      <section className="py-20 relative overflow-visible" style={{ background: KZ.cream2 }}>
-        {/* Perso 1 — flottant à gauche */}
-        <div className="absolute px-0 left-[-150px] top-[-20px] z-10 pointer-events-none select-none" style={{ width: '28vw' }}>
+      <section className="py-12 lg:py-20 relative overflow-visible" style={{ background: KZ.cream2 }}>
+        {/* Perso 1 — masqué sur mobile */}
+        <div className="hidden xl:block absolute left-[-150px] top-[-20px] z-10 pointer-events-none select-none" style={{ width: '22vw' }}>
           <img src="/assets/img/homepage/perso1.png" alt="" aria-hidden className="w-full object-contain object-bottom drop-shadow-xl" />
         </div>
-        {/* Perso 2 — flottant à droite */}
-        <div className="absolute right-[-200px] bottom-[-30px] z-10 pointer-events-none select-none" style={{ width: '28vw' }}>
+        {/* Perso 2 — masqué sur mobile */}
+        <div className="hidden xl:block absolute right-[-180px] bottom-[-30px] z-10 pointer-events-none select-none" style={{ width: '22vw' }}>
           <img src="/assets/img/homepage/perso2.png" alt="" aria-hidden className="w-full object-contain object-bottom drop-shadow-xl" />
         </div>
 
-        <div className="px-16 max-w-[1280px] mx-auto relative z-0">
-          <div className="flex justify-between items-end mb-9">
+        <div className="px-4 sm:px-8 lg:px-16 max-w-[1280px] mx-auto relative z-0">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-7">
             <div>
               <p className="kz-eyebrow mb-2" style={{ color: KZ.orange }}>Offres du moment</p>
-              <h2 className="kz-h2 text-[#1A1410] max-w-[600px]">Des opportunites fraiches, livrees chaque matin.</h2>
+              <h2 className="text-2xl lg:text-[36px] font-extrabold tracking-tight text-[#1A1410] max-w-[600px]">Des opportunites fraiches, livrees chaque matin.</h2>
             </div>
-            <Link href="/candidate/jobs">
+            <Link href="/candidate/jobs" className="shrink-0">
               <Button kind="outline" iconRight={<ArrowRight size={14} />}>Toutes les offres</Button>
             </Link>
           </div>
@@ -219,7 +219,7 @@ export default async function LandingPage() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
               {featuredJobs.map((job, i) => {
                 const color = CARD_COLORS[i % CARD_COLORS.length]
                 const isNew = Date.now() - new Date(job.created_at).getTime() < 86400000 * 3
@@ -275,15 +275,15 @@ export default async function LandingPage() {
       </section>
 
       {/* COMMENT CA MARCHE — statique (contenu marketing) ──── */}
-      <section className="px-16 py-20" style={{ background: KZ.cream }}>
+      <section className="px-4 sm:px-8 lg:px-16 py-12 lg:py-20" style={{ background: KZ.cream }}>
         <div className="max-w-[1280px] mx-auto">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 lg:mb-14">
             <p className="kz-eyebrow mb-2" style={{ color: KZ.orange }}>Comment ca marche</p>
-            <h2 className="kz-h2 text-[#1A1410] max-w-[720px] mx-auto">
+            <h2 className="text-2xl lg:text-[36px] font-extrabold tracking-tight text-[#1A1410] max-w-[720px] mx-auto">
               Trois etapes, zero chichi, ton premier entretien en 48 h.
             </h2>
           </div>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {HOW_STEPS.map((step) => (
               <div key={step.n} className="kz-card p-7 relative pt-10" style={{ background: step.color }}>
                 <div
@@ -304,30 +304,30 @@ export default async function LandingPage() {
       </section>
 
       {/* BANNIERE RECRUTEURS ────────────────────────────────── */}
-      <section className="px-16 py-16 relative overflow-hidden" style={{ background: KZ.ink }}>
-        <div className="absolute top-[-20px] right-16"><Soleil size={120} stroke={KZ.cream} color={KZ.orange} /></div>
-        <div className="max-w-[1280px] mx-auto grid grid-cols-[1.4fr_1fr] gap-12 items-center relative z-10">
+      <section className="px-4 sm:px-8 lg:px-16 py-12 lg:py-16 relative overflow-hidden" style={{ background: KZ.ink }}>
+        <div className="absolute top-[-20px] right-8 lg:right-16 opacity-60 lg:opacity-100"><Soleil size={90} stroke={KZ.cream} color={KZ.orange} /></div>
+        <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-8 lg:gap-12 items-center relative z-10">
           <div>
-            <Badge color="yellow" size="lg" className="mb-5">Recruteurs</Badge>
-            <h2 className="text-[48px] font-extrabold tracking-tight leading-tight mb-5" style={{ color: KZ.cream }}>
+            <Badge color="yellow" size="lg" className="mb-4 lg:mb-5">Recruteurs</Badge>
+            <h2 className="text-3xl lg:text-[44px] font-extrabold tracking-tight leading-tight mb-4 lg:mb-5" style={{ color: KZ.cream }}>
               Trouvez les meilleurs talents de l&apos;ile.<br />
               <span style={{ color: KZ.orange }}>Pas de spam. Pas de bruit.</span>
             </h2>
             <p className="text-base leading-relaxed opacity-80 mb-7 max-w-[520px]" style={{ color: KZ.cream }}>
               Annonces illimitees, IA de tri, dashboard analytics, et une vraie communaute locale de candidats actifs.
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <Link href="/auth/register?role=recruiter">
-                <Button kind="primary" size="lg">Publier une offre — gratuit</Button>
+                <Button kind="primary" size="md">Publier une offre — gratuit</Button>
               </Link>
               <Link href="/auth/register?role=recruiter">
-                <Button kind="outline" size="lg" className="!text-[#FFF7EE] !border-[#FFF7EE] !bg-transparent">
+                <Button kind="outline" size="md" className="!text-[#FFF7EE] !border-[#FFF7EE] !bg-transparent">
                   Voir les tarifs
                 </Button>
               </Link>
             </div>
           </div>
-          <div className="flex flex-col gap-3" style={{ transform: 'rotate(2deg)' }}>
+          <div className="hidden lg:flex flex-col gap-3" style={{ transform: 'rotate(2deg)' }}>
             <div className="p-4 rounded-xl border border-[#1A1410] kz-card" style={{ background: KZ.cream, color: KZ.ink, boxShadow: '4px 4px 0 #FF6B35' }}>
               <p className="kz-eyebrow text-[#6B5A4A] mb-2">Pipeline recrutement</p>
               <div className="grid grid-cols-4 gap-1.5">
@@ -349,24 +349,24 @@ export default async function LandingPage() {
       </section>
 
       {/* FOOTER CTA ─────────────────────────────────────────── */}
-      <section className="px-16 py-20 text-center border-t border-[#1A1410]" style={{ background: KZ.cream }}>
-        <div className="flex justify-center gap-4 mb-5">
-          <Hibiscus size={56} />
-          <Soleil size={56} />
-          <Palme size={64} />
+      <section className="px-4 sm:px-8 lg:px-16 py-14 lg:py-20 text-center border-t border-[#1A1410]" style={{ background: KZ.cream }}>
+        <div className="flex justify-center gap-3 mb-5">
+          <Hibiscus size={40} />
+          <Soleil size={40} />
+          <Palme size={48} />
         </div>
-        <h2 className="text-[64px] font-extrabold tracking-[-0.04em] leading-none text-[#1A1410] mb-4">
+        <h2 className="text-[40px] sm:text-[52px] lg:text-[64px] font-extrabold tracking-[-0.04em] leading-none text-[#1A1410] mb-4">
           Anou commence ?
         </h2>
-        <p className="text-lg text-[#2A2018] mb-8 max-w-[540px] mx-auto">
+        <p className="text-base lg:text-lg text-[#2A2018] mb-7 max-w-[540px] mx-auto">
           3 minutes pour creer ton profil. 0 € pour postuler.
         </p>
-        <div className="flex gap-3 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/auth/register">
-            <Button kind="primary" size="xl">Creer mon profil</Button>
+            <Button kind="primary" size="lg" className="w-full sm:w-auto">Creer mon profil</Button>
           </Link>
           <Link href="/auth/register?role=recruiter">
-            <Button kind="outline" size="xl">Je suis recruteur</Button>
+            <Button kind="outline" size="lg" className="w-full sm:w-auto">Je suis recruteur</Button>
           </Link>
         </div>
       </section>

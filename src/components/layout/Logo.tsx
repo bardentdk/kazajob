@@ -37,16 +37,16 @@ export function Logo({ size = 32, mono, color, accentColor = '#FF6B35', href = '
             }
           </style> */}
           <linearGradient id="Dégradé_sans_nom_5" data-name="Dégradé sans nom 5" x1="-96.43" y1="534.89" x2="429.76" y2="-3.1" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stop-color="#111527"/>
-            <stop offset=".27" stop-color="#131526"/>
-            <stop offset=".41" stop-color="#1b1826"/>
-            <stop offset=".53" stop-color="#281c26"/>
-            <stop offset=".63" stop-color="#3c2326"/>
-            <stop offset=".71" stop-color="#552b26"/>
-            <stop offset=".8" stop-color="#743525"/>
-            <stop offset=".87" stop-color="#984125"/>
-            <stop offset=".94" stop-color="#c14e24"/>
-            <stop offset="1" stop-color="#eb5c24"/>
+            <stop offset="0" stopColor="#111527"/>
+            <stop offset=".27" stopColor="#131526"/>
+            <stop offset=".41" stopColor="#1b1826"/>
+            <stop offset=".53" stopColor="#281c26"/>
+            <stop offset=".63" stopColor="#3c2326"/>
+            <stop offset=".71" stopColor="#552b26"/>
+            <stop offset=".8" stopColor="#743525"/>
+            <stop offset=".87" stopColor="#984125"/>
+            <stop offset=".94" stopColor="#c14e24"/>
+            <stop offset="1" stopColor="#eb5c24"/>
           </linearGradient>
         </defs>
         <g id="Calque_1-2" data-name="Calque 1">
