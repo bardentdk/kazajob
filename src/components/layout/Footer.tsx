@@ -1,0 +1,77 @@
+import Link from 'next/link'
+import { Logo } from './Logo'
+
+const FOOTER_LINKS = [
+  {
+    title: 'Candidats',
+    links: [
+      { label: 'Offres d\'emploi', href: '/candidate/jobs' },
+      { label: 'Mon profil', href: '/candidate/profile' },
+      { label: 'Mes candidatures', href: '/candidate/applications' },
+      { label: 'Favoris', href: '/candidate/favorites' },
+    ],
+  },
+  {
+    title: 'Recruteurs',
+    links: [
+      { label: 'Publier une offre', href: '/auth/register?role=recruiter' },
+      { label: 'Espace recruteur', href: '/recruiter/dashboard' },
+      { label: 'Candidats', href: '/recruiter/candidates' },
+    ],
+  },
+  {
+    title: 'Entreprise',
+    links: [
+      { label: 'A propos', href: '#' },
+      { label: 'Blog', href: '#' },
+      { label: 'Contact', href: '#' },
+    ],
+  },
+  {
+    title: 'Legal',
+    links: [
+      { label: 'CGU', href: '#' },
+      { label: 'Confidentialite', href: '#' },
+      { label: 'Cookies', href: '#' },
+    ],
+  },
+]
+
+export function Footer() {
+  return (
+    <footer className="bg-[#1A1410] text-[#FFF7EE] pt-12 pb-8 px-16">
+      <div className="grid grid-cols-5 gap-8 mb-8">
+        <div>
+          <Logo size={32} mono color="#FFF7EE" accentColor="#FF6B35" href="/" />
+          <p className="text-sm opacity-70 mt-4 max-w-[280px] leading-relaxed">
+            La plateforme d&apos;emploi nouvelle generation pour La Reunion. Fait avec{' '}
+            <span className="text-[#FF6B35]">amour</span> a Saint-Denis.
+          </p>
+        </div>
+        {FOOTER_LINKS.map((col) => (
+          <div key={col.title}>
+            <div className="text-xs font-bold text-[#FF6B35] mb-3 uppercase tracking-widest">
+              {col.title}
+            </div>
+            <ul className="flex flex-col gap-2">
+              {col.links.map((l) => (
+                <li key={l.label}>
+                  <Link
+                    href={l.href}
+                    className="text-sm opacity-75 hover:opacity-100 hover:text-[#FF6B35] transition-colors"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <div className="pt-5 border-t border-white/10 flex justify-between text-xs opacity-50">
+        <span>© 2026 Kazajob SAS · La Reunion 974</span>
+        <span>Fait avec passion dans le 974</span>
+      </div>
+    </footer>
+  )
+}

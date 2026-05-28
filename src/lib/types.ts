@@ -1,0 +1,145 @@
+export type UserRole = 'candidate' | 'recruiter' | 'admin'
+
+export interface Profile {
+  id: string
+  email: string
+  full_name: string
+  role: UserRole
+  avatar_url: string | null
+  location: string | null
+  bio: string | null
+  phone: string | null
+  cv_url: string | null
+  xp: number
+  streak: number
+  created_at: string
+  updated_at: string
+}
+
+export interface Company {
+  id: string
+  owner_id: string
+  name: string
+  logo_url: string | null
+  website: string | null
+  description: string | null
+  location: string | null
+  sector: string | null
+  size: string | null
+  is_verified: boolean
+  created_at: string
+}
+
+export interface Job {
+  id: string
+  company_id: string
+  recruiter_id: string
+  title: string
+  description: string
+  requirements: string | null
+  location: string
+  remote: boolean
+  job_type: string
+  sector: string | null
+  salary_min: number | null
+  salary_max: number | null
+  salary_currency: string
+  is_active: boolean
+  is_boosted: boolean
+  boost_expires_at: string | null
+  views: number
+  applications_count: number
+  created_at: string
+  updated_at: string
+  company?: Company
+  skills?: Skill[]
+  match_score?: number
+}
+
+export interface Application {
+  id: string
+  job_id: string
+  candidate_id: string
+  cover_letter: string | null
+  status: 'pending' | 'viewed' | 'interview' | 'offer' | 'hired' | 'rejected'
+  recruiter_notes: string | null
+  created_at: string
+  updated_at: string
+  job?: Job
+  candidate?: Profile
+}
+
+export interface Favorite {
+  id: string
+  candidate_id: string
+  job_id: string
+  created_at: string
+  job?: Job
+}
+
+export interface Skill {
+  id: string
+  name: string
+  category: string | null
+}
+
+export interface CandidateSkill {
+  candidate_id: string
+  skill_id: string
+  level: 'beginner' | 'intermediate' | 'advanced' | 'expert'
+  skill?: Skill
+}
+
+export interface JobSkill {
+  job_id: string
+  skill_id: string
+  is_required: boolean
+  skill?: Skill
+}
+
+export interface Conversation {
+  id: string
+  candidate_id: string
+  recruiter_id: string
+  job_id: string | null
+  last_message_at: string
+  created_at: string
+  candidate?: Profile
+  recruiter?: Profile
+  job?: Job
+  last_message?: Message
+}
+
+export interface Message {
+  id: string
+  conversation_id: string
+  sender_id: string
+  content: string
+  is_read: boolean
+  created_at: string
+  sender?: Profile
+}
+
+export interface JobFilters {
+  q?: string
+  location?: string
+  job_type?: string
+  sector?: string
+  remote?: boolean
+  salary_min?: number
+  salary_max?: number
+  page?: number
+  limit?: number
+}
+
+export interface PaginatedResult<T> {
+  data: T[]
+  count: number
+  page: number
+  limit: number
+  total_pages: number
+}
+
+export type BadgeColor = 'orange' | 'violet' | 'blue' | 'green' | 'yellow' | 'ink' | 'cream' | 'paper'
+export type ButtonKind = 'primary' | 'dark' | 'violet' | 'yellow' | 'outline' | 'ghost' | 'soft' | 'danger'
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl'

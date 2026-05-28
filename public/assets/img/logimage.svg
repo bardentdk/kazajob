@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#DCE7FB"/>
+      <stop offset="100%" stop-color="#E5DCFF"/>
+    </linearGradient>
+  </defs>
+  <!-- Sky -->
+  <rect width="800" height="600" fill="url(#sky)"/>
+  <!-- Sun -->
+  <circle cx="620" cy="120" r="56" fill="#FFC93C" stroke="#1A1410" stroke-width="3"/>
+  <!-- Sun rays -->
+  <line x1="620" y1="45" x2="620" y2="25" stroke="#1A1410" stroke-width="3" stroke-linecap="round"/>
+  <line x1="676" y1="64" x2="690" y2="50" stroke="#1A1410" stroke-width="3" stroke-linecap="round"/>
+  <line x1="695" y1="120" x2="715" y2="120" stroke="#1A1410" stroke-width="3" stroke-linecap="round"/>
+  <line x1="676" y1="176" x2="690" y2="190" stroke="#1A1410" stroke-width="3" stroke-linecap="round"/>
+  <line x1="620" y1="195" x2="620" y2="215" stroke="#1A1410" stroke-width="3" stroke-linecap="round"/>
+  <line x1="564" y1="176" x2="550" y2="190" stroke="#1A1410" stroke-width="3" stroke-linecap="round"/>
+  <line x1="545" y1="120" x2="525" y2="120" stroke="#1A1410" stroke-width="3" stroke-linecap="round"/>
+  <line x1="564" y1="64" x2="550" y2="50" stroke="#1A1410" stroke-width="3" stroke-linecap="round"/>
+  <!-- Cloud -->
+  <ellipse cx="200" cy="160" rx="60" ry="30" fill="white" stroke="#1A1410" stroke-width="2"/>
+  <ellipse cx="240" cy="148" rx="40" ry="25" fill="white" stroke="#1A1410" stroke-width="2"/>
+  <ellipse cx="160" cy="155" rx="30" ry="20" fill="white" stroke="#1A1410" stroke-width="2"/>
+  <!-- Mountains -->
+  <polygon points="0,380 160,180 260,260 320,380" fill="#6D3BEB" stroke="#1A1410" stroke-width="2"/>
+  <polygon points="200,380 400,200 500,280 600,380" fill="#1B4FB8" stroke="#1A1410" stroke-width="2"/>
+  <polygon points="500,380 650,240 760,300 800,380" fill="#6D3BEB" stroke="#1A1410" stroke-width="2"/>
+  <!-- Snow caps -->
+  <polygon points="160,180 145,205 175,205" fill="white" stroke="#1A1410" stroke-width="1.5"/>
+  <polygon points="400,200 385,225 415,225" fill="white" stroke="#1A1410" stroke-width="1.5"/>
+  <!-- Ocean -->
+  <rect x="0" y="380" width="800" height="220" fill="#D6F0E0" stroke="#1A1410" stroke-width="2"/>
+  <!-- Wave -->
+  <path d="M0 400 Q100 385 200 400 T400 400 T600 400 T800 400" fill="none" stroke="#1B4FB8" stroke-width="3" stroke-linecap="round"/>
+  <!-- Palm left -->
+  <line x1="80" y1="600" x2="100" y2="440" stroke="#1A1410" stroke-width="5" stroke-linecap="round"/>
+  <path d="M100 440 C50 430 20 410 10 390 C40 392 75 408 100 440Z" fill="#19A974" stroke="#1A1410" stroke-width="2"/>
+  <path d="M100 440 C150 430 180 410 190 390 C160 392 125 408 100 440Z" fill="#19A974" stroke="#1A1410" stroke-width="2"/>
+  <path d="M100 445 C70 460 40 465 15 455 C40 442 75 438 100 445Z" fill="#19A974" stroke="#1A1410" stroke-width="2"/>
+  <!-- Palm right -->
+  <line x1="720" y1="600" x2="700" y2="450" stroke="#1A1410" stroke-width="5" stroke-linecap="round"/>
+  <path d="M700 450 C650 440 620 420 610 400 C640 402 675 418 700 450Z" fill="#19A974" stroke="#1A1410" stroke-width="2"/>
+  <path d="M700 450 C750 440 780 420 790 400 C760 402 725 418 700 450Z" fill="#19A974" stroke="#1A1410" stroke-width="2"/>
+  <!-- Hibiscus center -->
+  <circle cx="400" cy="500" r="8" fill="#FFC93C" stroke="#1A1410" stroke-width="2"/>
+  <ellipse cx="400" cy="478" rx="12" ry="18" fill="#FF6B35" stroke="#1A1410" stroke-width="1.5"/>
+  <ellipse cx="418" cy="492" rx="12" ry="18" transform="rotate(72 418 492)" fill="#FF6B35" stroke="#1A1410" stroke-width="1.5"/>
+  <ellipse cx="411" cy="514" rx="12" ry="18" transform="rotate(144 411 514)" fill="#FF6B35" stroke="#1A1410" stroke-width="1.5"/>
+  <ellipse cx="389" cy="514" rx="12" ry="18" transform="rotate(216 389 514)" fill="#FF6B35" stroke="#1A1410" stroke-width="1.5"/>
+  <ellipse cx="382" cy="492" rx="12" ry="18" transform="rotate(288 382 492)" fill="#FF6B35" stroke="#1A1410" stroke-width="1.5"/>
+  <!-- Speech bubble -->
+  <rect x="280" y="440" width="130" height="48" rx="10" fill="#FFF1C2" stroke="#1A1410" stroke-width="2"/>
+  <polygon points="320,488 310,510 340,488" fill="#FFF1C2" stroke="#1A1410" stroke-width="1.5"/>
+  <text x="345" y="470" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="800" fill="#1A1410">Le la !</text>
+</svg>
