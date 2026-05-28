@@ -8,6 +8,13 @@ import { Tag } from '@/components/ui/Tag'
 import { SearchBarLanding } from '@/components/ui/SearchBarLanding'
 import { HeroIllustrationNew } from '@/components/illustrations/HeroIllustrationNew'
 import { Soleil, Palme, Hibiscus, Sparkle } from '@/components/illustrations/Tropical'
+import { ReassuranceBar }     from '@/components/landing/ReassuranceBar'
+import { WhySection }         from '@/components/landing/WhySection'
+import { KazaIASpotlight }    from '@/components/landing/KazaIASpotlight'
+import { TestimonialsSection } from '@/components/landing/TestimonialsSection'
+import { PricingSection }     from '@/components/landing/PricingSection'
+import { RoadmapSection }     from '@/components/landing/RoadmapSection'
+import { FaqSection }         from '@/components/landing/FaqSection'
 import { KZ } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/server'
 import { formatSalary } from '@/lib/utils'
@@ -105,6 +112,7 @@ export default async function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: KZ.cream }}>
       <NavLanding />
+      <ReassuranceBar />
 
       {/* HERO ──────────────────────────────────────────────── */}
       <section className="px-4 sm:px-8 lg:px-16 pt-10 lg:pt-20 pb-0 relative overflow-hidden" style={{ background: KZ.cream }}>
@@ -144,7 +152,7 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
-
+       <section className='my-10 '></section>   
       {/* STATS BAND — vraies données ────────────────────────── */}
       <section className="px-4 sm:px-8 lg:px-16 py-6 lg:py-8 border-y border-[#1A1410]" style={{ background: KZ.ink }}>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-[1280px] mx-auto">
@@ -156,7 +164,7 @@ export default async function LandingPage() {
           ))}
         </div>
       </section>
-
+      
       {/* LOGOS ENTREPRISES — vraies entreprises ─────────────── */}
       {companies.length > 0 && (
         <section className="px-4 sm:px-8 lg:px-16 py-8 lg:py-10" style={{ background: KZ.cream }}>
@@ -259,13 +267,13 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* COMMENT CA MARCHE — statique (contenu marketing) ──── */}
-      <section className="px-4 sm:px-8 lg:px-16 py-12 lg:py-20" style={{ background: KZ.cream }}>
+      {/* COMMENT CA MARCHE ──────────────────────────────────── */}
+      <section id="comment" className="px-4 sm:px-8 lg:px-16 py-12 lg:py-20" style={{ background: KZ.cream }}>
         <div className="max-w-[1280px] mx-auto">
           <div className="text-center mb-10 lg:mb-14">
-            <p className="kz-eyebrow mb-2" style={{ color: KZ.orange }}>Comment ca marche</p>
+            <p className="kz-eyebrow mb-2" style={{ color: KZ.orange }}>Comment ça marche</p>
             <h2 className="text-2xl lg:text-[36px] font-extrabold tracking-tight text-[#1A1410] max-w-[720px] mx-auto">
-              Trois etapes, zero chichi, ton premier entretien en 48 h.
+              Trois étapes, zéro chichi, ton premier entretien en 48 h.
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -280,7 +288,7 @@ export default async function LandingPage() {
                 <div className="w-14 h-14 rounded-xl border border-[#1A1410] flex items-center justify-center mb-5 text-[#1A1410]" style={{ background: KZ.paper }}>
                   {step.icon}
                 </div>
-                <h3 className="kz-h3 text-[#1A1410] mb-2.5">{step.title}</h3>
+                <h3 className="text-lg font-bold text-[#1A1410] mb-2.5">{step.title}</h3>
                 <p className="text-sm leading-relaxed text-[#2A2018]">{step.desc}</p>
               </div>
             ))}
@@ -288,47 +296,60 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* POURQUOI KAZAJOB + COMPARATIF ──────────────────────── */}
+      <WhySection />
+
+      {/* KAZAIA SPOTLIGHT ───────────────────────────────────── */}
+      <KazaIASpotlight />
+
+      {/* TÉMOIGNAGES ─────────────────────────────────────────── */}
+      <TestimonialsSection />
+
+      {/* PRICING ─────────────────────────────────────────────── */}
+      <PricingSection />
+
+      {/* ROADMAP ─────────────────────────────────────────────── */}
+      <RoadmapSection />
+
+      {/* FAQ ─────────────────────────────────────────────────── */}
+      <FaqSection />
+
       {/* BANNIERE RECRUTEURS ────────────────────────────────── */}
       <section className="px-4 sm:px-8 lg:px-16 py-12 lg:py-16 relative overflow-hidden" style={{ background: KZ.ink }}>
-        <div className="absolute top-[-20px] right-8 lg:right-16 opacity-60 lg:opacity-100"><Soleil size={90} stroke={KZ.cream} color={KZ.orange} /></div>
+        <div className="absolute top-[-20px] right-8 lg:right-16 opacity-40"><Soleil size={90} stroke={KZ.cream} color={KZ.orange} /></div>
         <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-8 lg:gap-12 items-center relative z-10">
           <div>
-            <Badge color="yellow" size="lg" className="mb-4 lg:mb-5">Recruteurs</Badge>
-            <h2 className="text-3xl lg:text-[44px] font-extrabold tracking-tight leading-tight mb-4 lg:mb-5" style={{ color: KZ.cream }}>
-              Trouvez les meilleurs talents de l&apos;ile.<br />
+            <Badge color="yellow" size="lg" className="mb-4">Recruteurs</Badge>
+            <h2 className="text-3xl lg:text-[44px] font-extrabold tracking-tight leading-tight mb-4" style={{ color: KZ.cream }}>
+              Trouvez les meilleurs talents de l&apos;île.<br />
               <span style={{ color: KZ.orange }}>Pas de spam. Pas de bruit.</span>
             </h2>
-            <p className="text-base leading-relaxed opacity-80 mb-7 max-w-[520px]" style={{ color: KZ.cream }}>
-              Annonces illimitees, IA de tri, dashboard analytics, et une vraie communaute locale de candidats actifs.
+            <p className="text-base leading-relaxed opacity-80 mb-6 max-w-[520px]" style={{ color: KZ.cream }}>
+              Offres illimitées, IA de tri automatique, pipeline Kanban, analytics, et une communauté locale de candidats actifs. Essai 14 jours gratuit.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/auth/register?role=recruiter">
-                <Button kind="primary" size="md">Publier une offre — gratuit</Button>
+                <Button kind="primary" size="lg">Publier une offre — gratuit</Button>
               </Link>
-              <Link href="/auth/register?role=recruiter">
-                <Button kind="outline" size="md" className="!text-[#FFF7EE] !border-[#FFF7EE] !bg-transparent">
+              <a href="#tarifs">
+                <Button kind="outline" size="lg" className="!text-[#FFF7EE] !border-[#FFF7EE] !bg-transparent">
                   Voir les tarifs
                 </Button>
-              </Link>
+              </a>
             </div>
           </div>
-          <div className="hidden lg:flex flex-col gap-3" style={{ transform: 'rotate(2deg)' }}>
-            <div className="p-4 rounded-xl border border-[#1A1410] kz-card" style={{ background: KZ.cream, color: KZ.ink, boxShadow: '4px 4px 0 #FF6B35' }}>
-              <p className="kz-eyebrow text-[#6B5A4A] mb-2">Pipeline recrutement</p>
-              <div className="grid grid-cols-4 gap-1.5">
-                {[
-                  { l: 'Postu.', v: stats.jobs },
-                  { l: 'Candidats', v: stats.users },
-                  { l: 'Entreprises', v: stats.companies },
-                  { l: 'Villes', v: 15 },
-                ].map((c) => (
-                  <div key={c.l} className="text-center p-2 rounded-md border border-[#1A1410]" style={{ background: KZ.paper }}>
-                    <div className="text-xl font-extrabold">{c.v}</div>
-                    <div className="text-[9px] font-semibold text-[#6B5A4A]">{c.l}</div>
-                  </div>
-                ))}
+          <div className="hidden lg:grid grid-cols-2 gap-3" style={{ transform: 'rotate(2deg)' }}>
+            {[
+              { l: 'Offres actives', v: stats.jobs || '—', color: KZ.orangeSoft },
+              { l: 'Candidats', v: stats.users || '—', color: KZ.violetSoft },
+              { l: 'Entreprises', v: stats.companies || '—', color: KZ.greenSoft },
+              { l: 'Villes couvertes', v: '15', color: KZ.yellowSoft },
+            ].map((c) => (
+              <div key={c.l} className="text-center p-3 rounded-xl border border-[#1A1410]" style={{ background: c.color, boxShadow: '2px 2px 0 #1A1410' }}>
+                <div className="text-2xl font-extrabold text-[#1A1410]">{c.v}</div>
+                <div className="text-[10px] font-semibold text-[#6B5A4A]">{c.l}</div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -341,19 +362,22 @@ export default async function LandingPage() {
           <Palme size={48} />
         </div>
         <h2 className="text-[40px] sm:text-[52px] lg:text-[64px] font-extrabold tracking-[-0.04em] leading-none text-[#1A1410] mb-4">
-          Anou commence ?
+          Anou commencé ?
         </h2>
         <p className="text-base lg:text-lg text-[#2A2018] mb-7 max-w-[540px] mx-auto">
-          3 minutes pour creer ton profil. 0 € pour postuler.
+          3 minutes pour créer ton profil. 0 € pour postuler.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
           <Link href="/auth/register">
-            <Button kind="primary" size="lg" className="w-full sm:w-auto">Creer mon profil</Button>
+            <Button kind="primary" size="lg" className="w-full sm:w-auto">Créer mon profil — gratuit</Button>
           </Link>
-          <Link href="/auth/register?role=recruiter">
-            <Button kind="outline" size="lg" className="w-full sm:w-auto">Je suis recruteur</Button>
-          </Link>
+          <a href="#tarifs">
+            <Button kind="outline" size="lg" className="w-full sm:w-auto">Voir les tarifs recruteur</Button>
+          </a>
         </div>
+        <p className="text-xs text-[#6B5A4A]">
+          Candidats : 100% gratuit · Recruteurs : essai 14 jours sans CB · Données hébergées en France
+        </p>
       </section>
 
       <Footer />
