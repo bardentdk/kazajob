@@ -2,20 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LayoutDashboard, Search, Heart, Briefcase, MessageCircle, User } from 'lucide-react'
+import { LayoutDashboard, Search, Heart, Briefcase, MessageCircle, User, Sparkles } from 'lucide-react'
 import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { useAuth } from '@/features/auth/useAuth'
-import { Sparkles } from 'lucide-react'
 import { KZ } from '@/lib/constants'
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/candidate/dashboard', label: 'Tableau de bord', icon: <LayoutDashboard size={16} /> },
-  { href: '/candidate/jobs',      label: 'Rechercher',      icon: <Search size={16} /> },
-  { href: '/candidate/favorites', label: 'Favoris',         icon: <Heart size={16} /> },
-  { href: '/candidate/applications', label: 'Candidatures', icon: <Briefcase size={16} /> },
-  { href: '/candidate/messages',  label: 'Messages',        icon: <MessageCircle size={16} /> },
-  { href: '/candidate/profile',   label: 'Mon profil',      icon: <User size={16} /> },
+  { href: '/candidate/dashboard',    label: 'Tableau de bord', icon: <LayoutDashboard size={16} /> },
+  { href: '/candidate/jobs',         label: 'Rechercher',      icon: <Search size={16} /> },
+  { href: '/candidate/favorites',    label: 'Favoris',         icon: <Heart size={16} /> },
+  { href: '/candidate/applications', label: 'Candidatures',    icon: <Briefcase size={16} /> },
+  { href: '/candidate/messages',     label: 'Messages',        icon: <MessageCircle size={16} /> },
+  { href: '/candidate/ia',           label: 'KazaIA',          icon: <Sparkles size={16} /> },
+  { href: '/candidate/profile',      label: 'Mon profil',      icon: <User size={16} /> },
 ]
 
 export default function CandidateLayout({ children }: { children: React.ReactNode }) {
@@ -52,7 +52,6 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: KZ.cream }}>
       <TopBar
-        user={{ name: profile.full_name, avatarUrl: profile.avatar_url, color: KZ.orangeSoft }}
         notifCount={3}
         searchPlaceholder="Metier, entreprise, ville..."
         onMenuClick={() => setSidebarOpen(true)}

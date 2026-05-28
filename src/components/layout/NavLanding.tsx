@@ -2,20 +2,38 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Menu, X, ArrowRight, LayoutDashboard, LogOut, User, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Avatar } from '@/components/ui/Avatar'
 import { Logo } from './Logo'
 import { KZ } from '@/lib/constants'
+import { useAuth } from '@/features/auth/useAuth'
 
 const NAV_LINKS = [
-  { href: '/candidate/jobs', label: 'Offres' },
-  { href: '#entreprises', label: 'Entreprises' },
-  { href: '#comment', label: 'Comment ca marche' },
+  { href: '/candidate/jobs',             label: 'Offres' },
+  { href: '#comment',                    label: 'Comment ça marche' },
   { href: '/auth/register?role=recruiter', label: 'Recruteurs' },
 ]
 
 export function NavLanding() {
-  const [open, setOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const { profile, signOut } = useAuth()
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    await signOut()
+    setProfileOpen(false)
+    router.push('/')
+    router.refresh()
+  }
+
+  const dashboardPath = profile?.role === 'recruiter'
+    ? '/recruiter/dashboard'
+    : profile?.role === 'admin'
+      ? '/admin/dashboard'
+      : '/candidate/dashboard'
 
   return (
     <header className="h-[64px] lg:h-[72px] px-4 md:px-8 lg:px-10 border-b border-[#1A1410] bg-[#FFF7EE] flex items-center gap-4 sticky top-0 z-50">
@@ -31,20 +49,91 @@ export function NavLanding() {
       </nav>
 
       <div className="ml-auto flex items-center gap-2 lg:gap-3">
-        {/* Desktop CTA */}
-        <Link href="/auth/login" className="hidden md:block">
-          <Button kind="ghost" size="md">Connexion</Button>
-        </Link>
-        <Link href="/auth/register">
-          <Button kind="primary" size="sm" className="lg:!text-sm lg:!h-9" iconRight={<ArrowRight size={14} />}>
-            <span className="hidden sm:inline">Anou commencé</span>
-            <span className="sm:hidden">Commencer</span>
-          </Button>
-        </Link>
+        {profile ? (
+          /* ── Connecté : avatar + dropdown ── */
+          <div className="relative">
+            <button
+              onClick={() => setProfileOpen(v => !v)}
+              className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-[#1A1410] hover:bg-[#FBEFE0] transition-colors"
+              style={{ background: KZ.paper }}
+            >
+              <Avatar name={profile.full_name} src={profile.avatar_url} size={28} color={KZ.orangeSoft} />
+              <span className="hidden sm:block text-sm font-bold text-[#1A1410] max-w-[120px] truncate">
+                {profile.full_name.split(' ')[0]}
+              </span>
+            </button>
+
+            {profileOpen && (
+              <>
+                {/* Backdrop */}
+                <div className="fixed inset-0 z-30" onClick={() => setProfileOpen(false)} />
+                {/* Menu */}
+                <div
+                  className="absolute right-0 top-full mt-2 w-52 z-40 rounded-xl border border-[#1A1410] overflow-hidden"
+                  style={{ background: KZ.paper, boxShadow: '4px 4px 0 #1A1410' }}
+                >
+                  <div className="px-4 py-3 border-b border-[#E8DDC9]" style={{ background: KZ.cream2 }}>
+                    <div className="text-xs font-bold text-[#1A1410] truncate">{profile.full_name}</div>
+                    <div className="text-[11px] text-[#6B5A4A] truncate">{profile.email}</div>
+                  </div>
+                  <div className="p-1.5 flex flex-col gap-0.5">
+                    <Link
+                      href={dashboardPath}
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-[#1A1410] hover:bg-[#FBEFE0] transition-colors"
+                    >
+                      <LayoutDashboard size={15} className="text-[#6B5A4A]" />
+                      Mon espace
+                    </Link>
+                    <Link
+                      href="/candidate/profile"
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-[#1A1410] hover:bg-[#FBEFE0] transition-colors"
+                    >
+                      <User size={15} className="text-[#6B5A4A]" />
+                      Mon profil
+                    </Link>
+                    {profile.role === 'candidate' && (
+                      <Link
+                        href="/candidate/ia"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-[#1A1410] hover:bg-[#FBEFE0] transition-colors"
+                      >
+                        <Sparkles size={15} color={KZ.violet} />
+                        KazaIA
+                      </Link>
+                    )}
+                    <div className="h-px bg-[#E8DDC9] my-1" />
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors w-full text-left"
+                    >
+                      <LogOut size={15} />
+                      Se déconnecter
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          /* ── Non connecté : boutons classiques ── */
+          <>
+            <Link href="/auth/login" className="hidden md:block">
+              <Button kind="ghost" size="md">Connexion</Button>
+            </Link>
+            <Link href="/auth/register">
+              <Button kind="primary" size="sm" className="lg:!text-sm lg:!h-9" iconRight={<ArrowRight size={14} />}>
+                <span className="hidden sm:inline">Anou commencé</span>
+                <span className="sm:hidden">S&apos;inscrire</span>
+              </Button>
+            </Link>
+          </>
+        )}
 
         {/* Hamburger mobile */}
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => setDrawerOpen(true)}
           className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg border border-[#1A1410] bg-white"
         >
           <Menu size={18} />
@@ -52,38 +141,59 @@ export function NavLanding() {
       </div>
 
       {/* Drawer mobile */}
-      {open && (
+      {drawerOpen && (
         <>
-          <div className="fixed inset-0 bg-[#1A1410]/50 z-40 lg:hidden" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 bg-[#1A1410]/50 z-40 lg:hidden" onClick={() => setDrawerOpen(false)} />
           <div
             className="fixed top-0 right-0 bottom-0 w-[280px] z-50 flex flex-col p-6 lg:hidden border-l border-[#1A1410]"
             style={{ background: KZ.cream, boxShadow: '-4px 0 0 #1A1410' }}
           >
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-6">
               <Logo size={24} />
-              <button onClick={() => setOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#1A1410] bg-white">
+              <button onClick={() => setDrawerOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#1A1410] bg-white">
                 <X size={16} />
               </button>
             </div>
+
+            {profile && (
+              <div className="flex items-center gap-3 p-3 rounded-xl border border-[#E8DDC9] mb-4" style={{ background: KZ.cream2 }}>
+                <Avatar name={profile.full_name} src={profile.avatar_url} size={36} color={KZ.orangeSoft} />
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-[#1A1410] truncate">{profile.full_name}</div>
+                  <div className="text-xs text-[#6B5A4A] capitalize">{profile.role}</div>
+                </div>
+              </div>
+            )}
+
             <nav className="flex flex-col gap-1">
               {NAV_LINKS.map((l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  onClick={() => setOpen(false)}
-                  className="px-3 py-3 text-sm font-semibold text-[#2A2018] hover:bg-[#FBEFE0] rounded-lg transition-colors"
-                >
+                <Link key={l.href} href={l.href} onClick={() => setDrawerOpen(false)}
+                  className="px-3 py-3 text-sm font-semibold text-[#2A2018] hover:bg-[#FBEFE0] rounded-lg transition-colors">
                   {l.label}
                 </Link>
               ))}
             </nav>
+
             <div className="mt-auto flex flex-col gap-2.5">
-              <Link href="/auth/login" onClick={() => setOpen(false)}>
-                <Button kind="outline" size="lg" full>Connexion</Button>
-              </Link>
-              <Link href="/auth/register" onClick={() => setOpen(false)}>
-                <Button kind="primary" size="lg" full>Creer mon compte</Button>
-              </Link>
+              {profile ? (
+                <>
+                  <Link href={dashboardPath} onClick={() => setDrawerOpen(false)}>
+                    <Button kind="outline" size="lg" full icon={<LayoutDashboard size={16} />}>Mon espace</Button>
+                  </Link>
+                  <Button kind="danger" size="lg" full icon={<LogOut size={16} />} onClick={handleSignOut}>
+                    Se déconnecter
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/login" onClick={() => setDrawerOpen(false)}>
+                    <Button kind="outline" size="lg" full>Connexion</Button>
+                  </Link>
+                  <Link href="/auth/register" onClick={() => setDrawerOpen(false)}>
+                    <Button kind="primary" size="lg" full>Créer mon compte</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </>

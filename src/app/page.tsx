@@ -1,10 +1,11 @@
 import Link from 'next/link'
-import { ArrowRight, MapPin, Search, Sparkles, Users, Briefcase } from 'lucide-react'
+import { ArrowRight, Sparkles, Users, Briefcase, MapPin } from 'lucide-react'
 import { NavLanding } from '@/components/layout/NavLanding'
 import { Footer } from '@/components/layout/Footer'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Tag } from '@/components/ui/Tag'
+import { SearchBarLanding } from '@/components/ui/SearchBarLanding'
 import { HeroIllustrationNew } from '@/components/illustrations/HeroIllustrationNew'
 import { Soleil, Palme, Hibiscus, Sparkle } from '@/components/illustrations/Tropical'
 import { KZ } from '@/lib/constants'
@@ -125,24 +126,8 @@ export default async function LandingPage() {
               avec les meilleures opportunites locales. Avec un peu d&apos;IA et beaucoup de soleil.
             </p>
 
-            {/* Barre de recherche */}
-            <div
-              className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center p-2 mb-4 rounded-xl border-[1.5px] border-[#1A1410]"
-              style={{ background: KZ.paper, boxShadow: '5px 5px 0 #1A1410' }}
-            >
-              <div className="flex-1 flex items-center gap-2 px-3 py-2 sm:py-1">
-                <Search size={18} className="text-[#6B5A4A] shrink-0" />
-                <span className="text-sm text-[#6B5A4A]">Metier, mot-cle...</span>
-              </div>
-              <div className="hidden sm:block w-px h-7 bg-[#E8DDC9]" />
-              <div className="hidden sm:flex flex-1 items-center gap-2 px-3 py-1">
-                <MapPin size={18} className="text-[#6B5A4A] shrink-0" />
-                <span className="text-sm text-[#2A2018]">Toute la Reunion</span>
-              </div>
-              <Link href="/candidate/jobs">
-                <Button kind="primary" size="md" className="w-full sm:w-auto">Rechercher</Button>
-              </Link>
-            </div>
+            {/* Barre de recherche — composant client pour permettre la saisie */}
+            <SearchBarLanding />
 
             <div className="flex gap-2 flex-wrap items-center">
               <span className="text-xs text-[#6B5A4A]">Populaire :</span>

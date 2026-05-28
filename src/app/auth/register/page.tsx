@@ -35,7 +35,8 @@ function RegisterForm() {
       setError('Une erreur est survenue. Verifie tes informations.')
       setLoading(false)
     } else {
-      router.push(role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard')
+      // Les candidats passent par l'onboarding, les recruteurs vont direct au dashboard
+      router.push(role === 'recruiter' ? '/recruiter/dashboard' : '/onboarding')
     }
   }
 

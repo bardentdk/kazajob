@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, MapPin, Clock, Heart, Briefcase, Sparkles, Building2, Check } from 'lucide-react'
+import { ArrowLeft, MapPin, Clock, Heart, Briefcase, Sparkles, Building2, Check, Brain } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Tag } from '@/components/ui/Tag'
@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Textarea } from '@/components/ui/Textarea'
 import { Progress } from '@/components/ui/Progress'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
+import { CoverLetterModal } from '@/components/ai/CoverLetterModal'
 import { useJob } from '@/features/jobs/useJobs'
 import { useApplications } from '@/features/applications/useApplications'
 import { useFavorites } from '@/features/favorites/useFavorites'
@@ -24,6 +25,8 @@ export default function JobDetailPage() {
   const { apply, hasApplied } = useApplications(profile?.id)
   const { isFavorite, toggle } = useFavorites(profile?.id)
   const [applyModal, setApplyModal] = useState(false)
+  const [coverLetterModal, setCoverLetterModal] = useState(false)
+  const [interviewModal, setInterviewModal] = useState(false)
   const [coverLetter, setCoverLetter] = useState('')
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
@@ -86,6 +89,37 @@ export default function JobDetailPage() {
                 <Progress value={job.match_score} color={KZ.violet} />
               </div>
             )}
+          </div>
+
+          {/* Outils KazaIA — visible partout */}
+          <div className="kz-card p-4 bg-white border-[#6D3BEB]" style={{ borderColor: KZ.violet }}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg border border-[#1A1410] flex items-center justify-center" style={{ background: KZ.violet }}>
+                <Sparkles size={13} color="white" />
+              </div>
+              <span className="text-sm font-bold text-[#1A1410]">KazaIA — Outils intelligents</span>
+              <Badge color="violet" size="sm">Beta</Badge>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button
+                kind="violet"
+                size="md"
+                full
+                icon={<Sparkles size={15} />}
+                onClick={() => setCoverLetterModal(true)}
+              >
+                Générer ma lettre de motivation
+              </Button>
+              <Button
+                kind="outline"
+                size="md"
+                full
+                icon={<Brain size={15} />}
+                onClick={() => setInterviewModal(true)}
+              >
+                Préparer mon entretien
+              </Button>
+            </div>
           </div>
 
           {/* CTA mobile — visible uniquement sur mobile */}
@@ -154,13 +188,110 @@ export default function JobDetailPage() {
             <p className="text-sm text-[#6B5A4A]">{job.company?.name} · {job.location}</p>
           </div>
           {error && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
-          <Textarea label="Lettre de motivation (optionnel)" value={coverLetter} onChange={(e) => setCoverLetter(e.target.value)} placeholder="Pourquoi ce poste t'interesse..." rows={5} />
+
+          <Textarea
+            label="Lettre de motivation (optionnel)"
+            value={coverLetter}
+            onChange={(e) => setCoverLetter(e.target.value)}
+            placeholder="Pourquoi ce poste t'interesse..."
+            rows={5}
+          />
+
+          {/* Raccourci KazaIA dans le modal */}
+          {!coverLetter && (
+            <button
+              type="button"
+              onClick={() => { setApplyModal(false); setCoverLetterModal(true) }}
+              className="flex items-center gap-2 text-sm font-semibold p-3 rounded-xl border border-[#1A1410] transition-all hover:shadow-[2px_2px_0_#1A1410]"
+              style={{ background: KZ.violetSoft }}
+            >
+              <Sparkles size={15} color={KZ.violet} />
+              <span style={{ color: KZ.violet }}>Générer avec KazaIA</span>
+              <span className="text-xs text-[#6B5A4A]">→ Lettre personnalisée en 5 secondes</span>
+            </button>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-2.5">
             <Button kind="outline" size="lg" full onClick={() => setApplyModal(false)}>Annuler</Button>
             <Button kind="primary" size="lg" full loading={applying} onClick={handleApply}>Envoyer ma candidature</Button>
           </div>
         </div>
       </Modal>
+
+      {/* Modal KazaIA — Cover Letter */}
+      <CoverLetterModal
+        open={coverLetterModal}
+        onClose={() => setCoverLetterModal(false)}
+        jobId={id}
+        jobTitle={job.title}
+        companyName={job.company?.name ?? 'l\'entreprise'}
+        onUseLetter={(letter) => {
+          setCoverLetter(letter)
+          setApplyModal(true)
+        }}
+      />
+
+      {/* Modal KazaIA — Préparation entretien */}
+      <InterviewPrepModal
+        open={interviewModal}
+        onClose={() => setInterviewModal(false)}
+        jobId={id}
+        jobTitle={job.title}
+      />
     </div>
+  )
+}
+
+// ── Modal préparation entretien ────────────────────────────────
+import { useInterviewPrepAI } from '@/features/ai/useKazaIA'
+import { Modal as ModalBase } from '@/components/ui/Modal'
+
+function InterviewPrepModal({ open, onClose, jobId, jobTitle }: {
+  open: boolean; onClose: () => void; jobId: string; jobTitle: string
+}) {
+  const { generating, questions, error, generate } = useInterviewPrepAI()
+
+  const handleOpen = () => {
+    if (!questions && !generating) generate(jobId)
+  }
+
+  // Générer dès l'ouverture
+  if (open && !questions && !generating && !error) {
+    generate(jobId)
+  }
+
+  return (
+    <ModalBase open={open} onClose={onClose} title={`Préparer l'entretien — ${jobTitle}`} size="lg">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2.5 p-3 rounded-xl border border-[#1A1410]" style={{ background: KZ.violetSoft }}>
+          <Brain size={18} color={KZ.violet} />
+          <p className="text-sm font-semibold text-[#1A1410]">
+            KazaIA génère des questions d&apos;entretien personnalisées pour ce poste.
+          </p>
+        </div>
+
+        {generating && (
+          <div className="flex flex-col items-center gap-3 py-8">
+            <div className="w-10 h-10 border-2 border-[#1A1410] border-t-[#6D3BEB] rounded-full animate-spin" />
+            <p className="text-sm text-[#6B5A4A]">Analyse du poste en cours...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>
+        )}
+
+        {questions && !generating && (
+          <div
+            className="p-4 rounded-xl border border-[#1A1410] text-sm text-[#2A2018] leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto"
+            style={{ background: KZ.paper }}
+          >
+            {questions}
+          </div>
+        )}
+
+        <Button kind="outline" size="md" onClick={onClose}>Fermer</Button>
+      </div>
+    </ModalBase>
   )
 }

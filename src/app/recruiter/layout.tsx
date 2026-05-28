@@ -48,7 +48,6 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: KZ.cream }}>
       <TopBar
-        user={{ name: profile.full_name, avatarUrl: profile.avatar_url, color: KZ.violetSoft }}
         notifCount={2}
         searchPlaceholder="Rechercher un candidat..."
         onMenuClick={() => setSidebarOpen(true)}

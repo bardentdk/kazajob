@@ -37,7 +37,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: KZ.cream }}>
       <TopBar
-        user={{ name: profile.full_name, avatarUrl: profile.avatar_url, color: KZ.yellowSoft }}
         onMenuClick={() => setSidebarOpen(true)}
       />
       <div className="flex flex-1 overflow-hidden">

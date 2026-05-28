@@ -12,6 +12,12 @@ export interface Profile {
   cv_url: string | null
   xp: number
   streak: number
+  onboarding_completed: boolean
+  avatar_category: string | null
+  avatar_categories: string[] | null
+  cv_template: string | null
+  cv_color: string | null
+  cv_data: Record<string, unknown> | null
   created_at: string
   updated_at: string
 }

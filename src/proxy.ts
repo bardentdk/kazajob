@@ -24,6 +24,11 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
+  // Onboarding — protégé mais hors flux classique
+  if (path.startsWith('/onboarding') && !user) {
+    return NextResponse.redirect(new URL('/auth/register', request.url))
+  }
+
   // ── Routes auth : rediriger si déjà connecté ─────────────
   if (user && (path === '/auth/login' || path === '/auth/register')) {
     // Tenter de lire le rôle — si 403 ou absent, laisser passer (le client gère)
