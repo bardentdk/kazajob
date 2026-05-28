@@ -1,16 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Upload, MapPin, Phone, Mail, Edit3, Check, Plus, X } from 'lucide-react'
+import { MapPin, Phone, Mail, Edit3, Check, Plus, X, Download, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
-import { Tag } from '@/components/ui/Tag'
 import { Progress } from '@/components/ui/Progress'
+import { FileUpload } from '@/components/ui/FileUpload'
 import { useAuth } from '@/features/auth/useAuth'
 import { useApplications } from '@/features/applications/useApplications'
+import { useAvatarUpload, useCvUpload } from '@/features/profile/useUpload'
 import { createClient } from '@/lib/supabase/client'
 import { KZ } from '@/lib/constants'
 
@@ -19,6 +20,9 @@ interface SkillRow { id: string; name: string; category: string | null }
 export default function CandidateProfilePage() {
   const { profile, refetch } = useAuth()
   const { applications } = useApplications(profile?.id)
+  const { upload: uploadAvatar, uploading: uploadingAvatar } = useAvatarUpload(profile?.id)
+  const { upload: uploadCv, uploading: uploadingCv, progress: cvProgress, getSignedUrl } = useCvUpload(profile?.id)
+
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [fullName, setFullName] = useState('')
@@ -29,9 +33,10 @@ export default function CandidateProfilePage() {
   const [allSkills, setAllSkills] = useState<SkillRow[]>([])
   const [skillSearch, setSkillSearch] = useState('')
   const [showSkillSearch, setShowSkillSearch] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [cvFileName, setCvFileName] = useState<string | null>(null)
   const supabase = createClient()
 
-  // Initialiser les champs dès que le profil est disponible
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name ?? '')
@@ -41,7 +46,6 @@ export default function CandidateProfilePage() {
     }
   }, [profile])
 
-  // Charger les compétences réelles du candidat
   useEffect(() => {
     if (!profile?.id) return
     const fetchSkills = async () => {
@@ -49,36 +53,49 @@ export default function CandidateProfilePage() {
         .from('candidate_skills')
         .select('skill:skills(id, name, category)')
         .eq('candidate_id', profile.id)
-      if (data) {
-        setSkills(data.map((r: { skill: unknown }) => r.skill as SkillRow).filter(Boolean))
-      }
+      if (data) setSkills(data.map((r: { skill: unknown }) => r.skill as SkillRow).filter(Boolean))
     }
     fetchSkills()
   }, [profile?.id, supabase])
 
-  // Charger toutes les compétences disponibles pour l'autocomplete
   useEffect(() => {
     if (!showSkillSearch) return
-    const fetchAll = async () => {
-      const { data } = await supabase.from('skills').select('id, name, category').order('name')
+    supabase.from('skills').select('id, name, category').order('name').then(({ data }) => {
       if (data) setAllSkills(data as SkillRow[])
-    }
-    fetchAll()
+    })
   }, [showSkillSearch, supabase])
 
   const handleSave = async () => {
     if (!profile) return
     setSaving(true)
     await supabase.from('profiles').update({
-      full_name: fullName,
-      bio,
-      location,
-      phone,
+      full_name: fullName, bio, location, phone,
       updated_at: new Date().toISOString(),
     }).eq('id', profile.id)
     await refetch?.()
     setSaving(false)
     setEditing(false)
+  }
+
+  const handleAvatarFile = async (file: File) => {
+    setUploadError(null)
+    const { error } = await uploadAvatar(file)
+    if (error) { setUploadError(error); return }
+    await refetch?.()
+  }
+
+  const handleCvFile = async (file: File) => {
+    setUploadError(null)
+    setCvFileName(file.name)
+    const { error } = await uploadCv(file)
+    if (error) { setUploadError(error); setCvFileName(null) }
+    else await refetch?.()
+  }
+
+  const handleDownloadCv = async () => {
+    if (!profile?.cv_url) return
+    const url = await getSignedUrl(profile.cv_url)
+    if (url) window.open(url, '_blank')
   }
 
   const addSkill = async (skill: SkillRow) => {
@@ -94,75 +111,124 @@ export default function CandidateProfilePage() {
     setSkills(prev => prev.filter(s => s.id !== skillId))
   }
 
-  // Score de complétion du profil
   const fields = [profile?.full_name, profile?.bio, profile?.location, profile?.phone, profile?.cv_url, profile?.avatar_url]
   const profileScore = Math.round((fields.filter(Boolean).length / fields.length) * 100)
 
   const filteredSkills = allSkills.filter(s =>
-    s.name.toLowerCase().includes(skillSearch.toLowerCase()) &&
-    !skills.find(cs => cs.id === s.id)
+    s.name.toLowerCase().includes(skillSearch.toLowerCase()) && !skills.find(cs => cs.id === s.id)
   )
+
+  const hasCv = !!profile?.cv_url
 
   return (
     <div className="max-w-[900px] mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="kz-h2 text-[#1A1410]">Mon profil</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+        <h1 className="text-2xl lg:text-[32px] font-extrabold tracking-tight text-[#1A1410]">Mon profil</h1>
         {!editing ? (
-          <Button kind="outline" size="md" icon={<Edit3 size={16} />} onClick={() => setEditing(true)}>
-            Modifier
-          </Button>
+          <Button kind="outline" size="md" icon={<Edit3 size={15} />} onClick={() => setEditing(true)}>Modifier</Button>
         ) : (
           <div className="flex gap-2">
             <Button kind="soft" size="md" onClick={() => setEditing(false)}>Annuler</Button>
-            <Button kind="primary" size="md" icon={<Check size={16} />} loading={saving} onClick={handleSave}>
-              Sauvegarder
-            </Button>
+            <Button kind="primary" size="md" icon={<Check size={15} />} loading={saving} onClick={handleSave}>Sauvegarder</Button>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-[280px_1fr] gap-5">
+      {uploadError && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+          <X size={15} />{uploadError}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5">
         {/* Colonne gauche */}
         <div className="flex flex-col gap-4">
-          {/* Avatar + score */}
+          {/* Avatar avec upload */}
           <div className="kz-card p-5 bg-white text-center">
-            <div className="flex justify-center mb-4">
-              <Avatar name={profile?.full_name ?? 'KZ'} src={profile?.avatar_url} size={80} color={KZ.orangeSoft} badge />
+            <div className="flex justify-center mb-4 relative">
+              <div className="relative">
+                <Avatar name={profile?.full_name ?? 'KZ'} src={profile?.avatar_url} size={80} color={KZ.orangeSoft} badge />
+                {/* Zone de click pour changer l'avatar */}
+                <FileUpload
+                  accept="image/jpeg,image/png,image/webp"
+                  maxSizeMb={5}
+                  onFile={handleAvatarFile}
+                  variant="avatar"
+                  uploading={uploadingAvatar}
+                  className="absolute inset-0 rounded-full"
+                />
+              </div>
             </div>
+            {uploadingAvatar && (
+              <p className="text-xs text-[#6B5A4A] mb-2">Upload de la photo...</p>
+            )}
             <div className="text-base font-bold text-[#1A1410]">{profile?.full_name}</div>
             <div className="text-xs text-[#6B5A4A] mt-0.5 mb-4">{profile?.location ?? 'La Reunion'}</div>
             <Progress value={profileScore} color={KZ.orange} label="Profil complete" />
-            <Button kind="soft" size="sm" full className="mt-3" icon={<Upload size={14} />}>
-              Changer la photo
-            </Button>
+            <p className="text-[11px] text-[#6B5A4A] mt-2">Clique sur ta photo pour la changer</p>
           </div>
 
-          {/* CV */}
+          {/* Upload CV */}
           <div className="kz-card p-5 bg-white">
             <h3 className="text-sm font-bold text-[#1A1410] mb-3">Mon CV</h3>
-            {profile?.cv_url ? (
-              <div className="flex items-center gap-2.5 p-3 rounded-lg border border-[#E8DDC9]" style={{ background: KZ.greenSoft }}>
-                <Check size={16} color={KZ.green} />
-                <span className="text-sm font-semibold text-[#1A1410]">CV uploade</span>
+
+            {hasCv ? (
+              <div className="flex flex-col gap-2.5">
+                <div className="flex items-center gap-2.5 p-3 rounded-lg border border-[#19A974] bg-[#D6F0E0]">
+                  <Check size={16} color={KZ.green} />
+                  <span className="text-sm font-semibold text-[#1A1410] flex-1 min-w-0 truncate">
+                    {cvFileName ?? 'CV uploade'}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button kind="soft" size="sm" full icon={<Download size={13} />} onClick={handleDownloadCv}>
+                    Telecharger
+                  </Button>
+                  <Button kind="outline" size="sm" icon={<ExternalLink size={13} />} onClick={() => {
+                    // Reset pour permettre un nouvel upload
+                    setCvFileName(null)
+                  }}>
+                    Changer
+                  </Button>
+                </div>
               </div>
             ) : (
-              <div className="p-3 rounded-lg border border-dashed border-[#1A1410] text-center">
-                <Upload size={24} className="mx-auto mb-2 text-[#6B5A4A]" />
-                <p className="text-xs text-[#6B5A4A] mb-2">PDF, DOC · max 5 Mo</p>
-                <Button kind="primary" size="sm">Uploader mon CV</Button>
+              <FileUpload
+                accept=".pdf,.doc,.docx"
+                maxSizeMb={10}
+                hint="PDF ou Word · max 10 Mo"
+                onFile={handleCvFile}
+                uploading={uploadingCv}
+                progress={cvProgress}
+                currentFileName={cvFileName ?? undefined}
+              />
+            )}
+
+            {/* Permettre un nouvel upload si on veut changer */}
+            {hasCv && !cvFileName && (
+              <div className="mt-3">
+                <FileUpload
+                  accept=".pdf,.doc,.docx"
+                  maxSizeMb={10}
+                  hint="Remplacer par un nouveau CV"
+                  onFile={handleCvFile}
+                  uploading={uploadingCv}
+                  progress={cvProgress}
+                />
               </div>
             )}
           </div>
 
           {/* Badges */}
           <div className="kz-card p-5 bg-white">
-            <h3 className="text-sm font-bold text-[#1A1410] mb-3">Badges</h3>
+            <h3 className="text-sm font-bold text-[#1A1410] mb-3">Badges obtenus</h3>
             <div className="flex flex-wrap gap-2">
-              {(profile?.streak ?? 0) > 0 && <Badge color="orange" size="md">Streak {profile!.streak}j</Badge>}
-              {(profile?.xp ?? 0) >= 1000 && <Badge color="violet" size="md">Niveau {Math.floor((profile!.xp) / 1000) + 1}</Badge>}
-              {profileScore >= 80 && <Badge color="green" size="md">Profil complet</Badge>}
-              {applications.length >= 5 && <Badge color="yellow" size="md">{applications.length} candidatures</Badge>}
-              {(profile?.streak ?? 0) === 0 && (profile?.xp ?? 0) === 0 && profileScore < 80 && applications.length < 5 && (
+              {(profile?.streak ?? 0) > 0  && <Badge color="orange" size="md">Streak {profile!.streak}j</Badge>}
+              {(profile?.xp ?? 0) >= 1000   && <Badge color="violet" size="md">Niveau {Math.floor((profile!.xp) / 1000) + 1}</Badge>}
+              {profileScore >= 80            && <Badge color="green"  size="md">Profil complet</Badge>}
+              {hasCv                         && <Badge color="blue"   size="md">CV uploade</Badge>}
+              {applications.length >= 5      && <Badge color="yellow" size="md">{applications.length} candidatures</Badge>}
+              {(profile?.streak ?? 0) === 0 && (profile?.xp ?? 0) === 0 && !hasCv && (
                 <p className="text-xs text-[#6B5A4A]">Complete ton profil pour obtenir des badges.</p>
               )}
             </div>
@@ -172,15 +238,15 @@ export default function CandidateProfilePage() {
         {/* Colonne droite */}
         <div className="flex flex-col gap-4">
           {/* Infos personnelles */}
-          <div className="kz-card p-6 bg-white">
-            <h2 className="kz-h3 text-[#1A1410] mb-5">Informations personnelles</h2>
+          <div className="kz-card p-5 bg-white">
+            <h2 className="text-lg font-bold text-[#1A1410] mb-4">Informations personnelles</h2>
             {editing ? (
               <div className="flex flex-col gap-4">
                 <Input label="Nom complet" value={fullName} onChange={(e) => setFullName(e.target.value)} />
                 <Textarea label="Bio / Presentation" value={bio} onChange={(e) => setBio(e.target.value)} rows={4} placeholder="Parle de toi en quelques lignes..." />
-                <div className="grid grid-cols-2 gap-4">
-                  <Input label="Localisation" value={location} onChange={(e) => setLocation(e.target.value)} icon={<MapPin size={16} />} placeholder="Saint-Denis" />
-                  <Input label="Telephone" value={phone} onChange={(e) => setPhone(e.target.value)} icon={<Phone size={16} />} placeholder="+262 692 ..." />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input label="Localisation" value={location} onChange={(e) => setLocation(e.target.value)} icon={<MapPin size={15} />} placeholder="Saint-Denis" />
+                  <Input label="Telephone" value={phone} onChange={(e) => setPhone(e.target.value)} icon={<Phone size={15} />} placeholder="+262 692 ..." />
                 </div>
               </div>
             ) : (
@@ -191,9 +257,7 @@ export default function CandidateProfilePage() {
                 </div>
                 <div>
                   <div className="text-xs text-[#6B5A4A] mb-0.5">Email</div>
-                  <div className="flex items-center gap-2 text-sm text-[#1A1410]">
-                    <Mail size={14} />{profile?.email}
-                  </div>
+                  <div className="flex items-center gap-2 text-sm text-[#1A1410]"><Mail size={13} />{profile?.email}</div>
                 </div>
                 <div>
                   <div className="text-xs text-[#6B5A4A] mb-0.5">Bio</div>
@@ -202,47 +266,39 @@ export default function CandidateProfilePage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="text-xs text-[#6B5A4A] mb-0.5">Localisation</div>
-                    <div className="flex items-center gap-1.5 text-sm text-[#1A1410]">
-                      <MapPin size={14} />{profile?.location || '—'}
-                    </div>
+                    <div className="flex items-center gap-1 text-sm text-[#1A1410]"><MapPin size={13} />{profile?.location || '—'}</div>
                   </div>
                   <div>
                     <div className="text-xs text-[#6B5A4A] mb-0.5">Telephone</div>
-                    <div className="flex items-center gap-1.5 text-sm text-[#1A1410]">
-                      <Phone size={14} />{profile?.phone || '—'}
-                    </div>
+                    <div className="flex items-center gap-1 text-sm text-[#1A1410]"><Phone size={13} />{profile?.phone || '—'}</div>
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Compétences — données réelles */}
-          <div className="kz-card p-6 bg-white">
+          {/* Compétences */}
+          <div className="kz-card p-5 bg-white">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="kz-h3 text-[#1A1410]">Competences</h2>
-              <Button kind="soft" size="sm" icon={<Plus size={14} />} onClick={() => setShowSkillSearch(v => !v)}>
+              <h2 className="text-lg font-bold text-[#1A1410]">Competences</h2>
+              <Button kind="soft" size="sm" icon={<Plus size={13} />} onClick={() => setShowSkillSearch(v => !v)}>
                 Ajouter
               </Button>
             </div>
 
-            {/* Recherche de compétences */}
             {showSkillSearch && (
               <div className="mb-4 relative">
                 <Input
                   value={skillSearch}
                   onChange={(e) => setSkillSearch(e.target.value)}
-                  placeholder="Rechercher une competence..."
+                  placeholder="Rechercher React, Python, Figma..."
                   autoFocus
                 />
                 {skillSearch.length > 0 && filteredSkills.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-20 bg-white border border-[#1A1410] rounded-lg shadow-[3px_3px_0_#1A1410] mt-1 max-h-48 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 z-20 bg-white border border-[#1A1410] rounded-lg shadow-[3px_3px_0_#1A1410] mt-1 max-h-44 overflow-y-auto">
                     {filteredSkills.slice(0, 8).map(s => (
-                      <button
-                        key={s.id}
-                        onClick={() => { addSkill(s); setShowSkillSearch(false) }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-[#FBEFE0] transition-colors text-sm"
-                      >
+                      <button key={s.id} onClick={() => { addSkill(s); setShowSkillSearch(false) }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-[#FBEFE0] text-sm">
                         <span className="font-semibold text-[#1A1410]">{s.name}</span>
                         {s.category && <span className="text-xs text-[#6B5A4A]">{s.category}</span>}
                       </button>
@@ -257,30 +313,24 @@ export default function CandidateProfilePage() {
 
             {skills.length === 0 ? (
               <div className="text-sm text-[#6B5A4A] py-4 text-center border border-dashed border-[#E8DDC9] rounded-lg">
-                Aucune competence ajoutee. Clique sur &quot;Ajouter&quot; pour commencer.
+                Aucune competence — clique sur &quot;Ajouter&quot; pour commencer.
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {skills.map((s) => (
-                  <span
-                    key={s.id}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold border border-[#1A1410] rounded-md"
-                    style={{ background: KZ.violetSoft }}
-                  >
+                  <span key={s.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold border border-[#1A1410] rounded-md" style={{ background: KZ.violetSoft }}>
                     {s.name}
-                    <button onClick={() => removeSkill(s.id)} className="text-[#6B5A4A] hover:text-red-600 transition-colors">
-                      <X size={10} />
-                    </button>
+                    <button onClick={() => removeSkill(s.id)} className="text-[#6B5A4A] hover:text-red-600"><X size={10} /></button>
                   </span>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Statistiques réelles */}
-          <div className="kz-card p-6 bg-white">
-            <h2 className="kz-h3 text-[#1A1410] mb-4">Statistiques</h2>
-            <div className="grid grid-cols-3 gap-4">
+          {/* Statistiques */}
+          <div className="kz-card p-5 bg-white">
+            <h2 className="text-lg font-bold text-[#1A1410] mb-4">Statistiques</h2>
+            <div className="grid grid-cols-3 gap-3">
               {[
                 { v: (profile?.xp ?? 0).toLocaleString('fr-FR'), l: 'XP total' },
                 { v: profile?.streak ?? 0, l: 'Jours streak' },
