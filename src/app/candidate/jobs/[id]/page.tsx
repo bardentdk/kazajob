@@ -6,6 +6,7 @@ import { ArrowLeft, MapPin, Clock, Heart, Briefcase, Sparkles, Building2, Check,
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Tag } from '@/components/ui/Tag'
+import { InlineLoader } from '@/components/ui/LogoLoader'
 import { Modal } from '@/components/ui/Modal'
 import { Textarea } from '@/components/ui/Textarea'
 import { Progress } from '@/components/ui/Progress'
@@ -272,7 +273,7 @@ function InterviewPrepModal({ open, onClose, jobId, jobTitle }: {
 
         {generating && (
           <div className="flex flex-col items-center gap-3 py-8">
-            <div className="w-10 h-10 border-2 border-[#1A1410] border-t-[#6D3BEB] rounded-full animate-spin" />
+            <InlineLoader size={48} />
             <p className="text-sm text-[#6B5A4A]">Analyse du poste en cours...</p>
           </div>
         )}

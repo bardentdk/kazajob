@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LayoutDashboard, Search, Heart, Briefcase, MessageCircle, User, Sparkles, Calendar } from 'lucide-react'
+import { LayoutDashboard, Search, Heart, Briefcase, MessageCircle, User, Sparkles, Calendar, Settings } from 'lucide-react'
 import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { useAuth } from '@/features/auth/useAuth'
+import { FullPageLoader } from '@/components/ui/LogoLoader'
 import { KZ } from '@/lib/constants'
 
 const NAV_ITEMS: NavItem[] = [
@@ -17,6 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/candidate/agenda',       label: 'Entretiens',      icon: <Calendar size={16} /> },
   { href: '/candidate/ia',           label: 'KazaIA',          icon: <Sparkles size={16} /> },
   { href: '/candidate/profile',      label: 'Mon profil',      icon: <User size={16} /> },
+  { href: '/candidate/settings',     label: 'Paramètres',      icon: <Settings size={16} /> },
 ]
 
 export default function CandidateLayout({ children }: { children: React.ReactNode }) {
@@ -31,29 +33,13 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
     if (profile.role === 'admin')     router.push('/admin/dashboard')
   }, [profile, authChecked, router])
 
-  if (!authChecked || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: KZ.cream }}>
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-[#1A1410] border-t-[#FF6B35] rounded-full animate-spin" />
-          <p className="text-sm font-semibold text-[#6B5A4A]">Chargement...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: KZ.cream }}>
-        <div className="w-10 h-10 border-2 border-[#1A1410] border-t-[#FF6B35] rounded-full animate-spin" />
-      </div>
-    )
+  if (!authChecked || loading || !profile) {
+    return <FullPageLoader />
   }
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: KZ.cream }}>
       <TopBar
-        notifCount={3}
         searchPlaceholder="Metier, entreprise, ville..."
         onMenuClick={() => setSidebarOpen(true)}
       />

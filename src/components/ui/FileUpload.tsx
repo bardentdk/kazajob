@@ -4,6 +4,7 @@ import { useRef, useState, type DragEvent, type ChangeEvent } from 'react'
 import { Upload, Check, AlertCircle, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { KZ } from '@/lib/constants'
+import { InlineLoader } from './LogoLoader'
 
 interface FileUploadProps {
   accept?: string
@@ -66,7 +67,7 @@ export function FileUpload({
         <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={handleChange} />
         <div className="absolute inset-0 rounded-full bg-[#1A1410]/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           {uploading ? (
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <InlineLoader size={24} />
           ) : (
             <Upload size={20} className="text-white" />
           )}
@@ -96,7 +97,7 @@ export function FileUpload({
 
         {uploading ? (
           <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-2 border-[#1A1410] border-t-[#FF6B35] rounded-full animate-spin" />
+            <InlineLoader size={40} />
             <div className="text-sm font-semibold text-[#1A1410]">Upload en cours...</div>
             {progress !== undefined && (
               <div className="w-full max-w-[200px] h-2 bg-[#E8DDC9] rounded-full overflow-hidden border border-[#1A1410]">

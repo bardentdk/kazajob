@@ -6,6 +6,7 @@ import { LayoutDashboard, Users, Briefcase, Building2, Shield } from 'lucide-rea
 import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { useAuth } from '@/features/auth/useAuth'
+import { FullPageLoader } from '@/components/ui/LogoLoader'
 import { KZ } from '@/lib/constants'
 
 const NAV_ITEMS: NavItem[] = [
@@ -27,11 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [profile, loading, router])
 
   if (loading || !profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: KZ.cream }}>
-        <div className="w-10 h-10 border-2 border-[#1A1410] border-t-[#FF6B35] rounded-full animate-spin" />
-      </div>
-    )
+    return <FullPageLoader />
   }
 
   return (

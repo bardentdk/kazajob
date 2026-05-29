@@ -18,6 +18,8 @@ export interface Profile {
   cv_template: string | null
   cv_color: string | null
   cv_data: Record<string, unknown> | null
+  email_alerts_enabled: boolean
+  email_alert_frequency: string | null
   created_at: string
   updated_at: string
 }

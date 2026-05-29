@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Download, Check, Plus, Trash2, ArrowRight, Palette,
-  LayoutTemplate, Eye, EyeOff, GripVertical, ChevronDown, ChevronUp
+  LayoutTemplate, ChevronDown, ChevronUp, Loader2, Eye
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -305,6 +305,7 @@ export default function CvBuilderPage() {
   const router = useRouter()
   const supabase = createClient()
   const printRef = useRef<HTMLDivElement>(null)
+  const [downloading, setDownloading] = useState(false)
 
   const [template, setTemplate] = useState('modern')
   const [color, setColor] = useState<string>(KZ.violet)
@@ -392,28 +393,48 @@ export default function CvBuilderPage() {
     router.push('/candidate/dashboard')
   }
 
-  const handlePrint = () => {
-    const printContent = printRef.current
-    if (!printContent) return
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>CV — ${cvData.fullName}</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: system-ui, sans-serif; }
-            @page { size: A4; margin: 0; }
-          </style>
-        </head>
-        <body>${printContent.innerHTML}</body>
-      </html>
-    `)
-    win.document.close()
-    win.focus()
-    setTimeout(() => { win.print(); win.close() }, 500)
+  const handleDownload = async () => {
+    const element = printRef.current
+    if (!element) return
+    setDownloading(true)
+
+    try {
+      // Import dynamique pour éviter le SSR
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ])
+
+      // A4 : 595 × 842 px à 96dpi → scale 2 pour la qualité
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width:  element.offsetWidth,
+        height: element.offsetHeight,
+      })
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95)
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true,
+      })
+
+      const pdfW = pdf.internal.pageSize.getWidth()
+      const pdfH = pdf.internal.pageSize.getHeight()
+
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH)
+
+      const fileName = `CV-${(cvData.fullName || 'Kazajob').replace(/\s+/g, '-')}.pdf`
+      pdf.save(fileName)
+    } finally {
+      setDownloading(false)
+    }
   }
 
   const CvComponent = template === 'creative' ? CvCreative : template === 'minimal' ? CvMinimal : CvModern
@@ -437,8 +458,8 @@ export default function CvBuilderPage() {
           <Badge color="violet" size="sm">Beta</Badge>
         </div>
         <div className="flex items-center gap-2">
-          <Button kind="outline" size="sm" icon={<Download size={14} />} onClick={handlePrint}>
-            <span className="hidden sm:inline">Télécharger PDF</span>
+          <Button kind="outline" size="sm" icon={downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} onClick={handleDownload} disabled={downloading}>
+            <span className="hidden sm:inline">{downloading ? 'Génération...' : 'Télécharger PDF'}</span>
           </Button>
           <Button kind="primary" size="sm" icon={<Check size={14} />} loading={saving} onClick={handleSave}>
             <span className="hidden sm:inline">Sauvegarder</span>
@@ -610,8 +631,8 @@ export default function CvBuilderPage() {
 
             {/* Actions bas de page */}
             <div className="flex gap-3 mt-5 justify-center">
-              <Button kind="outline" size="md" icon={<Download size={15} />} onClick={handlePrint}>
-                Télécharger PDF
+              <Button kind="outline" size="md" icon={downloading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} onClick={handleDownload} loading={downloading}>
+                {downloading ? 'Génération en cours...' : 'Télécharger PDF'}
               </Button>
               <Button kind="primary" size="md" loading={saving} icon={<ArrowRight size={15} />} onClick={handleSave}>
                 Terminer et aller au dashboard
