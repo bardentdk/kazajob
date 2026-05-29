@@ -7,6 +7,7 @@ import { StatCard } from '@/components/ui/StatCard'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/feedback/EmptyState'
+import { KazaScoreCard } from '@/components/ui/KazaScoreBadge'
 import { useAuth } from '@/features/auth/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import { APPLICATION_STATUSES, KZ } from '@/lib/constants'
@@ -168,6 +169,9 @@ export default function RecruiterDashboard() {
               </div>
             )}
           </div>
+
+          {/* KazaScore */}
+          {profile?.id && <KazaScoreCard recruiterId={profile.id} />}
 
           <div className="p-4 rounded-xl border border-[#1A1410]" style={{ background: KZ.violetSoft, boxShadow: '3px 3px 0 #1A1410' }}>
             <p className="kz-eyebrow mb-2" style={{ color: KZ.violet }}>Conseil</p>

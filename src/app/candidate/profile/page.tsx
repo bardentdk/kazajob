@@ -10,6 +10,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Progress } from '@/components/ui/Progress'
 import { FileUpload } from '@/components/ui/FileUpload'
+import { VideoPitchRecorder } from '@/components/ui/VideoPitchRecorder'
 import { useAuth } from '@/features/auth/useAuth'
 import { useApplications } from '@/features/applications/useApplications'
 import { useAvatarUpload, useCvUpload } from '@/features/profile/useUpload'
@@ -97,6 +98,31 @@ export default function CandidateProfilePage() {
     if (!profile?.cv_url) return
     const url = await getSignedUrl(profile.cv_url)
     if (url) window.open(url, '_blank')
+  }
+
+  // ── Video Pitch ───────────────────────────────────────────────
+  const handleVideoPitchUpload = async (blob: Blob, mimeType: string) => {
+    if (!profile?.id) return { url: null, error: 'Non authentifié' }
+    const path = `${profile.id}/pitch.webm`
+    const { error: storageError } = await supabase.storage
+      .from('video-pitches')
+      .upload(path, blob, { upsert: true, contentType: mimeType })
+    if (storageError) return { url: null, error: storageError.message }
+    const signedResult = await supabase.storage
+      .from('video-pitches').createSignedUrl(path, 60 * 60 * 24 * 365)
+    const signedUrl = signedResult.data?.signedUrl ?? null
+    await supabase.from('profiles')
+      .update({ video_pitch_url: `video-pitches/${path}`, updated_at: new Date().toISOString() })
+      .eq('id', profile.id)
+    await refetch?.()
+    return { url: signedUrl, error: null }
+  }
+
+  const handleVideoPitchDelete = async () => {
+    if (!profile?.id) return
+    await supabase.storage.from('video-pitches').remove([`${profile.id}/pitch.webm`])
+    await supabase.from('profiles').update({ video_pitch_url: null }).eq('id', profile.id)
+    await refetch?.()
   }
 
   const addSkill = async (skill: SkillRow) => {
@@ -252,11 +278,31 @@ export default function CandidateProfilePage() {
               {(profile?.xp ?? 0) >= 1000   && <Badge color="violet" size="md">Niveau {Math.floor((profile!.xp) / 1000) + 1}</Badge>}
               {profileScore >= 80            && <Badge color="green"  size="md">Profil complet</Badge>}
               {hasCv                         && <Badge color="blue"   size="md">CV uploade</Badge>}
+              {!!(profile as unknown as Record<string,unknown>).video_pitch_url && <Badge color="orange" size="md">Pitch video</Badge>}
               {applications.length >= 5      && <Badge color="yellow" size="md">{applications.length} candidatures</Badge>}
               {(profile?.streak ?? 0) === 0 && (profile?.xp ?? 0) === 0 && !hasCv && (
                 <p className="text-xs text-[#6B5A4A]">Complete ton profil pour obtenir des badges.</p>
               )}
             </div>
+          </div>
+
+          {/* Video Pitch */}
+          <div className="kz-card p-5 bg-white">
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-bold text-[#1A1410]">Pitch vidéo</h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#1A1410]"
+                style={{ background: KZ.orangeSoft, color: KZ.ink }}>
+                60s max
+              </span>
+            </div>
+            <p className="text-xs text-[#6B5A4A] mb-3 leading-relaxed">
+              Présente-toi en 60 secondes. Les recruteurs peuvent voir ton pitch directement sur ton profil — un vrai avantage pour te démarquer !
+            </p>
+            <VideoPitchRecorder
+              currentUrl={(profile as unknown as Record<string,unknown>).video_pitch_url as string | null}
+              onUpload={handleVideoPitchUpload}
+              onDelete={handleVideoPitchDelete}
+            />
           </div>
         </div>
 

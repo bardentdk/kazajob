@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Profile, Application } from '@/lib/types'
 import { APPLICATION_STATUSES, KZ } from '@/lib/constants'
 import { timeAgo } from '@/lib/utils'
+import { Play } from 'lucide-react'
 import type { BadgeColor } from '@/lib/types'
 
 export default function CandidateDetailPage() {
@@ -59,6 +60,25 @@ export default function CandidateDetailPage() {
                 <MapPin size={13} /> {candidate.location}
               </div>
             )}
+            {/* Pitch vidéo */}
+            {(() => {
+              const pitchUrl = (candidate as unknown as Record<string,unknown>).video_pitch_url as string | null
+              if (!pitchUrl) return null
+              return (
+                <div className="mt-4">
+                  <div className="text-xs font-bold text-[#6B5A4A] mb-2 flex items-center gap-1.5">
+                    <Play size={11} /> Pitch vidéo du candidat
+                  </div>
+                  <video
+                    src={pitchUrl}
+                    controls
+                    className="w-full rounded-xl border border-[#1A1410] bg-black"
+                    style={{ maxHeight: '200px' }}
+                  />
+                </div>
+              )
+            })()}
+
             <div className="mt-4 flex flex-col gap-2">
               {candidate.cv_url && (
                 <a href={candidate.cv_url} target="_blank" rel="noreferrer">
@@ -66,6 +86,13 @@ export default function CandidateDetailPage() {
                     Telecharger le CV
                   </Button>
                 </a>
+              )}
+              {/* CV Builder */}
+              {!!(candidate as unknown as Record<string,unknown>).cv_data && (
+                <Button kind="violet" size="sm" full icon={<Download size={14} />}
+                  onClick={() => window.open(`/candidate/profile`, '_blank')}>
+                  Voir le CV Builder
+                </Button>
               )}
               <Button kind="outline" size="sm" full icon={<MessageCircle size={14} />}>
                 Envoyer un message

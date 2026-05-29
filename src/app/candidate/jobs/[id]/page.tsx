@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Tag } from '@/components/ui/Tag'
 import { InlineLoader } from '@/components/ui/LogoLoader'
+import { KazaScoreMini } from '@/components/ui/KazaScoreBadge'
 import { Modal } from '@/components/ui/Modal'
 import { Textarea } from '@/components/ui/Textarea'
 import { Progress } from '@/components/ui/Progress'
@@ -172,6 +173,13 @@ export default function JobDetailPage() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 text-sm text-[#2A2018]"><Building2 size={14} className="text-[#6B5A4A]" />{job.company?.name}</div>
               {job.company?.location && <div className="flex items-center gap-2 text-sm text-[#2A2018]"><MapPin size={14} className="text-[#6B5A4A]" />{job.company.location}</div>}
+              {/* KazaScore recruteur */}
+              {job.recruiter_id && (
+                <div className="mt-2 pt-2 border-t border-[#E8DDC9] flex items-center gap-2">
+                  <span className="text-xs text-[#6B5A4A]">Réactivité :</span>
+                  <KazaScoreMini recruiterId={job.recruiter_id} />
+                </div>
+              )}
             </div>
           </div>
           <div className="kz-card p-4 bg-white grid grid-cols-2 gap-3">
