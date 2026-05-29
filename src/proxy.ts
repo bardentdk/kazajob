@@ -1,6 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 
+// Routes publiques sous /candidate accessibles sans connexion
+const PUBLIC_CANDIDATE_PATHS = ['/candidate/jobs']
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -24,67 +27,68 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
-  // Onboarding — protégé mais hors flux classique
+  // Onboarding — protégé
   if (path.startsWith('/onboarding') && !user) {
     return NextResponse.redirect(new URL('/auth/register', request.url))
   }
 
-  // ── Routes auth : rediriger si déjà connecté ─────────────
+  // Routes auth → rediriger si déjà connecté
   if (user && (path === '/auth/login' || path === '/auth/register')) {
-    // Tenter de lire le rôle — si 403 ou absent, laisser passer (le client gère)
     try {
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
+        .from('profiles').select('role').eq('id', user.id).single()
       const role = profile?.role ?? 'candidate'
-      const dashboardMap: Record<string, string> = {
+      const map: Record<string, string> = {
         candidate: '/candidate/dashboard',
         recruiter: '/recruiter/dashboard',
         admin:     '/admin/dashboard',
       }
-      return NextResponse.redirect(new URL(dashboardMap[role] ?? '/candidate/dashboard', request.url))
+      return NextResponse.redirect(new URL(map[role] ?? '/candidate/dashboard', request.url))
     } catch {
-      // Profil inaccessible (403) → laisser le client gérer
       return supabaseResponse
     }
   }
 
-  // ── Routes protégées : rediriger si non connecté ──────────
+  // Routes protégées
+  const isPublicCandidatePath = PUBLIC_CANDIDATE_PATHS.some(p =>
+    path === p || path.startsWith(p + '/')
+  )
+
   const protectedPrefixes = ['/candidate', '/recruiter', '/admin']
-  const isProtected = protectedPrefixes.some((p) => path.startsWith(p))
+  const isProtected = protectedPrefixes.some((p) => path.startsWith(p)) && !isPublicCandidatePath
 
   if (isProtected && !user) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
+    const next = encodeURIComponent(path)
+    return NextResponse.redirect(new URL(`/auth/login?next=${next}`, request.url))
   }
 
-  // ── Vérification du rôle (best-effort, sans bloquer si 403) ──
+  // Vérification du rôle — STRICT : en cas d'échec on redirige vers login
   if (user && isProtected) {
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
+      const { data: profile, error } = await supabase
+        .from('profiles').select('role').eq('id', user.id).single()
 
-      if (profile?.role) {
-        const role = profile.role as string
-
-        if (path.startsWith('/candidate') && role !== 'candidate' && role !== 'admin') {
-          return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url))
-        }
-        if (path.startsWith('/recruiter') && role !== 'recruiter' && role !== 'admin') {
-          return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url))
-        }
-        if (path.startsWith('/admin') && role !== 'admin') {
-          return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url))
-        }
+      if (error || !profile?.role) {
+        // Profil inaccessible → laisser le client créer le profil
+        return supabaseResponse
       }
-      // Si profil absent ou erreur → laisser passer, le client créera le profil
+
+      const role = profile.role as string
+
+      // Accès /candidate → réservé aux candidats et admins
+      if (path.startsWith('/candidate') && role !== 'candidate' && role !== 'admin') {
+        return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url))
+      }
+      // Accès /recruiter → réservé aux recruteurs et admins
+      if (path.startsWith('/recruiter') && role !== 'recruiter' && role !== 'admin') {
+        return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url))
+      }
+      // Accès /admin → réservé aux admins uniquement
+      if (path.startsWith('/admin') && role !== 'admin') {
+        return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url))
+      }
     } catch {
-      // 403 ou autre erreur → ne pas bloquer, laisser le client gérer
+      // En cas d'erreur réseau, laisser passer — le layout client gère
     }
   }
 

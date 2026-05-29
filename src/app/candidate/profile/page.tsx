@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { MapPin, Phone, Mail, Edit3, Check, Plus, X, Download, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -119,6 +120,7 @@ export default function CandidateProfilePage() {
   )
 
   const hasCv = !!profile?.cv_url
+  const hasCvBuilder = !!profile?.cv_data
 
   return (
     <div className="max-w-[900px] mx-auto">
@@ -168,41 +170,64 @@ export default function CandidateProfilePage() {
             <p className="text-[11px] text-[#6B5A4A] mt-2">Clique sur ta photo pour la changer</p>
           </div>
 
-          {/* Upload CV */}
+          {/* CV */}
           <div className="kz-card p-5 bg-white">
             <h3 className="text-sm font-bold text-[#1A1410] mb-3">Mon CV</h3>
 
+            {/* CV Builder (cv_data) */}
+            {hasCvBuilder && (
+              <div className="flex flex-col gap-2 mb-3">
+                <div className="flex items-center gap-2.5 p-3 rounded-lg border border-[#6D3BEB] bg-[#E5DCFF]">
+                  <Check size={16} color={KZ.violet} />
+                  <span className="text-sm font-semibold text-[#1A1410] flex-1">CV Builder — créé</span>
+                </div>
+                <div className="flex gap-2">
+                  <Link href="/onboarding/cv-builder" className="flex-1">
+                    <Button kind="violet" size="sm" full icon={<ExternalLink size={13} />}>
+                      Modifier / Télécharger
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* CV uploadé (cv_url) */}
             {hasCv ? (
               <div className="flex flex-col gap-2.5">
                 <div className="flex items-center gap-2.5 p-3 rounded-lg border border-[#19A974] bg-[#D6F0E0]">
                   <Check size={16} color={KZ.green} />
                   <span className="text-sm font-semibold text-[#1A1410] flex-1 min-w-0 truncate">
-                    {cvFileName ?? 'CV uploade'}
+                    {cvFileName ?? 'CV uploadé'}
                   </span>
                 </div>
                 <div className="flex gap-2">
                   <Button kind="soft" size="sm" full icon={<Download size={13} />} onClick={handleDownloadCv}>
-                    Telecharger
+                    Télécharger
                   </Button>
-                  <Button kind="outline" size="sm" icon={<ExternalLink size={13} />} onClick={() => {
-                    // Reset pour permettre un nouvel upload
-                    setCvFileName(null)
-                  }}>
+                  <Button kind="outline" size="sm" icon={<ExternalLink size={13} />} onClick={() => setCvFileName(null)}>
                     Changer
                   </Button>
                 </div>
               </div>
-            ) : (
-              <FileUpload
-                accept=".pdf,.doc,.docx"
-                maxSizeMb={10}
-                hint="PDF ou Word · max 10 Mo"
-                onFile={handleCvFile}
-                uploading={uploadingCv}
-                progress={cvProgress}
-                currentFileName={cvFileName ?? undefined}
-              />
-            )}
+            ) : !hasCvBuilder ? (
+              <div className="flex flex-col gap-2">
+                <Link href="/onboarding/cv-builder">
+                  <Button kind="primary" size="sm" full icon={<ExternalLink size={13} />}>
+                    Créer mon CV avec le Builder
+                  </Button>
+                </Link>
+                <div className="text-center text-xs text-[#6B5A4A] py-1">ou</div>
+                <FileUpload
+                  accept=".pdf,.doc,.docx"
+                  maxSizeMb={10}
+                  hint="PDF ou Word · max 10 Mo"
+                  onFile={handleCvFile}
+                  uploading={uploadingCv}
+                  progress={cvProgress}
+                  currentFileName={cvFileName ?? undefined}
+                />
+              </div>
+            ) : null}
 
             {/* Permettre un nouvel upload si on veut changer */}
             {hasCv && !cvFileName && (

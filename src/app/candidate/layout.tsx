@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LayoutDashboard, Search, Heart, Briefcase, MessageCircle, User, Sparkles } from 'lucide-react'
+import { LayoutDashboard, Search, Heart, Briefcase, MessageCircle, User, Sparkles, Calendar } from 'lucide-react'
 import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { useAuth } from '@/features/auth/useAuth'
@@ -14,6 +14,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/candidate/favorites',    label: 'Favoris',         icon: <Heart size={16} /> },
   { href: '/candidate/applications', label: 'Candidatures',    icon: <Briefcase size={16} /> },
   { href: '/candidate/messages',     label: 'Messages',        icon: <MessageCircle size={16} /> },
+  { href: '/candidate/agenda',       label: 'Entretiens',      icon: <Calendar size={16} /> },
   { href: '/candidate/ia',           label: 'KazaIA',          icon: <Sparkles size={16} /> },
   { href: '/candidate/profile',      label: 'Mon profil',      icon: <User size={16} /> },
 ]

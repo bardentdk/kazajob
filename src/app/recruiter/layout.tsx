@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LayoutDashboard, Briefcase, Users, MessageCircle, Plus } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, MessageCircle, Plus, Calendar } from 'lucide-react'
 import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { useAuth } from '@/features/auth/useAuth'
@@ -12,6 +12,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/recruiter/dashboard',    label: 'Tableau de bord', icon: <LayoutDashboard size={16} /> },
   { href: '/recruiter/jobs',         label: 'Mes offres',       icon: <Briefcase size={16} /> },
   { href: '/recruiter/applications', label: 'Candidatures',     icon: <Users size={16} /> },
+  { href: '/recruiter/agenda',       label: 'Agenda',           icon: <Calendar size={16} /> },
   { href: '/recruiter/messages',     label: 'Messages',         icon: <MessageCircle size={16} /> },
 ]
 

@@ -2,24 +2,34 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Users } from 'lucide-react'
+import { Users, Calendar, Video, Phone, MapPin } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
+import { Input } from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/Textarea'
+import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
 import { useAuth } from '@/features/auth/useAuth'
+import { useInterviews } from '@/features/interviews/useInterviews'
 import { createClient } from '@/lib/supabase/client'
-import type { Application } from '@/lib/types'
+import type { Application, BadgeColor } from '@/lib/types'
 import { APPLICATION_STATUSES, KZ } from '@/lib/constants'
 import { timeAgo } from '@/lib/utils'
-import type { BadgeColor } from '@/lib/types'
 
 export default function RecruiterApplicationsPage() {
   const { profile } = useAuth()
   const [applications, setApplications] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState('')
+  const [scheduleFor, setScheduleFor] = useState<Application | null>(null)
+  const [scheduleData, setScheduleData] = useState({
+    scheduledAt: '', durationMin: '45', type: 'video' as 'video'|'phone'|'onsite',
+    visioType: 'jitsi' as 'jitsi'|'external', externalLink: '', location: '', notes: '',
+  })
+  const [scheduling, setScheduling] = useState(false)
+  const { create: createInterview } = useInterviews()
   const supabase = createClient()
 
   useEffect(() => {
@@ -43,6 +53,27 @@ export default function RecruiterApplicationsPage() {
     }
     fetchApps()
   }, [profile, filterStatus, supabase])
+
+  const handleSchedule = async () => {
+    if (!scheduleFor || !scheduleData.scheduledAt) return
+    setScheduling(true)
+    await createInterview({
+      applicationId: scheduleFor.id,
+      candidateId:   scheduleFor.candidate_id,
+      jobId:         scheduleFor.job_id,
+      scheduledAt:   new Date(scheduleData.scheduledAt).toISOString(),
+      durationMin:   parseInt(scheduleData.durationMin),
+      type:          scheduleData.type,
+      visioType:     scheduleData.visioType,
+      externalLink:  scheduleData.externalLink || undefined,
+      location:      scheduleData.location || undefined,
+      notes:         scheduleData.notes || undefined,
+    })
+    setScheduling(false)
+    setScheduleFor(null)
+    // Rafraîchir
+    setApplications(prev => prev.map(a => a.id === scheduleFor.id ? { ...a, status: 'interview' } : a))
+  }
 
   const updateStatus = async (id: string, status: Application['status']) => {
     await supabase.from('applications').update({ status }).eq('id', id)
@@ -110,6 +141,11 @@ export default function RecruiterApplicationsPage() {
                     ))}
                   </select>
                   {candidate && (
+                    <Button kind="soft" size="sm" icon={<Calendar size={13} />} onClick={() => setScheduleFor(app)}>
+                      Entretien
+                    </Button>
+                  )}
+                  {candidate && (
                     <Link href={`/recruiter/candidates/${candidate.id}`}>
                       <Button kind="soft" size="sm">Profil</Button>
                     </Link>
@@ -120,6 +156,70 @@ export default function RecruiterApplicationsPage() {
           })}
         </div>
       )}
+
+      {/* Modal planification entretien */}
+      <Modal open={!!scheduleFor} onClose={() => setScheduleFor(null)} title="Planifier un entretien" size="md">
+        <div className="flex flex-col gap-4">
+          <div className="p-3 rounded-xl border border-[#1A1410]" style={{ background: KZ.violetSoft }}>
+            <div className="text-sm font-bold text-[#1A1410]">{scheduleFor?.job?.title}</div>
+            <div className="text-xs text-[#6B5A4A]">
+              Candidat : {(scheduleFor?.candidate as { full_name?: string })?.full_name}
+            </div>
+          </div>
+
+          <Input label="Date et heure *" type="datetime-local" value={scheduleData.scheduledAt}
+            onChange={e => setScheduleData(d => ({ ...d, scheduledAt: e.target.value }))} required />
+
+          <div className="grid grid-cols-2 gap-3">
+            <Select label="Durée" options={[
+              { value: '30', label: '30 min' }, { value: '45', label: '45 min' },
+              { value: '60', label: '1 heure' }, { value: '90', label: '1h30' },
+            ]} value={scheduleData.durationMin} onChange={e => setScheduleData(d => ({ ...d, durationMin: e.target.value }))} />
+
+            <Select label="Type" options={[
+              { value: 'video',  label: 'Visioconférence' },
+              { value: 'phone',  label: 'Téléphone' },
+              { value: 'onsite', label: 'Présentiel' },
+            ]} value={scheduleData.type} onChange={e => setScheduleData(d => ({ ...d, type: e.target.value as 'video'|'phone'|'onsite' }))} />
+          </div>
+
+          {scheduleData.type === 'video' && (
+            <div>
+              <Select label="Outil visio" options={[
+                { value: 'jitsi',    label: 'Jitsi Meet (lien auto-généré)' },
+                { value: 'external', label: 'Mon propre lien' },
+              ]} value={scheduleData.visioType} onChange={e => setScheduleData(d => ({ ...d, visioType: e.target.value as 'jitsi'|'external' }))} />
+              {scheduleData.visioType === 'external' && (
+                <Input label="Lien visio" className="mt-3" value={scheduleData.externalLink}
+                  placeholder="https://meet.google.com/..."
+                  onChange={e => setScheduleData(d => ({ ...d, externalLink: e.target.value }))} />
+              )}
+            </div>
+          )}
+
+          {scheduleData.type === 'onsite' && (
+            <Input label="Lieu" value={scheduleData.location}
+              placeholder="12 Rue de Paris, Saint-Denis"
+              onChange={e => setScheduleData(d => ({ ...d, location: e.target.value }))} />
+          )}
+
+          <Textarea label="Notes pour le candidat" value={scheduleData.notes} rows={3}
+            placeholder="Ce que le candidat doit savoir avant l'entretien..."
+            onChange={e => setScheduleData(d => ({ ...d, notes: e.target.value }))} />
+
+          <div className="text-xs text-[#6B5A4A] p-2.5 rounded-lg border border-[#E8DDC9]" style={{ background: KZ.greenSoft }}>
+            Les deux parties recevront un email de confirmation avec tous les détails.
+          </div>
+
+          <div className="flex gap-3">
+            <Button kind="soft" size="lg" full onClick={() => setScheduleFor(null)}>Annuler</Button>
+            <Button kind="primary" size="lg" full loading={scheduling} onClick={handleSchedule}
+              disabled={!scheduleData.scheduledAt}>
+              Planifier et envoyer les invitations
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
