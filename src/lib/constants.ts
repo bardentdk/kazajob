@@ -149,7 +149,50 @@ export const KAZA_BOOST_COST_XP = 100   // coût en XP pour booster son profil 4
 export const KAZA_BOOST_HOURS   = 48    // durée du boost en heures
 
 export const EVENT_TYPES: Record<string, { label: string; color: string; bg: string }> = {
-  job_dating: { label: 'Job Dating', color: '#6D3BEB', bg: '#E5DCFF' },
-  webinar:    { label: 'Webinar',    color: '#1B4FB8', bg: '#DCE7FB' },
-  atelier:    { label: 'Atelier',    color: '#FF6B35', bg: '#FFE0CF' },
+  job_dating:      { label: 'Job Dating',          color: '#6D3BEB', bg: '#E5DCFF' },
+  webinar:         { label: 'Webinar',              color: '#1B4FB8', bg: '#DCE7FB' },
+  atelier:         { label: 'Atelier',              color: '#FF6B35', bg: '#FFE0CF' },
+  info_collective: { label: 'Info Collective',      color: '#19A974', bg: '#D6F0E0' },
+}
+
+// ── Formations ───────────────────────────────────────────────────
+export const CERTIFICATION_LEVELS = [
+  { id: 'non_certifiante', label: 'Non certifiante'           },
+  { id: '1',               label: 'Niveau 1 (BEP/CAP)'       },
+  { id: '2',               label: 'Niveau 2 (Bac)'           },
+  { id: '3',               label: 'Niveau 3 (Bac+2 / BTS)'   },
+  { id: '4',               label: 'Niveau 4 (Bac+3 / Licence)'},
+  { id: '5',               label: 'Niveau 5 (Bac+5 / Master)' },
+  { id: '6',               label: 'Niveau 6 (Bac+6)'          },
+  { id: '7',               label: 'Niveau 7 (Doctorat)'       },
+  { id: '8',               label: 'Niveau 8 (HDR)'            },
+]
+
+export const FINANCING_OPTIONS = [
+  'CPF',
+  'OPCO',
+  'France Travail',
+  'Région Réunion',
+  'AIF (Aide Individuelle)',
+  'Autofinancement',
+]
+
+export const DURATION_UNITS = [
+  { id: 'heures',   label: 'heures'   },
+  { id: 'jours',    label: 'jours'    },
+  { id: 'semaines', label: 'semaines' },
+  { id: 'mois',     label: 'mois'     },
+]
+
+export const TRAINING_STATUS: Record<string, { label: string; color: string }> = {
+  pending:   { label: 'En attente',  color: 'yellow' },
+  viewed:    { label: 'Dossier vu',  color: 'blue'   },
+  accepted:  { label: 'Accepté',     color: 'green'  },
+  rejected:  { label: 'Refusé',      color: 'orange' },
+  withdrawn: { label: 'Retiré',      color: 'cream'  },
+}
+
+/** Vérifie que le titre contient la mention (H/F) ou (F/H) */
+export function hasMentionHF(title: string): boolean {
+  return /\(H\/F\)|\(F\/H\)/i.test(title)
 }

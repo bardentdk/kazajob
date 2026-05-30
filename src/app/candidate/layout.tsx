@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LayoutDashboard, Search, Heart, Briefcase, MessageCircle, User, Sparkles, Calendar, Settings, Star, Users, Flame, Gamepad2 } from 'lucide-react'
+import { LayoutDashboard, Search, Heart, Briefcase, MessageCircle, User, Sparkles, Calendar, Settings, Star, Users, Flame, Gamepad2, GraduationCap } from 'lucide-react'
 import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { useAuth } from '@/features/auth/useAuth'
@@ -13,8 +13,9 @@ import { KZ } from '@/lib/constants'
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/candidate/dashboard',    label: 'Tableau de bord', icon: <LayoutDashboard size={16} /> },
-  { href: '/candidate/jobs',         label: 'Rechercher',      icon: <Search size={16} /> },
-  { href: '/candidate/favorites',    label: 'Favoris',         icon: <Heart size={16} /> },
+  { href: '/candidate/jobs',         label: 'Offres d\'emploi', icon: <Search size={16} /> },
+  { href: '/candidate/training',     label: 'Formations',       icon: <GraduationCap size={16} /> },
+  { href: '/candidate/favorites',    label: 'Favoris',          icon: <Heart size={16} /> },
   { href: '/candidate/applications', label: 'Candidatures',    icon: <Briefcase size={16} /> },
   { href: '/candidate/messages',     label: 'Messages',        icon: <MessageCircle size={16} /> },
   { href: '/candidate/agenda',       label: 'Entretiens',      icon: <Calendar size={16} /> },

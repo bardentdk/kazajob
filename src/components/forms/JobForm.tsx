@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
-import { REUNION_CITIES, JOB_TYPES, JOB_SECTORS, KZ } from '@/lib/constants'
+import { REUNION_CITIES, JOB_TYPES, JOB_SECTORS, KZ, hasMentionHF } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
 import type { Job } from '@/lib/types'
 
@@ -43,6 +43,10 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
     e.preventDefault()
     if (!title || !description || !location) {
       setError('Titre, description et localisation sont obligatoires.')
+      return
+    }
+    if (!hasMentionHF(title)) {
+      setError('La mention (H/F) est obligatoire dans le titre pour éviter toute discrimination.')
       return
     }
     setSaving(true)
@@ -85,14 +89,21 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        <Input
-          label="Titre du poste *"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Ex: Developpeur Full-Stack"
-          className="col-span-2"
-          required
-        />
+        <div className="col-span-2">
+          <Input
+            label="Titre du poste *"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Ex: Développeur Full-Stack (H/F)"
+            required
+          />
+          {title && !hasMentionHF(title) && (
+            <div className="mt-1.5 flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#FFC93C]"
+              style={{ background: '#FFF1C2', color: '#1A1410' }}>
+              ⚠️ La mention <strong>(H/F)</strong> est obligatoire pour éviter la discrimination — ajoutez-la au titre.
+            </div>
+          )}
+        </div>
         <Select
           label="Type de contrat"
           options={TYPE_OPTIONS}

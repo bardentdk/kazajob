@@ -1,5 +1,47 @@
 export type UserRole = 'candidate' | 'recruiter' | 'admin'
 
+export interface TrainingOffer {
+  id:                 string
+  recruiter_id:       string
+  company_id:         string | null
+  title:              string
+  description:        string
+  program:            string | null
+  prerequisites:      string | null
+  certification:      string | null
+  certification_level:string | null
+  duration_value:     number
+  duration_unit:      'heures' | 'jours' | 'semaines' | 'mois'
+  location:           string
+  remote:             boolean
+  sector:             string | null
+  start_date:         string | null
+  max_participants:   number
+  is_financed:        boolean
+  financing_options:  string[]
+  image_url:          string | null
+  info_session_id:    string | null
+  views:              number
+  applications_count: number
+  is_active:          boolean
+  created_at:         string
+  updated_at:         string
+  // Joins
+  company?:           { name: string; logo_url?: string | null } | null
+  info_session?:      { id: string; title: string; date: string; jitsi_room: string | null } | null
+}
+
+export interface TrainingApplication {
+  id:                 string
+  training_offer_id:  string
+  candidate_id:       string
+  motivation:         string | null
+  status:             'pending' | 'viewed' | 'accepted' | 'rejected' | 'withdrawn'
+  created_at:         string
+  updated_at:         string
+  training_offer?:    TrainingOffer | null
+}
+
 export interface Profile {
   id: string
   email: string
