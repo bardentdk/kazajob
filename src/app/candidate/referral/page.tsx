@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Copy, Check, Gift, Users, Share2 } from 'lucide-react'
+import { Copy, Check, Gift, Users, Share2, Link as LinkIcon, Smartphone, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/features/auth/useAuth'
 import { createClient } from '@/lib/supabase/client'
@@ -77,12 +77,12 @@ export default function ReferralPage() {
         <h2 className="text-sm font-bold text-[#1A1410] mb-4">Comment ça marche ?</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { emoji: '🔗', step: '1', text: 'Copiez votre lien de parrainage unique' },
-            { emoji: '📲', step: '2', text: 'Partagez-le à vos amis ou sur les réseaux' },
-            { emoji: '🎁', step: '3', text: `+${XP_PER_REFERRAL} XP pour vous ET votre filleul à l'inscription` },
+            { icon: <LinkIcon size={20} />, step: '1', text: 'Copiez votre lien de parrainage unique' },
+            { icon: <Smartphone size={20} />, step: '2', text: 'Partagez-le à vos amis ou sur les réseaux' },
+            { icon: <Gift size={20} />, step: '3', text: `+${XP_PER_REFERRAL} XP pour vous ET votre filleul à l'inscription` },
           ].map(s => (
             <div key={s.step} className="flex flex-col items-center text-center gap-2 p-3 rounded-xl border border-[#E8DDC9]" style={{ background: KZ.cream2 }}>
-              <div className="text-2xl">{s.emoji}</div>
+              <div className="w-10 h-10 rounded-xl border border-[#1A1410] flex items-center justify-center" style={{ background: KZ.violetSoft, color: KZ.violet }}>{s.icon}</div>
               <div className="w-6 h-6 rounded-full border border-[#1A1410] flex items-center justify-center text-xs font-extrabold" style={{ background: KZ.orangeSoft }}>
                 {s.step}
               </div>
@@ -163,7 +163,7 @@ export default function ReferralPage() {
         className="p-4 rounded-xl border border-[#1A1410] text-sm text-[#2A2018] leading-relaxed"
         style={{ background: KZ.yellowSoft }}
       >
-        <strong>📌 Note :</strong> Les XP sont crédités lorsque votre filleul complète son profil à plus de 50%.
+        <strong className="flex items-center gap-1.5 mb-1"><Info size={14} /> Note :</strong> Les XP sont crédités lorsque votre filleul complète son profil à plus de 50%.
         Les parrainages sont limités à des profils réels — tout abus entraîne la suspension du compte.
       </div>
     </div>

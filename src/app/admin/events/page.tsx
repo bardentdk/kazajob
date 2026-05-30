@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Star, Trash2, ExternalLink, Users, Calendar } from 'lucide-react'
+import { Star, Trash2, ExternalLink, Users, Calendar, UserCheck, Monitor, BookOpen } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/feedback/EmptyState'
@@ -23,6 +23,11 @@ interface AdminEvent {
 }
 
 const TYPE_BADGE: Record<string, BadgeColor> = { job_dating: 'violet', webinar: 'blue', atelier: 'orange' }
+const TYPE_ICONS: Record<string, React.ReactNode> = {
+  job_dating: <UserCheck size={13} />,
+  webinar:    <Monitor   size={13} />,
+  atelier:    <BookOpen  size={13} />,
+}
 
 export default function AdminEventsPage() {
   const supabase = createClient()
@@ -88,14 +93,14 @@ export default function AdminEventsPage() {
             </thead>
             <tbody>
               {events.map(evt => {
-                const typeInfo = EVENT_TYPES[evt.type] ?? { label: evt.type, emoji: '📅' }
+                const typeInfo = EVENT_TYPES[evt.type] ?? { label: evt.type }
                 const isPast = new Date(evt.date) < new Date()
                 return (
                   <tr key={evt.id} className="border-b border-[#E8DDC9] last:border-0 hover:bg-[#FBEFE0] transition-colors">
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         <Badge color={TYPE_BADGE[evt.type] ?? 'cream'} size="sm">
-                          {typeInfo.emoji} {typeInfo.label}
+                          <span className="flex items-center gap-1">{TYPE_ICONS[evt.type]}{typeInfo.label}</span>
                         </Badge>
                         <span className="font-semibold text-[#1A1410] truncate max-w-[180px]">{evt.title}</span>
                       </div>

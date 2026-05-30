@@ -2,12 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Building2, Users, ArrowRight, Edit3, Check, Globe, Star } from 'lucide-react'
+import { Building2, Users, ArrowRight, Edit3, Check, Globe, Star, Landmark, Target, Briefcase, Search, Rss } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useAuth } from '@/features/auth/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import { KZ, SUBSCRIPTION_PLANS, PARTNERS } from '@/lib/constants'
+
+const PARTNER_ICONS: Record<string, React.ReactNode> = {
+  Landmark:  <Landmark  size={12} />,
+  Target:    <Target    size={12} />,
+  Briefcase: <Briefcase size={12} />,
+  Search:    <Search    size={12} />,
+  Rss:       <Rss       size={12} />,
+}
 import type { Company, CompanySubscription } from '@/lib/types'
 
 export default function CompanyPage() {
@@ -173,7 +181,7 @@ export default function CompanyPage() {
                 <div key={p} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#1A1410] text-xs font-bold"
                   style={{ background: KZ.greenSoft }}>
                   <Check size={11} color={KZ.green} />
-                  {partner.emoji} {partner.name}
+                  <span className="flex items-center gap-1">{PARTNER_ICONS[partner.icon]}{partner.name}</span>
                 </div>
               ) : null
             })}

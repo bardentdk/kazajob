@@ -35,8 +35,8 @@ function RegisterForm() {
       setError('Une erreur est survenue. Verifie tes informations.')
       setLoading(false)
     } else {
-      // Les candidats passent par l'onboarding, les recruteurs vont direct au dashboard
-      router.push(role === 'recruiter' ? '/recruiter/dashboard' : '/onboarding')
+      // Candidats → onboarding | Recruteurs → configuration entreprise (obligatoire)
+      router.push(role === 'recruiter' ? '/recruiter/company-setup' : '/onboarding')
     }
   }
 

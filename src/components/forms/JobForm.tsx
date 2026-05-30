@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
-import { REUNION_CITIES, JOB_TYPES, JOB_SECTORS } from '@/lib/constants'
+import { REUNION_CITIES, JOB_TYPES, JOB_SECTORS, KZ } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
 import type { Job } from '@/lib/types'
 
@@ -36,6 +37,7 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
   const [remote, setRemote] = useState(job?.remote ?? false)
   const [salaryMin, setSalaryMin] = useState(job?.salary_min?.toString() ?? '')
   const [salaryMax, setSalaryMax] = useState(job?.salary_max?.toString() ?? '')
+  const [isAnonymous, setIsAnonymous] = useState((job as Record<string, unknown>)?.is_anonymous as boolean ?? false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,6 +61,8 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
       salary_currency: '€',
       recruiter_id: recruiterId,
       company_id: companyId ?? null,
+      published_by: recruiterId,
+      is_anonymous: isAnonymous,
       is_active: true,
       updated_at: new Date().toISOString(),
     }
@@ -162,6 +166,35 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
         placeholder="Formation, experience, competences requises..."
         rows={4}
       />
+
+      {/* Toggle publication anonyme */}
+      <button
+        type="button"
+        onClick={() => setIsAnonymous(v => !v)}
+        className="flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all"
+        style={{
+          borderColor: isAnonymous ? KZ.violet : KZ.line,
+          background: isAnonymous ? KZ.violetSoft : KZ.cream2,
+        }}
+      >
+        <div className="w-9 h-9 rounded-lg border border-[#1A1410] flex items-center justify-center shrink-0"
+          style={{ background: isAnonymous ? KZ.violet : 'white' }}>
+          <EyeOff size={16} color={isAnonymous ? 'white' : KZ.mute} />
+        </div>
+        <div>
+          <div className="text-sm font-bold text-[#1A1410]">Publication anonyme</div>
+          <div className="text-xs text-[#6B5A4A]">
+            {isAnonymous
+              ? 'Les candidats verront "Entreprise confidentielle" — nom caché'
+              : 'Les candidats verront le nom et le logo de votre entreprise'}
+          </div>
+        </div>
+        <div className="ml-auto w-10 h-6 rounded-full border border-[#1A1410] transition-colors shrink-0 relative"
+          style={{ background: isAnonymous ? KZ.violet : '#E8DDC9' }}>
+          <div className="absolute top-0.5 h-5 w-5 rounded-full border border-[#1A1410] transition-all bg-white"
+            style={{ left: isAnonymous ? 'calc(100% - 22px)' : '2px' }} />
+        </div>
+      </button>
 
       <div className="flex gap-3 pt-2">
         <Button type="button" kind="soft" size="lg" onClick={() => router.back()}>

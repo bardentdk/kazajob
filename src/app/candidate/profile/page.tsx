@@ -10,8 +10,14 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Progress } from '@/components/ui/Progress'
 import { FileUpload } from '@/components/ui/FileUpload'
-import { VideoPitchRecorder } from '@/components/ui/VideoPitchRecorder'
+import dynamic from 'next/dynamic'
 import { KazaBoostButton } from '@/components/ui/KazaBoostButton'
+
+// Import dynamique ssr:false pour éviter les erreurs MediaRecorder en prod
+const VideoPitchRecorder = dynamic(
+  () => import('@/components/ui/VideoPitchRecorder').then(m => ({ default: m.VideoPitchRecorder })),
+  { ssr: false, loading: () => <div className="h-24 rounded-xl bg-[#FBEFE0] animate-pulse" /> }
+)
 import { useAuth } from '@/features/auth/useAuth'
 import { useApplications } from '@/features/applications/useApplications'
 import { useAvatarUpload, useCvUpload } from '@/features/profile/useUpload'

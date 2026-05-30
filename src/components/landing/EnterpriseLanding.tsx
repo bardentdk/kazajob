@@ -1,8 +1,16 @@
 import Link from 'next/link'
-import { ArrowRight, Check, Users, BarChart2, Zap, Shield, Globe } from 'lucide-react'
+import { ArrowRight, Check, Users, BarChart2, Zap, Shield, Globe, Landmark, Target, Briefcase, Search, Rss } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { KZ, SUBSCRIPTION_PLANS, PARTNERS } from '@/lib/constants'
+
+const PARTNER_ICON_MAP: Record<string, React.ReactNode> = {
+  Landmark:  <Landmark  size={16} />,
+  Target:    <Target    size={16} />,
+  Briefcase: <Briefcase size={16} />,
+  Search:    <Search    size={16} />,
+  Rss:       <Rss       size={16} />,
+}
 
 interface EnterpriseLandingProps {
   stats: { jobs: number; companies: number; users: number }
@@ -47,7 +55,7 @@ function PriceCard({ plan, isHighlight }: { plan: typeof SUBSCRIPTION_PLANS[0]; 
               const partner = PARTNERS[p]
               return partner ? (
                 <div key={p} className="text-xs flex items-center gap-1.5 mb-1">
-                  <span>{partner.emoji}</span>
+                  {PARTNER_ICON_MAP[partner.icon]}
                   <span style={{ opacity: 0.85 }}>{partner.name}</span>
                 </div>
               ) : null
@@ -146,7 +154,10 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
         <div className="flex justify-center items-center gap-6 lg:gap-12 flex-wrap max-w-[900px] mx-auto">
           {PARTNER_LIST.map(p => (
             <div key={p.name} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#E8DDC9] bg-white">
-              <span className="text-xl">{p.emoji}</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: p.color + '18', color: p.color }}>
+                {PARTNER_ICON_MAP[p.icon]}
+              </div>
               <div>
                 <div className="text-sm font-bold text-[#1A1410]">{p.name}</div>
                 <div className="text-[10px] text-[#6B5A4A]">{p.desc}</div>

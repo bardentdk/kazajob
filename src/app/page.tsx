@@ -131,7 +131,6 @@ export default async function LandingPage({
       ) : (
       /* ── VUE CANDIDAT (existante) ───────────────────────────── */
       <>
-      <ReassuranceBar />
 
       {/* HERO ──────────────────────────────────────────────── */}
       <section className="px-4 sm:px-8 lg:px-16 pt-10 lg:pt-20 pb-0 relative overflow-hidden" style={{ background: KZ.cream }}>

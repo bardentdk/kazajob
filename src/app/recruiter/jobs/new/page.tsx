@@ -18,7 +18,12 @@ export default function NewJobPage() {
       <h1 className="kz-h2 text-[#1A1410] mb-6">Publier une nouvelle offre</h1>
 
       <div className="kz-card p-6 bg-white">
-        {profile && <JobForm recruiterId={profile.id} />}
+        {profile && (
+          <JobForm
+            recruiterId={profile.id}
+            companyId={profile.company_id ?? undefined}
+          />
+        )}
       </div>
     </div>
   )

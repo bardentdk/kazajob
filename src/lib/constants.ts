@@ -100,12 +100,12 @@ export function getSalaryLabel(min?: number | null, max?: number | null) {
 }
 
 // ── Partenaires de diffusion ──────────────────────────────────────
-export const PARTNERS: Record<string, { name: string; emoji: string; color: string; desc: string }> = {
-  france_travail: { name: 'France Travail', emoji: '🏛️', color: '#003189', desc: 'Pôle Emploi · réseau national' },
-  mission_locale: { name: 'Mission Locale', emoji: '🎯', color: '#E31E24', desc: 'Jeunes 16-25 ans · 974' },
-  apec:           { name: 'APEC',           emoji: '💼', color: '#1B3B6F', desc: 'Cadres & ingénieurs' },
-  indeed:         { name: 'Indeed',         emoji: '🔍', color: '#2164F3', desc: 'N°1 mondial offres d\'emploi' },
-  aggregator:     { name: 'Flux XML/RSS',   emoji: '📡', color: '#19A974', desc: 'Tous agrégateurs compatibles' },
+export const PARTNERS: Record<string, { name: string; color: string; desc: string; icon: string }> = {
+  france_travail: { name: 'France Travail', color: '#003189', desc: 'Pôle Emploi · réseau national',    icon: 'Landmark' },
+  mission_locale: { name: 'Mission Locale', color: '#E31E24', desc: 'Jeunes 16-25 ans · 974',           icon: 'Target'   },
+  apec:           { name: 'APEC',           color: '#1B3B6F', desc: 'Cadres & ingénieurs',              icon: 'Briefcase'},
+  indeed:         { name: 'Indeed',         color: '#2164F3', desc: 'N°1 mondial offres d\'emploi',     icon: 'Search'   },
+  aggregator:     { name: 'Flux XML/RSS',   color: '#19A974', desc: 'Tous agrégateurs compatibles',     icon: 'Rss'      },
 }
 
 // ── Plans tarifaires ──────────────────────────────────────────────
@@ -148,8 +148,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
 export const KAZA_BOOST_COST_XP = 100   // coût en XP pour booster son profil 48h
 export const KAZA_BOOST_HOURS   = 48    // durée du boost en heures
 
-export const EVENT_TYPES: Record<string, { label: string; emoji: string; color: string; bg: string }> = {
-  job_dating: { label: 'Job Dating',  emoji: '🤝', color: '#6D3BEB', bg: '#E5DCFF' },
-  webinar:    { label: 'Webinar',     emoji: '💻', color: '#1B4FB8', bg: '#DCE7FB' },
-  atelier:    { label: 'Atelier',     emoji: '🎯', color: '#FF6B35', bg: '#FFE0CF' },
+export const EVENT_TYPES: Record<string, { label: string; color: string; bg: string }> = {
+  job_dating: { label: 'Job Dating', color: '#6D3BEB', bg: '#E5DCFF' },
+  webinar:    { label: 'Webinar',    color: '#1B4FB8', bg: '#DCE7FB' },
+  atelier:    { label: 'Atelier',    color: '#FF6B35', bg: '#FFE0CF' },
 }

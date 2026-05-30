@@ -456,7 +456,10 @@ export default function CompanySetupPage() {
           {/* ── ÉTAPE 4 : Succès ─────────────────────────────────────── */}
           {mode === 'done' && (
             <div className="text-center py-6">
-              <div className="text-6xl mb-5 animate-bounce">🎉</div>
+              <div className="w-20 h-20 rounded-full border-2 border-[#1A1410] flex items-center justify-center mx-auto mb-5"
+              style={{ background: KZ.greenSoft }}>
+              <Check size={36} color={KZ.green} />
+            </div>
               <h2 className="text-xl font-extrabold text-[#1A1410] mb-2">Votre espace est prêt !</h2>
               <p className="text-sm text-[#6B5A4A] mb-6 leading-relaxed">
                 Votre entreprise est configurée. Vous pouvez maintenant publier des offres,

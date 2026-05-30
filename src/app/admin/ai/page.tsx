@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Sparkles, ExternalLink, Zap, MessageCircle, FileText, Brain } from 'lucide-react'
+import { Sparkles, ExternalLink, Zap, MessageCircle, FileText, Brain, Info } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { KZ } from '@/lib/constants'
 
@@ -170,7 +170,7 @@ export default function AdminAIPage() {
           {/* Note + liens */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="kz-card p-5 bg-white">
-              <h3 className="text-sm font-bold text-[#1A1410] mb-2">📌 Note sur les estimations</h3>
+              <h3 className="text-sm font-bold text-[#1A1410] mb-2 flex items-center gap-1.5"><Info size={14} /> Note sur les estimations</h3>
               <p className="text-xs text-[#6B5A4A] leading-relaxed">
                 Ces chiffres sont des <strong>estimations</strong> basées sur les données Supabase (candidatures, conversations).
                 Pour un suivi exact, activez les logs IA dans les routes API ({' '}

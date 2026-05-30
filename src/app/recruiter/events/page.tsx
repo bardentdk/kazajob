@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Calendar, Users, Trash2, ExternalLink, Star } from 'lucide-react'
+import { Plus, Calendar, Users, Trash2, ExternalLink, Star, UserCheck, Monitor, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
@@ -31,6 +31,11 @@ const TYPE_COLORS: Record<string, BadgeColor> = {
   job_dating: 'violet',
   webinar:    'blue',
   atelier:    'orange',
+}
+const TYPE_ICONS: Record<string, React.ReactNode> = {
+  job_dating: <UserCheck size={14} />,
+  webinar:    <Monitor   size={14} />,
+  atelier:    <BookOpen  size={14} />,
 }
 
 export default function RecruiterEventsPage() {
@@ -144,7 +149,9 @@ export default function RecruiterEventsPage() {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <Badge color={TYPE_COLORS[evt.type] ?? 'cream'} size="sm">{typeInfo.emoji} {typeInfo.label}</Badge>
+                    <Badge color={TYPE_COLORS[evt.type] ?? 'cream'} size="sm">
+                      <span className="flex items-center gap-1">{TYPE_ICONS[evt.type]}{typeInfo.label}</span>
+                    </Badge>
                     {isPast && <Badge color="cream" size="sm">Terminé</Badge>}
                     {!evt.is_published && <Badge color="orange" size="sm">Brouillon</Badge>}
                   </div>
@@ -211,7 +218,7 @@ export default function RecruiterEventsPage() {
                     color: form.type === key ? val.color : KZ.mute,
                   }}
                 >
-                  <div className="text-lg mb-0.5">{val.emoji}</div>
+                  <div className="flex justify-center mb-0.5">{TYPE_ICONS[key]}</div>
                   {val.label}
                 </button>
               ))}

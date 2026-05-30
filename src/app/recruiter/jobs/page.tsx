@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, Eye, Users, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Plus, Eye, Users, Edit, Trash2, ToggleLeft, ToggleRight, EyeOff, User } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/feedback/EmptyState'
@@ -23,7 +23,7 @@ export default function RecruiterJobsPage() {
     if (!profile) return
     const { data } = await supabase
       .from('jobs')
-      .select('*, company:companies(*)')
+      .select('*, company:companies(name, logo_url), publisher:profiles!published_by(full_name)')
       .eq('recruiter_id', profile.id)
       .order('created_at', { ascending: false })
 
@@ -66,29 +66,53 @@ export default function RecruiterJobsPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {jobs.map((job) => (
-            <div key={job.id} className="kz-card p-5 bg-white flex items-center gap-5">
+            <div key={job.id} className="kz-card p-4 bg-white flex items-center gap-4">
+              {/* Logo entreprise */}
+              {(() => {
+                const co = (job as unknown as { company?: { name: string; logo_url: string | null } }).company
+                return co ? (
+                  <div className="w-11 h-11 rounded-xl border border-[#1A1410] flex items-center justify-center text-xs font-extrabold shrink-0"
+                    style={{ background: KZ.orangeSoft }}>
+                    {co.logo_url
+                      ? <img src={co.logo_url} alt="" className="w-full h-full object-cover rounded-xl" />
+                      : co.name.slice(0, 2).toUpperCase()}
+                  </div>
+                ) : null
+              })()}
+
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <h3 className="text-base font-bold text-[#1A1410]">{job.title}</h3>
+                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                  <h3 className="text-sm font-bold text-[#1A1410]">{job.title}</h3>
                   {job.is_boosted && <Badge color="orange" size="sm">Booste</Badge>}
+                  {(job as unknown as { is_anonymous?: boolean }).is_anonymous && (
+                    <Badge color="cream" size="sm"><span className="flex items-center gap-1"><EyeOff size={10} />Anonyme</span></Badge>
+                  )}
                 </div>
-                <div className="flex items-center gap-3 text-sm text-[#6B5A4A]">
-                  <span>{job.location}</span>
-                  <span>·</span>
-                  <span>{job.job_type}</span>
-                  <span>·</span>
-                  <span>{formatSalary(job.salary_min, job.salary_max)}</span>
-                  <span>·</span>
-                  <span>Publiee {timeAgo(job.created_at)}</span>
+                <div className="flex items-center gap-2 text-xs text-[#6B5A4A] flex-wrap">
+                  <span>{job.location} · {job.job_type} · {formatSalary(job.salary_min, job.salary_max)}</span>
+                  <span>· {timeAgo(job.created_at)}</span>
+                  {/* Auteur */}
+                  {(() => {
+                    const pub = (job as unknown as { publisher?: { full_name: string } }).publisher
+                    return pub ? (
+                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-[#E8DDC9]"
+                        style={{ background: KZ.cream2 }}>
+                        <User size={9} />{pub.full_name}
+                      </span>
+                    ) : null
+                  })()}
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 shrink-0">
-                <div className="flex items-center gap-1.5 text-sm text-[#6B5A4A]">
-                  <Eye size={14} /> {job.views}
+              {/* Analytics */}
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="text-center">
+                  <div className="text-sm font-extrabold text-[#1A1410]">{job.views}</div>
+                  <div className="text-[10px] text-[#6B5A4A] flex items-center gap-0.5"><Eye size={9} />vues</div>
                 </div>
-                <div className="flex items-center gap-1.5 text-sm text-[#6B5A4A]">
-                  <Users size={14} /> {job.applications_count}
+                <div className="text-center">
+                  <div className="text-sm font-extrabold text-[#1A1410]">{job.applications_count}</div>
+                  <div className="text-[10px] text-[#6B5A4A] flex items-center gap-0.5"><Users size={9} />cand.</div>
                 </div>
                 <Badge color={job.is_active ? 'green' : 'cream'}>
                   {job.is_active ? 'Active' : 'Inactive'}

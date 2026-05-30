@@ -1,13 +1,19 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Calendar, MapPin, Users, Clock, ExternalLink, Star } from 'lucide-react'
+import { Calendar, MapPin, Users, Clock, ExternalLink, Star, UserCheck, Monitor, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { useAuth } from '@/features/auth/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import { KZ, EVENT_TYPES } from '@/lib/constants'
+
+const EVENT_ICONS: Record<string, React.ReactNode> = {
+  job_dating: <UserCheck size={13} />,
+  webinar:    <Monitor   size={13} />,
+  atelier:    <BookOpen  size={13} />,
+}
 
 interface KazaEvent {
   id: string
@@ -106,7 +112,7 @@ export default function CandidateEventsPage() {
       ) : (
         <div className="flex flex-col gap-4">
           {events.map(evt => {
-            const typeInfo = EVENT_TYPES[evt.type] ?? { label: evt.type, emoji: '📅', color: KZ.mute, bg: KZ.cream2 }
+            const typeInfo = EVENT_TYPES[evt.type] ?? { label: evt.type, color: KZ.mute, bg: KZ.cream2 }
             const eventDate = new Date(evt.date)
             const isFull = evt.registrations_count >= evt.max_participants && !evt.is_registered
             const live = isEventLive(evt.date)
@@ -138,7 +144,7 @@ export default function CandidateEventsPage() {
                       className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border border-[#1A1410]"
                       style={{ background: typeInfo.bg, color: typeInfo.color }}
                     >
-                      {typeInfo.emoji} {typeInfo.label}
+                      <span className="flex items-center gap-1">{EVENT_ICONS[evt.type]}{typeInfo.label}</span>
                     </span>
                     {live && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border border-[#19A974] bg-[#D6F0E0] text-[#19A974] animate-pulse">
