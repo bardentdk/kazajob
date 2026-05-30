@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\djeba\\\\Desktop\\\\kazajob\\\\supabase\")",
-      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\djeba\\\\Desktop\\\\kazajob\" -Recurse | Where-Object {$_.Extension -in '.tsx','.ts','.sql','.css'} | Measure-Object | Select-Object -ExpandProperty Count)"
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\djeba\\\\Desktop\\\\kazajob\" -Recurse | Where-Object {$_.Extension -in '.tsx','.ts','.sql','.css'} | Measure-Object | Select-Object -ExpandProperty Count)",
+      "Bash(npx next *)"
     ]
   }
 }

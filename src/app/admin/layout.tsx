@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LayoutDashboard, Users, Briefcase, Building2, Shield } from 'lucide-react'
+import { LayoutDashboard, Users, Briefcase, Building2, Shield, Star, Bell, BookOpen, BarChart2, Sparkles, CreditCard } from 'lucide-react'
 import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { useAuth } from '@/features/auth/useAuth'
@@ -10,10 +10,16 @@ import { FullPageLoader } from '@/components/ui/LogoLoader'
 import { KZ } from '@/lib/constants'
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/admin/dashboard', label: 'Dashboard',       icon: <LayoutDashboard size={16} /> },
-  { href: '/admin/users',     label: 'Utilisateurs',    icon: <Users size={16} /> },
-  { href: '/admin/jobs',      label: 'Offres',          icon: <Briefcase size={16} /> },
-  { href: '/admin/companies', label: 'Entreprises',     icon: <Building2 size={16} /> },
+  { href: '/admin/dashboard',      label: 'Dashboard',        icon: <LayoutDashboard size={16} /> },
+  { href: '/admin/analytics',      label: 'Analytics',        icon: <BarChart2 size={16} /> },
+  { href: '/admin/users',          label: 'Utilisateurs',     icon: <Users size={16} /> },
+  { href: '/admin/jobs',           label: 'Offres',           icon: <Briefcase size={16} /> },
+  { href: '/admin/companies',      label: 'Entreprises',      icon: <Building2 size={16} /> },
+  { href: '/admin/events',         label: 'KazaEvents',       icon: <Star size={16} /> },
+  { href: '/admin/notifications',  label: 'Notifications',    icon: <Bell size={16} /> },
+  { href: '/admin/skills',         label: 'Compétences',      icon: <BookOpen size={16} /> },
+  { href: '/admin/ai',             label: 'KazaIA Stats',     icon: <Sparkles size={16} /> },
+  { href: '/admin/subscriptions',  label: 'Abonnements',      icon: <CreditCard size={16} /> },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

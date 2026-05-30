@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Users, Briefcase, Building2, TrendingUp, AlertTriangle } from 'lucide-react'
+import { Users, Briefcase, Building2, TrendingUp, Star, Bell, BookOpen, BarChart2, Sparkles, Zap } from 'lucide-react'
 import { StatCard } from '@/components/ui/StatCard'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -18,12 +18,16 @@ interface AdminStats {
   candidates: number
   recruiters: number
   admins: number
+  events: number
+  skills: number
+  referrals: number
 }
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats>({
     users: 0, jobs: 0, companies: 0, applications: 0,
     candidates: 0, recruiters: 0, admins: 0,
+    events: 0, skills: 0, referrals: 0,
   })
   const [recentJobs, setRecentJobs] = useState<Array<{ id: string; title: string; created_at: string; is_active: boolean }>>([])
   const [loading, setLoading] = useState(true)
@@ -39,6 +43,9 @@ export default function AdminDashboard() {
         { count: candidates },
         { count: recruiters },
         { count: admins },
+        { count: events },
+        { count: skills },
+        { count: referrals },
         { data: latestJobs },
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
@@ -48,6 +55,9 @@ export default function AdminDashboard() {
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'candidate'),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'recruiter'),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'admin'),
+        supabase.from('events').select('*', { count: 'exact', head: true }),
+        supabase.from('skills').select('*', { count: 'exact', head: true }),
+        supabase.from('referrals').select('*', { count: 'exact', head: true }),
         supabase.from('jobs').select('id, title, created_at, is_active').order('created_at', { ascending: false }).limit(5),
       ])
 
@@ -55,6 +65,7 @@ export default function AdminDashboard() {
         users: users ?? 0, jobs: jobs ?? 0, companies: companies ?? 0,
         applications: applications ?? 0, candidates: candidates ?? 0,
         recruiters: recruiters ?? 0, admins: admins ?? 0,
+        events: events ?? 0, skills: skills ?? 0, referrals: referrals ?? 0,
       })
       setRecentJobs((latestJobs ?? []) as typeof recentJobs)
       setLoading(false)
@@ -79,12 +90,18 @@ export default function AdminDashboard() {
         <p className="text-sm text-[#6B5A4A]">Vue globale · Kazajob La Reunion 974</p>
       </div>
 
-      {/* KPI — données réelles */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <StatCard label="Utilisateurs"  value={stats.users.toLocaleString('fr-FR')}        color={KZ.violetSoft} icon={<Users size={16} />} />
-        <StatCard label="Offres"        value={stats.jobs.toLocaleString('fr-FR')}          color={KZ.orangeSoft} icon={<Briefcase size={16} />} />
-        <StatCard label="Entreprises"   value={stats.companies.toLocaleString('fr-FR')}     color={KZ.greenSoft}  icon={<Building2 size={16} />} />
-        <StatCard label="Candidatures"  value={stats.applications.toLocaleString('fr-FR')}  color={KZ.yellowSoft} icon={<TrendingUp size={16} />} />
+      {/* KPI — ligne 1 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+        <StatCard label="Utilisateurs"   value={stats.users.toLocaleString('fr-FR')}        color={KZ.violetSoft} icon={<Users size={16} />} />
+        <StatCard label="Offres"         value={stats.jobs.toLocaleString('fr-FR')}          color={KZ.orangeSoft} icon={<Briefcase size={16} />} />
+        <StatCard label="Entreprises"    value={stats.companies.toLocaleString('fr-FR')}     color={KZ.greenSoft}  icon={<Building2 size={16} />} />
+        <StatCard label="Candidatures"   value={stats.applications.toLocaleString('fr-FR')}  color={KZ.yellowSoft} icon={<TrendingUp size={16} />} />
+      </div>
+      {/* KPI — ligne 2 */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+        <StatCard label="KazaEvents"     value={stats.events.toLocaleString('fr-FR')}        color={KZ.blueSoft}   icon={<Star size={16} />} />
+        <StatCard label="Compétences"    value={stats.skills.toLocaleString('fr-FR')}        color={KZ.cream2}     icon={<BookOpen size={16} />} />
+        <StatCard label="Parrainages"    value={stats.referrals.toLocaleString('fr-FR')}     color={KZ.yellowSoft} icon={<Zap size={16} />} />
       </div>
 
       <div className="grid grid-cols-[1.5fr_1fr] gap-5">
@@ -122,9 +139,14 @@ export default function AdminDashboard() {
             <h3 className="kz-h3 text-[#1A1410] mb-4">Acces rapides</h3>
             <div className="flex flex-col gap-2">
               {[
-                { href: '/admin/users',     label: 'Gerer les utilisateurs',  color: KZ.violetSoft, icon: <Users size={16} /> },
-                { href: '/admin/jobs',      label: 'Moderer les offres',       color: KZ.orangeSoft, icon: <Briefcase size={16} /> },
-                { href: '/admin/companies', label: 'Valider les entreprises',  color: KZ.greenSoft,  icon: <Building2 size={16} /> },
+                { href: '/admin/users',         label: 'Gérer les utilisateurs',  color: KZ.violetSoft, icon: <Users size={16} /> },
+                { href: '/admin/jobs',          label: 'Modérer les offres',       color: KZ.orangeSoft, icon: <Briefcase size={16} /> },
+                { href: '/admin/companies',     label: 'Valider les entreprises',  color: KZ.greenSoft,  icon: <Building2 size={16} /> },
+                { href: '/admin/events',        label: 'Gérer KazaEvents',         color: KZ.blueSoft,   icon: <Star size={16} /> },
+                { href: '/admin/notifications', label: 'Envoyer une notification', color: KZ.yellowSoft, icon: <Bell size={16} /> },
+                { href: '/admin/skills',        label: 'Référentiel compétences',  color: KZ.cream2,     icon: <BookOpen size={16} /> },
+                { href: '/admin/analytics',     label: 'Analytics & rapports',     color: KZ.violetSoft, icon: <BarChart2 size={16} /> },
+                { href: '/admin/ai',            label: 'KazaIA — Statistiques',    color: KZ.orangeSoft, icon: <Sparkles size={16} /> },
               ].map((item) => (
                 <Link
                   key={item.href}

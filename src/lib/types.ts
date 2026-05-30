@@ -20,6 +20,10 @@ export interface Profile {
   cv_data: Record<string, unknown> | null
   email_alerts_enabled: boolean
   email_alert_frequency: string | null
+  video_pitch_url: string | null
+  boosted_until: string | null
+  referral_code: string | null
+  company_id: string | null
   created_at: string
   updated_at: string
 }
@@ -28,13 +32,57 @@ export interface Company {
   id: string
   owner_id: string
   name: string
+  legal_name: string | null
+  siret: string | null
   logo_url: string | null
   website: string | null
   description: string | null
   location: string | null
+  city: string | null
+  zip_code: string | null
+  address: string | null
+  phone: string | null
   sector: string | null
   size: string | null
+  founded_year: number | null
+  linkedin_url: string | null
   is_verified: boolean
+  is_setup_complete: boolean
+  created_at: string
+}
+
+export type CompanyMemberRole   = 'owner' | 'admin' | 'member'
+export type CompanyMemberStatus = 'pending' | 'active' | 'suspended'
+
+export interface CompanyMember {
+  id: string
+  company_id: string
+  recruiter_id: string
+  role: CompanyMemberRole
+  status: CompanyMemberStatus
+  invited_by: string | null
+  created_at: string
+  profile?: Pick<Profile, 'full_name' | 'email' | 'avatar_url'>
+}
+
+export interface CompanyJoinRequest {
+  id: string
+  company_id: string
+  recruiter_id: string
+  message: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  created_at: string
+  profile?: Pick<Profile, 'full_name' | 'email'>
+}
+
+export interface CompanySubscription {
+  id: string
+  company_id: string
+  plan_id: string
+  status: 'trial' | 'active' | 'cancelled' | 'expired'
+  trial_ends_at: string | null
+  current_period_end: string | null
+  seats_used: number
   created_at: string
 }
 

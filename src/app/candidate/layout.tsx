@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LayoutDashboard, Search, Heart, Briefcase, MessageCircle, User, Sparkles, Calendar, Settings } from 'lucide-react'
+import { LayoutDashboard, Search, Heart, Briefcase, MessageCircle, User, Sparkles, Calendar, Settings, Star, Users } from 'lucide-react'
 import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { useAuth } from '@/features/auth/useAuth'
 import { FullPageLoader } from '@/components/ui/LogoLoader'
+import { ChatAssistantDrawer } from '@/components/ui/ChatAssistantDrawer'
 import { KZ } from '@/lib/constants'
 
 const NAV_ITEMS: NavItem[] = [
@@ -16,8 +17,10 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/candidate/applications', label: 'Candidatures',    icon: <Briefcase size={16} /> },
   { href: '/candidate/messages',     label: 'Messages',        icon: <MessageCircle size={16} /> },
   { href: '/candidate/agenda',       label: 'Entretiens',      icon: <Calendar size={16} /> },
+  { href: '/candidate/events',       label: 'KazaEvents',      icon: <Star size={16} /> },
   { href: '/candidate/ia',           label: 'KazaIA',          icon: <Sparkles size={16} /> },
   { href: '/candidate/profile',      label: 'Mon profil',      icon: <User size={16} /> },
+  { href: '/candidate/referral',     label: 'Parrainage',      icon: <Users size={16} /> },
   { href: '/candidate/settings',     label: 'Paramètres',      icon: <Settings size={16} /> },
 ]
 
@@ -66,6 +69,8 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+      {/* KazaIA flottant */}
+      <ChatAssistantDrawer />
     </div>
   )
 }

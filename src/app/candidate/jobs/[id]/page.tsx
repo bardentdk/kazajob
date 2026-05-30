@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, MapPin, Clock, Heart, Briefcase, Sparkles, Building2, Check, Brain } from 'lucide-react'
+import { ArrowLeft, MapPin, Clock, Heart, Briefcase, Sparkles, Building2, Check, Brain, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Tag } from '@/components/ui/Tag'
@@ -18,7 +18,7 @@ import { useApplications } from '@/features/applications/useApplications'
 import { useFavorites } from '@/features/favorites/useFavorites'
 import { useAuth } from '@/features/auth/useAuth'
 import { formatSalary, timeAgo } from '@/lib/utils'
-import { KZ } from '@/lib/constants'
+import { KZ, getSalaryLabel } from '@/lib/constants'
 
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -29,6 +29,7 @@ export default function JobDetailPage() {
   const [applyModal, setApplyModal] = useState(false)
   const [coverLetterModal, setCoverLetterModal] = useState(false)
   const [interviewModal, setInterviewModal] = useState(false)
+  const [showMatchDetail, setShowMatchDetail] = useState(false)
   const [coverLetter, setCoverLetter] = useState('')
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
@@ -82,15 +83,80 @@ export default function JobDetailPage() {
             <div className="flex gap-2 flex-wrap mb-4">
               {job.skills?.map((s) => <Tag key={s.id}>{s.name}</Tag>)}
             </div>
-            {job.match_score !== undefined && (
-              <div className="p-3 rounded-xl border border-[#1A1410]" style={{ background: KZ.violetSoft }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles size={15} color={KZ.violet} />
-                  <span className="text-sm font-bold text-[#1A1410]">Score matching IA : <span style={{ color: KZ.violet }}>{job.match_score}%</span></span>
+            {job.match_score !== undefined && (() => {
+              const locationMatch = profile?.location && job.location
+                ? job.location.toLowerCase().includes(profile.location.toLowerCase().split(',')[0])
+                  || profile.location.toLowerCase().includes(job.location.toLowerCase().split(',')[0])
+                : null
+              return (
+                <div className="rounded-xl border border-[#1A1410] overflow-hidden" style={{ background: KZ.violetSoft }}>
+                  <div className="p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles size={15} color={KZ.violet} />
+                      <span className="text-sm font-bold text-[#1A1410]">
+                        Score matching IA : <span style={{ color: KZ.violet }}>{job.match_score}%</span>
+                      </span>
+                      <button
+                        onClick={() => setShowMatchDetail(v => !v)}
+                        className="ml-auto flex items-center gap-1 text-xs font-semibold"
+                        style={{ color: KZ.violet }}
+                      >
+                        {showMatchDetail ? 'Masquer' : 'Détail'}
+                        {showMatchDetail ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                      </button>
+                    </div>
+                    <Progress value={job.match_score} color={KZ.violet} />
+                  </div>
+                  {showMatchDetail && (
+                    <div className="px-3 pb-3 flex flex-col gap-2 border-t border-[#6D3BEB]/20 pt-3">
+                      <p className="text-xs font-bold text-[#1A1410] mb-1">Détail du score :</p>
+                      {[
+                        {
+                          label: 'Compétences techniques',
+                          pct: 50,
+                          ok: (job.skills?.length ?? 0) > 0,
+                          tip: job.skills && job.skills.length > 0
+                            ? `${job.skills.length} compétence(s) requise(s) : ${job.skills.slice(0,3).map((s: {name:string}) => s.name).join(', ')}${job.skills.length > 3 ? '…' : ''}`
+                            : 'Aucune compétence spécifique requise',
+                        },
+                        {
+                          label: 'Localisation',
+                          pct: 20,
+                          ok: locationMatch !== false,
+                          tip: locationMatch
+                            ? `Votre ville correspond (${job.location})`
+                            : locationMatch === false
+                            ? `Votre profil indique ${profile?.location} · poste à ${job.location}`
+                            : `Poste à ${job.location}`,
+                        },
+                        { label: 'Type de contrat',  pct: 15, ok: true, tip: job.job_type },
+                        { label: 'Disponibilité',    pct: 15, ok: true, tip: 'Critère validé' },
+                      ].map(row => (
+                        <div key={row.label} className="flex items-start gap-2">
+                          <span className="mt-0.5 text-base leading-none">{row.ok ? '✅' : '⚡'}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-semibold text-[#1A1410]">{row.label}</span>
+                              <span className="text-[10px] text-[#6B5A4A]">({row.pct}%)</span>
+                            </div>
+                            <p className="text-[11px] text-[#6B5A4A] mt-0.5 leading-tight">{row.tip}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {job.match_score < 80 && (
+                        <a
+                          href="/candidate/profile"
+                          className="mt-1 text-xs font-bold text-center py-2 rounded-lg border border-[#6D3BEB] transition-colors hover:bg-[#6D3BEB] hover:text-white"
+                          style={{ color: KZ.violet }}
+                        >
+                          Améliorer mon score → compléter mon profil
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <Progress value={job.match_score} color={KZ.violet} />
-              </div>
-            )}
+              )
+            })()}
           </div>
 
           {/* Outils KazaIA — visible partout */}
@@ -127,6 +193,15 @@ export default function JobDetailPage() {
           {/* CTA mobile — visible uniquement sur mobile */}
           <div className="lg:hidden kz-card p-4 bg-white">
             <div className="text-xl font-extrabold text-[#1A1410] mb-1">{formatSalary(job.salary_min, job.salary_max)}</div>
+            {(() => {
+              const sl = getSalaryLabel(job.salary_min, job.salary_max)
+              return sl ? (
+                <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded-full border border-[#1A1410] mb-2"
+                  style={{ background: sl.bg, color: sl.color }}>
+                  {sl.label}
+                </span>
+              ) : null
+            })()}
             <div className="text-sm text-[#6B5A4A] mb-4">{job.job_type} · {job.location}</div>
             {alreadyApplied ? (
               <div className="flex items-center gap-2 p-3 rounded-xl border border-[#19A974] bg-[#D6F0E0]">
@@ -155,6 +230,15 @@ export default function JobDetailPage() {
         <div className="hidden lg:flex flex-col gap-4">
           <div className="kz-card p-5 bg-white">
             <div className="text-2xl font-extrabold tracking-tight text-[#1A1410] mb-1">{formatSalary(job.salary_min, job.salary_max)}</div>
+            {(() => {
+              const sl = getSalaryLabel(job.salary_min, job.salary_max)
+              return sl ? (
+                <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded-full border border-[#1A1410] mb-2"
+                  style={{ background: sl.bg, color: sl.color }}>
+                  {sl.label}
+                </span>
+              ) : null
+            })()}
             <div className="text-sm text-[#6B5A4A] mb-4">{job.job_type} · {job.location}</div>
             {alreadyApplied ? (
               <div className="flex items-center gap-2 p-3 rounded-xl border border-[#19A974] bg-[#D6F0E0]">

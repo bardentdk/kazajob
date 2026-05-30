@@ -15,6 +15,8 @@ import { TestimonialsSection } from '@/components/landing/TestimonialsSection'
 import { PricingSection }     from '@/components/landing/PricingSection'
 import { RoadmapSection }     from '@/components/landing/RoadmapSection'
 import { FaqSection }         from '@/components/landing/FaqSection'
+import { LandingViewToggle }  from '@/components/landing/LandingViewToggle'
+import { EnterpriseLanding }  from '@/components/landing/EnterpriseLanding'
 import { KZ } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/server'
 import { formatSalary } from '@/lib/utils'
@@ -98,7 +100,13 @@ async function getLandingData() {
   }
 }
 
-export default async function LandingPage() {
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>
+}) {
+  const params = await searchParams
+  const isEnterprise = params?.view === 'entreprise'
   const { featuredJobs, companies, stats } = await getLandingData()
 
   // Bande stats — vraies données si disponibles, sinon labels clairs
@@ -112,6 +120,17 @@ export default async function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: KZ.cream }}>
       <NavLanding />
+      <LandingViewToggle current={isEnterprise ? 'entreprise' : 'candidat'} />
+
+      {/* ── VUE ENTREPRISE ──────────────────────────────────────── */}
+      {isEnterprise ? (
+        <>
+          <EnterpriseLanding stats={stats} />
+          <Footer />
+        </>
+      ) : (
+      /* ── VUE CANDIDAT (existante) ───────────────────────────── */
+      <>
       <ReassuranceBar />
 
       {/* HERO ──────────────────────────────────────────────── */}
@@ -381,6 +400,8 @@ export default async function LandingPage() {
       </section>
 
       <Footer />
+      </>
+      )}
     </div>
   )
 }
