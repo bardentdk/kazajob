@@ -29,6 +29,12 @@ CREATE INDEX IF NOT EXISTS idx_interviews_scheduled  ON interviews(scheduled_at)
 
 ALTER TABLE interviews ENABLE ROW LEVEL SECURITY;
 
+-- Drop avant recréation (idempotent)
+DROP POLICY IF EXISTS "Candidats voient leurs entretiens"          ON interviews;
+DROP POLICY IF EXISTS "Recruteurs voient leurs entretiens"         ON interviews;
+DROP POLICY IF EXISTS "Recruteurs créent des entretiens"           ON interviews;
+DROP POLICY IF EXISTS "Recruteurs mettent à jour leurs entretiens" ON interviews;
+
 CREATE POLICY "Candidats voient leurs entretiens"
   ON interviews FOR SELECT
   USING (candidate_id = auth.uid());
@@ -44,6 +50,9 @@ CREATE POLICY "Recruteurs créent des entretiens"
 CREATE POLICY "Recruteurs mettent à jour leurs entretiens"
   ON interviews FOR UPDATE
   USING (recruiter_id = auth.uid() OR candidate_id = auth.uid());
+
+-- GRANT permissions
+GRANT SELECT, INSERT, UPDATE, DELETE ON interviews TO authenticated;
 
 ALTER PUBLICATION supabase_realtime ADD TABLE interviews;
 

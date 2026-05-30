@@ -49,6 +49,18 @@ export function useApplications(candidateId?: string) {
     if (!error) {
       await supabase.rpc('increment_applications_count', { job_id: jobId })
       await fetchApplications()
+
+      // Notifier le recruteur par email (fire & forget)
+      const { data: newApp } = await supabase
+        .from('applications').select('id')
+        .eq('job_id', jobId).eq('candidate_id', candidateId).single()
+      if (newApp) {
+        fetch('/api/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'new_application', applicationId: newApp.id }),
+        }).catch(() => {})
+      }
     }
 
     return { error: error?.message ?? null }
@@ -64,7 +76,15 @@ export function useApplications(candidateId?: string) {
       .update({ status, recruiter_notes: notes, updated_at: new Date().toISOString() })
       .eq('id', applicationId)
 
-    if (!error) await fetchApplications()
+    if (!error) {
+      await fetchApplications()
+      // Alerter le candidat par email (fire & forget)
+      fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'application_status', applicationId, status }),
+      }).catch(() => {})
+    }
     return { error }
   }, [supabase, fetchApplications])
 

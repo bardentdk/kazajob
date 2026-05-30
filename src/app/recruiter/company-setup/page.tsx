@@ -109,6 +109,22 @@ export default function CompanySetupPage() {
       message: joinMessage.trim() || null,
       status: 'pending',
     }, { onConflict: 'company_id,recruiter_id' })
+
+    // Notifier l'owner par email (fire & forget)
+    const { data: newReq } = await supabase
+      .from('company_join_requests')
+      .select('id')
+      .eq('company_id', selectedCompany.id)
+      .eq('recruiter_id', profile.id)
+      .single()
+    if (newReq) {
+      fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'join_request', requestId: newReq.id }),
+      }).catch(() => {})
+    }
+
     setJoinSent(true)
     setJoining(false)
   }

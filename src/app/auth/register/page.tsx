@@ -35,6 +35,12 @@ function RegisterForm() {
       setError('Une erreur est survenue. Verifie tes informations.')
       setLoading(false)
     } else {
+      // Email de bienvenue (fire & forget)
+      fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'welcome', email, fullName, role }),
+      }).catch(() => {})
       // Candidats → onboarding | Recruteurs → configuration entreprise (obligatoire)
       router.push(role === 'recruiter' ? '/recruiter/company-setup' : '/onboarding')
     }

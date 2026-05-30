@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
-import { interviewInviteEmail, applicationWithdrawnEmail } from '@/lib/email/templates'
+import {
+  interviewInviteEmail,
+  applicationWithdrawnEmail,
+  applicationStatusEmail,
+  welcomeEmail,
+  newApplicationEmail,
+  newMessageEmail,
+  joinRequestEmail,
+  joinResponseEmail,
+  type ApplicationStatus,
+} from '@/lib/email/templates'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = process.env.RESEND_FROM ?? 'Kazajob <contact@velt.re>'
@@ -96,6 +106,182 @@ export async function POST(req: NextRequest) {
       })
 
       await resend.emails.send({ from: FROM, to: recruiter.email, subject, html })
+      return NextResponse.json({ ok: true })
+    }
+
+    // ── Welcome ────────────────────────────────────────────────────
+    if (type === 'welcome') {
+      const { email: to, fullName, role } = body
+      if (!to || !fullName) return NextResponse.json({ error: 'Champs manquants' }, { status: 400 })
+      const { subject, html } = welcomeEmail({ fullName, role: role ?? 'candidate' })
+      const { error } = await resend.emails.send({ from: FROM, to, subject, html })
+      if (error) throw new Error(error.message)
+      return NextResponse.json({ ok: true })
+    }
+
+    // ── Nouvelle candidature (→ recruteur) ─────────────────────────
+    if (type === 'new_application') {
+      const { applicationId } = body
+      const { data: app } = await supabase
+        .from('applications')
+        .select(`
+          id, cover_letter,
+          candidate:profiles!candidate_id(full_name, email),
+          job:jobs!inner(title, recruiter_id, company:companies(name))
+        `)
+        .eq('id', applicationId)
+        .single()
+
+      if (!app) return NextResponse.json({ error: 'Candidature introuvable' }, { status: 404 })
+
+      const candidate = app.candidate as unknown as { full_name: string; email: string }
+      const job       = app.job       as unknown as { title: string; recruiter_id: string; company?: { name: string } }
+
+      const { data: recruiter } = await supabase
+        .from('profiles').select('full_name, email').eq('id', job.recruiter_id).single()
+      if (!recruiter) return NextResponse.json({ ok: true })
+
+      const { subject, html } = newApplicationEmail({
+        recruiterName:  recruiter.full_name,
+        candidateName:  candidate.full_name,
+        candidateEmail: candidate.email,
+        jobTitle:       job.title,
+        companyName:    job.company?.name ?? 'Votre entreprise',
+        applicationId,
+        hasCoverLetter: !!(app.cover_letter),
+      })
+      await resend.emails.send({ from: FROM, to: recruiter.email, subject, html })
+      return NextResponse.json({ ok: true })
+    }
+
+    // ── Changement statut candidature (→ candidat) ─────────────────
+    if (type === 'application_status') {
+      const { applicationId, status } = body
+      const { data: app } = await supabase
+        .from('applications')
+        .select(`
+          candidate:profiles!candidate_id(full_name, email, email_alerts_enabled),
+          job:jobs!inner(title, company:companies(name))
+        `)
+        .eq('id', applicationId)
+        .single()
+
+      if (!app) return NextResponse.json({ error: 'Candidature introuvable' }, { status: 404 })
+
+      const candidate = app.candidate as unknown as { full_name: string; email: string; email_alerts_enabled: boolean }
+      const job       = app.job       as unknown as { title: string; company?: { name: string } }
+
+      if (!candidate.email_alerts_enabled) return NextResponse.json({ ok: true, skipped: 'alerts disabled' })
+
+      const validStatuses: ApplicationStatus[] = ['viewed','interview','offer','hired','rejected']
+      if (!validStatuses.includes(status)) return NextResponse.json({ ok: true })
+
+      const { subject, html } = applicationStatusEmail({
+        candidateName: candidate.full_name,
+        jobTitle:      job.title,
+        companyName:   job.company?.name ?? 'Entreprise',
+        status,
+      })
+      await resend.emails.send({ from: FROM, to: candidate.email, subject, html })
+      return NextResponse.json({ ok: true })
+    }
+
+    // ── Nouveau message ────────────────────────────────────────────
+    if (type === 'new_message') {
+      const { conversationId, senderId } = body
+      const { data: conv } = await supabase
+        .from('conversations')
+        .select('candidate_id, recruiter_id, job:jobs(title)')
+        .eq('id', conversationId)
+        .single()
+
+      if (!conv) return NextResponse.json({ ok: true })
+
+      const recipientId = senderId === conv.candidate_id ? conv.recruiter_id : conv.candidate_id
+      const isRecruiter = senderId === conv.candidate_id
+
+      const [{ data: sender }, { data: recipient }] = await Promise.all([
+        supabase.from('profiles').select('full_name').eq('id', senderId).single(),
+        supabase.from('profiles').select('full_name, email, email_alerts_enabled').eq('id', recipientId).single(),
+      ])
+
+      if (!recipient || !recipient.email_alerts_enabled) return NextResponse.json({ ok: true })
+
+      const { data: lastMsg } = await supabase
+        .from('messages')
+        .select('content')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      const { subject, html } = newMessageEmail({
+        recipientName:  recipient.full_name,
+        senderName:     sender?.full_name ?? 'Un utilisateur',
+        messagePreview: lastMsg?.content ?? '',
+        jobTitle:       (conv.job as { title?: string } | null)?.title ?? undefined,
+        role:           isRecruiter ? 'recruiter' : 'candidate',
+      })
+      await resend.emails.send({ from: FROM, to: recipient.email, subject, html })
+      return NextResponse.json({ ok: true })
+    }
+
+    // ── Demande rejoindre équipe (→ owner) ─────────────────────────
+    if (type === 'join_request') {
+      const { requestId } = body
+      const { data: req } = await supabase
+        .from('company_join_requests')
+        .select(`
+          message,
+          requester:profiles!recruiter_id(full_name, email),
+          company:companies!company_id(name, owner_id)
+        `)
+        .eq('id', requestId)
+        .single()
+
+      if (!req) return NextResponse.json({ ok: true })
+
+      const requester = req.requester as unknown as { full_name: string; email: string }
+      const company   = req.company   as unknown as { name: string; owner_id: string }
+
+      const { data: owner } = await supabase
+        .from('profiles').select('full_name, email').eq('id', company.owner_id).single()
+      if (!owner) return NextResponse.json({ ok: true })
+
+      const { subject, html } = joinRequestEmail({
+        ownerName:      owner.full_name,
+        companyName:    company.name,
+        requesterName:  requester.full_name,
+        requesterEmail: requester.email,
+        message:        req.message,
+      })
+      await resend.emails.send({ from: FROM, to: owner.email, subject, html })
+      return NextResponse.json({ ok: true })
+    }
+
+    // ── Réponse demande adhésion (→ recruteur) ─────────────────────
+    if (type === 'join_response') {
+      const { requestId, approved } = body
+      const { data: req } = await supabase
+        .from('company_join_requests')
+        .select(`
+          requester:profiles!recruiter_id(full_name, email),
+          company:companies!company_id(name)
+        `)
+        .eq('id', requestId)
+        .single()
+
+      if (!req) return NextResponse.json({ ok: true })
+
+      const requester = req.requester as unknown as { full_name: string; email: string }
+      const company   = req.company   as unknown as { name: string }
+
+      const { subject, html } = joinResponseEmail({
+        recruiterName: requester.full_name,
+        companyName:   company.name,
+        approved:      !!approved,
+      })
+      await resend.emails.send({ from: FROM, to: requester.email, subject, html })
       return NextResponse.json({ ok: true })
     }
 

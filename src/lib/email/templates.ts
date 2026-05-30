@@ -1,22 +1,29 @@
 /**
  * KAZAJOB — Templates email HTML
- * Design cohérent avec la DA du site (orange, violet, cartoon)
+ * Architecture 100% table-based (compatible Gmail, Outlook, Apple Mail)
+ * DA fidèle : orange #FF6B35, violet #6D3BEB, cream #FFF7EE, ink #1A1410
  */
 
-interface InterviewEmailData {
-  candidateName: string
-  recruiterName: string
-  companyName: string
-  jobTitle: string
-  scheduledAt: Date
-  durationMin: number
-  type: 'video' | 'phone' | 'onsite'
-  visioLink?: string | null
-  location?: string | null
-  notes?: string | null
-  isReminder?: boolean
+// ── Palette ────────────────────────────────────────────────────────
+const C = {
+  orange:     '#FF6B35',
+  orangeSoft: '#FFE0CF',
+  violet:     '#6D3BEB',
+  violetSoft: '#E5DCFF',
+  ink:        '#1A1410',
+  cream:      '#FFF7EE',
+  cream2:     '#FBEFE0',
+  paper:      '#FDF6EC',
+  mute:       '#6B5A4A',
+  line:       '#E8DDC9',
+  green:      '#19A974',
+  greenSoft:  '#D6F0E0',
+  yellow:     '#FFC93C',
+  yellowSoft: '#FFF1C2',
+  bg:         '#F2E4D0',
 }
 
+// ── Helpers ────────────────────────────────────────────────────────
 function formatDate(d: Date): string {
   return d.toLocaleDateString('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -27,167 +34,888 @@ function formatTime(d: Date): string {
   return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
-const typeLabels = {
-  video:   'Visioconférence',
-  phone:   'Entretien téléphonique',
-  onsite:  'Entretien présentiel',
-}
+// ── Shell commun (wrapper email) ───────────────────────────────────
+function shell(headerAccent: string, body: string): string {
+  return `<!DOCTYPE html>
+<html lang="fr" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Kazajob</title>
+  <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
+</head>
+<body style="margin:0;padding:0;background-color:${C.bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.bg};">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
 
-const typeIcons = {
-  video:  '📹',
-  phone:  '📞',
-  onsite: '🏢',
-}
+      <!-- Carte principale -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+        style="max-width:580px;background-color:${C.cream};border:2px solid ${C.ink};border-radius:16px;overflow:hidden;">
 
-export function interviewInviteEmail(data: InterviewEmailData, recipient: 'candidate' | 'recruiter'): { subject: string; html: string } {
-  const isCandidate = recipient === 'candidate'
-  const subject = data.isReminder
-    ? `Rappel — Votre entretien demain : ${data.jobTitle} chez ${data.companyName}`
-    : `Entretien planifié — ${data.jobTitle} chez ${data.companyName}`
+        <!-- HEADER -->
+        <tr>
+          <td style="background-color:${headerAccent};padding:0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="padding:28px 32px;">
+                  <!-- Logo -->
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="background-color:${C.ink};border-radius:8px;padding:6px 12px;">
+                        <span style="font-size:18px;font-weight:900;color:${C.cream};letter-spacing:-0.04em;font-family:Arial,sans-serif;">kaza<span style="color:${C.orange};">job</span></span>
+                      </td>
+                      <td style="padding-left:12px;">
+                        <span style="font-size:11px;font-weight:700;color:${C.ink};opacity:0.7;letter-spacing:0.05em;text-transform:uppercase;">La Réunion · 974</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <!-- Cercle déco -->
+                <td width="80" style="padding:0;vertical-align:bottom;text-align:right;">
+                  <div style="width:80px;height:80px;border-radius:50%;background-color:rgba(255,247,238,0.2);display:inline-block;"></div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
 
-  const primaryColor = '#FF6B35'
-  const violet = '#6D3BEB'
-  const ink = '#1A1410'
-  const cream = '#FFF7EE'
+        <!-- BODY -->
+        <tr>
+          <td style="padding:0;">
+            ${body}
+          </td>
+        </tr>
 
-  const visioSection = data.visioLink ? `
-    <div style="background:#E5DCFF;border:1.5px solid ${ink};border-radius:12px;padding:20px;margin:20px 0;text-align:center;">
-      <div style="font-size:13px;font-weight:700;color:${ink};margin-bottom:10px;">Lien de connexion</div>
-      <a href="${data.visioLink}"
-        style="display:inline-block;background:${violet};color:white;font-weight:800;font-size:15px;padding:12px 28px;border-radius:8px;border:1.5px solid ${ink};text-decoration:none;box-shadow:3px 3px 0 ${ink};">
-        Rejoindre la visioconférence
-      </a>
-      <div style="font-size:11px;color:#6B5A4A;margin-top:8px;">${data.visioLink}</div>
-    </div>` : ''
+        <!-- FOOTER -->
+        <tr>
+          <td style="border-top:1px solid ${C.line};padding:18px 32px;background-color:${C.cream2};">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="font-size:11px;color:${C.mute};line-height:1.6;text-align:center;">
+                  <strong style="color:${C.ink};">Kazajob</strong> · Saint-Denis, La Réunion 974<br>
+                  <a href="https://kazajob.re" style="color:${C.orange};text-decoration:none;font-weight:700;">kazajob.re</a>
+                  &nbsp;·&nbsp;Cet email est automatique, merci de ne pas y répondre directement.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
 
-  const locationSection = data.location ? `
-    <div style="padding:14px 18px;background:#FBEFE0;border:1.5px solid #E8DDC9;border-radius:10px;margin:12px 0;">
-      <span style="font-size:13px;font-weight:700;color:${ink};">Lieu :</span>
-      <span style="font-size:13px;color:#2A2018;margin-left:6px;">${data.location}</span>
-    </div>` : ''
-
-  const notesSection = data.notes ? `
-    <div style="padding:14px 18px;background:#FFF7EE;border:1.5px dashed #E8DDC9;border-radius:10px;margin:12px 0;">
-      <div style="font-size:12px;font-weight:700;color:#6B5A4A;margin-bottom:4px;">Notes du recruteur</div>
-      <div style="font-size:13px;color:#2A2018;line-height:1.5;">${data.notes}</div>
-    </div>` : ''
-
-  const html = `
-<!DOCTYPE html>
-<html lang="fr">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#F2E4D0;font-family:system-ui,-apple-system,sans-serif;">
-  <div style="max-width:560px;margin:32px auto;background:#FFF7EE;border:1.5px solid ${ink};border-radius:16px;overflow:hidden;box-shadow:5px 5px 0 ${ink};">
-
-    <!-- Header -->
-    <div style="background:${primaryColor};padding:28px 32px;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,247,238,0.15);"></div>
-      <div style="position:relative;z-index:1;">
-        <div style="font-size:22px;font-weight:800;color:${ink};letter-spacing:-0.03em;">kazajob</div>
-        <div style="font-size:13px;color:${ink};opacity:0.75;margin-top:2px;">Le travail péi, nouvelle génération</div>
-      </div>
-    </div>
-
-    <!-- Badge type -->
-    <div style="padding:24px 32px 0;">
-      <div style="display:inline-flex;align-items:center;gap:8px;background:#E5DCFF;border:1.5px solid ${ink};border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:${ink};">
-        ${typeIcons[data.type]} ${typeLabels[data.type]}
-        ${data.isReminder ? ' — Rappel J-1' : ''}
-      </div>
-    </div>
-
-    <!-- Body -->
-    <div style="padding:24px 32px;">
-      <h1 style="font-size:26px;font-weight:800;color:${ink};letter-spacing:-0.025em;margin:0 0 8px;">
-        ${data.isReminder ? 'Votre entretien est demain !' : 'Entretien planifié'}
-      </h1>
-      <p style="font-size:14px;color:#2A2018;line-height:1.55;margin:0 0 20px;">
-        ${isCandidate
-          ? `Bonjour <strong>${data.candidateName}</strong>, <strong>${data.recruiterName}</strong> de <strong>${data.companyName}</strong> a planifié un entretien avec vous pour le poste de <strong>${data.jobTitle}</strong>.`
-          : `Votre entretien avec <strong>${data.candidateName}</strong> pour le poste <strong>${data.jobTitle}</strong> est confirmé.`
-        }
-      </p>
-
-      <!-- Détails entretien -->
-      <div style="background:white;border:1.5px solid ${ink};border-radius:12px;padding:20px;box-shadow:3px 3px 0 #E8DDC9;margin-bottom:16px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <div>
-            <div style="font-size:11px;font-weight:700;color:#6B5A4A;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Date</div>
-            <div style="font-size:14px;font-weight:700;color:${ink};">${formatDate(data.scheduledAt)}</div>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;color:#6B5A4A;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Heure</div>
-            <div style="font-size:14px;font-weight:700;color:${ink};">${formatTime(data.scheduledAt)}</div>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;color:#6B5A4A;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Durée</div>
-            <div style="font-size:14px;font-weight:700;color:${ink};">${data.durationMin} minutes</div>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;color:#6B5A4A;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Poste</div>
-            <div style="font-size:14px;font-weight:700;color:${ink};">${data.jobTitle}</div>
-          </div>
-        </div>
-      </div>
-
-      ${visioSection}
-      ${locationSection}
-      ${notesSection}
-
-      <!-- CTA -->
-      <div style="text-align:center;margin:24px 0 0;">
-        <a href="https://kazajob.re/candidate/messages"
-          style="display:inline-block;background:${primaryColor};color:${ink};font-weight:800;font-size:15px;padding:14px 32px;border-radius:10px;border:1.5px solid ${ink};text-decoration:none;box-shadow:4px 4px 0 ${ink};">
-          Voir dans Kazajob →
-        </a>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div style="padding:16px 32px;border-top:1px solid #E8DDC9;font-size:11px;color:#6B5A4A;text-align:center;line-height:1.5;">
-      Kazajob SAS · Saint-Denis, La Réunion 974<br>
-      <a href="https://kazajob.re" style="color:#FF6B35;text-decoration:none;">kazajob.re</a> ·
-      Cet email a été envoyé automatiquement, merci de ne pas y répondre directement.
-    </div>
-  </div>
+      </table>
+    </td>
+  </tr>
+</table>
 </body>
 </html>`
-
-  return { subject, html }
 }
+
+// ── Bouton CTA ─────────────────────────────────────────────────────
+function ctaButton(label: string, href: string, bg = C.orange, color = C.ink): string {
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+      <tr>
+        <td style="background-color:${bg};border:2px solid ${C.ink};border-radius:10px;
+          box-shadow:4px 4px 0 ${C.ink};">
+          <a href="${href}"
+            style="display:block;padding:14px 32px;font-size:15px;font-weight:800;
+            color:${color};text-decoration:none;letter-spacing:-0.01em;white-space:nowrap;
+            font-family:Arial,sans-serif;">
+            ${label} &rarr;
+          </a>
+        </td>
+      </tr>
+    </table>`
+}
+
+// ── Ligne séparateur ───────────────────────────────────────────────
+function divider(): string {
+  return `<tr><td style="padding:8px 32px;"><div style="height:1px;background-color:${C.line};"></div></td></tr>`
+}
+
+// ── Bloc "étape" pour welcome ──────────────────────────────────────
+function stepBlock(num: string, title: string, desc: string, bg: string): string {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="background-color:${bg};border:1.5px solid ${C.ink};border-radius:12px;margin-bottom:10px;">
+      <tr>
+        <td width="50" style="padding:16px 12px 16px 16px;vertical-align:top;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="background-color:${C.ink};border-radius:50%;width:28px;height:28px;
+                text-align:center;vertical-align:middle;">
+                <span style="font-size:13px;font-weight:900;color:${C.cream};font-family:Arial,sans-serif;
+                  line-height:28px;display:block;">${num}</span>
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td style="padding:16px 16px 16px 0;vertical-align:top;">
+          <p style="margin:0 0 3px;font-size:13px;font-weight:800;color:${C.ink};font-family:Arial,sans-serif;">${title}</p>
+          <p style="margin:0;font-size:12px;color:${C.mute};line-height:1.5;font-family:Arial,sans-serif;">${desc}</p>
+        </td>
+      </tr>
+    </table>`
+}
+
+// ── Chip / Badge ───────────────────────────────────────────────────
+function chip(text: string, bg: string, color = C.ink): string {
+  return `<span style="display:inline-block;background-color:${bg};border:1.5px solid ${C.ink};
+    border-radius:999px;padding:4px 14px;font-size:12px;font-weight:700;color:${color};
+    letter-spacing:0.02em;font-family:Arial,sans-serif;">${text}</span>`
+}
+
+// ── Ligne de détail (label + valeur) ──────────────────────────────
+function detailRow(label: string, value: string): string {
+  return `
+    <tr>
+      <td style="padding:10px 16px;border-bottom:1px solid ${C.line};width:40%;
+        font-size:11px;font-weight:700;color:${C.mute};text-transform:uppercase;
+        letter-spacing:0.07em;font-family:Arial,sans-serif;">${label}</td>
+      <td style="padding:10px 16px;border-bottom:1px solid ${C.line};
+        font-size:14px;font-weight:700;color:${C.ink};font-family:Arial,sans-serif;">${value}</td>
+    </tr>`
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 1 — Invitation entretien
+// ══════════════════════════════════════════════════════════════════
+
+interface InterviewEmailData {
+  candidateName: string
+  recruiterName:  string
+  companyName:   string
+  jobTitle:      string
+  scheduledAt:   Date
+  durationMin:   number
+  type:          'video' | 'phone' | 'onsite'
+  visioLink?:    string | null
+  location?:     string | null
+  notes?:        string | null
+  isReminder?:   boolean
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  video:  'Visioconférence',
+  phone:  'Entretien téléphonique',
+  onsite: 'Entretien présentiel',
+}
+
+const TYPE_COLOR: Record<string, string> = {
+  video:  C.violetSoft,
+  phone:  C.yellowSoft,
+  onsite: C.greenSoft,
+}
+
+export function interviewInviteEmail(
+  data: InterviewEmailData,
+  recipient: 'candidate' | 'recruiter'
+): { subject: string; html: string } {
+  const isCandidate = recipient === 'candidate'
+
+  const subject = data.isReminder
+    ? `Rappel — Entretien demain : ${data.jobTitle} chez ${data.companyName}`
+    : isCandidate
+      ? `Entretien planifié — ${data.jobTitle} chez ${data.companyName}`
+      : `Entretien confirmé — ${data.candidateName} pour ${data.jobTitle}`
+
+  const headerBg = data.isReminder ? C.yellow : C.orange
+
+  const visioBlock = data.visioLink ? `
+    <tr>
+      <td style="padding:0 32px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+          style="background-color:${C.violetSoft};border:2px solid ${C.ink};border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="padding:20px;text-align:center;">
+              <p style="margin:0 0 12px;font-size:12px;font-weight:700;color:${C.mute};
+                text-transform:uppercase;letter-spacing:0.07em;font-family:Arial,sans-serif;">
+                Lien de connexion
+              </p>
+              ${ctaButton('Rejoindre la visioconférence', data.visioLink, C.violet, '#FFFFFF')}
+              <p style="margin:10px 0 0;font-size:10px;color:${C.mute};word-break:break-all;font-family:Arial,sans-serif;">
+                ${data.visioLink}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>` : ''
+
+  const locationBlock = data.location ? `
+    <tr>
+      <td style="padding:0 32px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+          style="background-color:${C.cream2};border:1.5px solid ${C.line};border-radius:10px;">
+          <tr>
+            <td style="padding:12px 16px;">
+              <span style="font-size:12px;font-weight:700;color:${C.mute};font-family:Arial,sans-serif;">Lieu :</span>
+              <span style="font-size:13px;font-weight:600;color:${C.ink};margin-left:6px;font-family:Arial,sans-serif;">${data.location}</span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>` : ''
+
+  const notesBlock = data.notes ? `
+    <tr>
+      <td style="padding:0 32px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+          style="background-color:${C.paper};border:1.5px dashed ${C.line};border-radius:10px;">
+          <tr>
+            <td style="padding:14px 16px;">
+              <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:${C.mute};
+                text-transform:uppercase;letter-spacing:0.06em;font-family:Arial,sans-serif;">
+                Notes du recruteur
+              </p>
+              <p style="margin:0;font-size:13px;color:${C.ink};line-height:1.55;font-family:Arial,sans-serif;">${data.notes}</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>` : ''
+
+  const ctaHref = isCandidate
+    ? 'https://kazajob.re/candidate/agenda'
+    : 'https://kazajob.re/recruiter/agenda'
+
+  const body = `
+    <!-- Badge type -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:24px 32px 16px;">
+          ${chip(TYPE_LABEL[data.type] + (data.isReminder ? ' — Rappel J-1' : ''), TYPE_COLOR[data.type])}
+        </td>
+      </tr>
+
+      <!-- Titre -->
+      <tr>
+        <td style="padding:0 32px 8px;">
+          <h1 style="margin:0;font-size:28px;font-weight:900;color:${C.ink};
+            letter-spacing:-0.03em;line-height:1.1;font-family:Arial,sans-serif;">
+            ${data.isReminder ? 'Votre entretien<br>est demain !' : 'Entretien<br>planifié !'}
+          </h1>
+        </td>
+      </tr>
+
+      <!-- Intro -->
+      <tr>
+        <td style="padding:12px 32px 20px;">
+          <p style="margin:0;font-size:14px;color:#2A2018;line-height:1.6;font-family:Arial,sans-serif;">
+            ${isCandidate
+              ? `Bonjour <strong style="color:${C.ink};">${data.candidateName}</strong>,<br><br>
+                 <strong style="color:${C.ink};">${data.recruiterName}</strong> de
+                 <strong style="color:${C.orange};">${data.companyName}</strong>
+                 a planifié un entretien avec vous pour le poste de
+                 <strong style="color:${C.ink};">${data.jobTitle}</strong>.`
+              : `Bonjour <strong style="color:${C.ink};">${data.recruiterName}</strong>,<br><br>
+                 Votre entretien avec <strong style="color:${C.orange};">${data.candidateName}</strong>
+                 pour le poste <strong style="color:${C.ink};">${data.jobTitle}</strong> est confirmé.`}
+          </p>
+        </td>
+      </tr>
+
+      <!-- Carte détails -->
+      <tr>
+        <td style="padding:0 32px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="background-color:white;border:2px solid ${C.ink};border-radius:12px;overflow:hidden;">
+            ${detailRow('Date', formatDate(data.scheduledAt))}
+            ${detailRow('Heure', formatTime(data.scheduledAt))}
+            ${detailRow('Durée', `${data.durationMin} minutes`)}
+            ${detailRow('Poste', data.jobTitle)}
+            ${detailRow('Entreprise', data.companyName)}
+            <tr><td colspan="2" style="height:1px;"></td></tr>
+          </table>
+        </td>
+      </tr>
+
+      ${visioBlock}
+      ${locationBlock}
+      ${notesBlock}
+
+      <!-- CTA principal -->
+      <tr>
+        <td style="padding:4px 32px 28px;text-align:center;">
+          ${ctaButton('Voir dans Kazajob', ctaHref)}
+        </td>
+      </tr>
+    </table>`
+
+  return { subject, html: shell(headerBg, body) }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 2 — Candidature retirée (pour le recruteur)
+// ══════════════════════════════════════════════════════════════════
 
 export function applicationWithdrawnEmail(data: {
   recruiterName: string
   candidateName: string
-  jobTitle: string
+  jobTitle:      string
 }): { subject: string; html: string } {
   const subject = `Candidature retirée — ${data.candidateName} pour ${data.jobTitle}`
-  const html = `
-<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#F2E4D0;font-family:system-ui,sans-serif;">
-  <div style="max-width:560px;margin:32px auto;background:#FFF7EE;border:1.5px solid #1A1410;border-radius:16px;overflow:hidden;box-shadow:5px 5px 0 #1A1410;">
-    <div style="background:#FF6B35;padding:24px 32px;">
-      <div style="font-size:20px;font-weight:800;color:#1A1410;">kazajob</div>
-    </div>
-    <div style="padding:28px 32px;">
-      <h2 style="font-size:22px;font-weight:800;color:#1A1410;margin:0 0 12px;">Candidature retirée</h2>
-      <p style="font-size:14px;color:#2A2018;line-height:1.55;">
-        Bonjour <strong>${data.recruiterName}</strong>,<br><br>
-        <strong>${data.candidateName}</strong> a retiré sa candidature pour le poste de <strong>${data.jobTitle}</strong>.
-      </p>
-      <p style="font-size:13px;color:#6B5A4A;margin-top:16px;">
-        Le candidat a décidé de ne pas poursuivre le processus. Vous pouvez explorer d'autres candidats pour ce poste.
-      </p>
-      <div style="text-align:center;margin-top:24px;">
-        <a href="https://kazajob.re/recruiter/applications" style="display:inline-block;background:#FF6B35;color:#1A1410;font-weight:800;font-size:14px;padding:12px 28px;border-radius:10px;border:1.5px solid #1A1410;text-decoration:none;box-shadow:3px 3px 0 #1A1410;">
-          Voir mes candidatures →
-        </a>
-      </div>
-    </div>
-    <div style="padding:12px 32px;border-top:1px solid #E8DDC9;font-size:11px;color:#6B5A4A;text-align:center;">
-      Kazajob SAS · Saint-Denis, La Réunion 974 · <a href="https://kazajob.re" style="color:#FF6B35;text-decoration:none;">kazajob.re</a>
-    </div>
-  </div>
-</body></html>`
-  return { subject, html }
+
+  const body = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:24px 32px 16px;">
+          ${chip('Candidature retirée', C.orangeSoft)}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 12px;">
+          <h1 style="margin:0;font-size:26px;font-weight:900;color:${C.ink};
+            letter-spacing:-0.03em;font-family:Arial,sans-serif;">
+            Un candidat<br>s&apos;est retiré.
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 32px 20px;">
+          <p style="margin:0;font-size:14px;color:#2A2018;line-height:1.6;font-family:Arial,sans-serif;">
+            Bonjour <strong style="color:${C.ink};">${data.recruiterName}</strong>,<br><br>
+            <strong style="color:${C.orange};">${data.candidateName}</strong>
+            a décidé de retirer sa candidature pour le poste de
+            <strong style="color:${C.ink};">${data.jobTitle}</strong>.<br><br>
+            D&apos;autres candidats ont postulé — explorez le pipeline pour trouver votre perle rare.
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="background-color:${C.cream2};border:1.5px solid ${C.line};border-radius:10px;">
+            ${detailRow('Candidat', data.candidateName)}
+            ${detailRow('Poste', data.jobTitle)}
+            <tr><td colspan="2" style="height:1px;"></td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 32px 28px;text-align:center;">
+          ${ctaButton('Voir mes candidatures', 'https://kazajob.re/recruiter/applications')}
+        </td>
+      </tr>
+    </table>`
+
+  return { subject, html: shell(C.orange, body) }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 3 — Changement de statut candidature (pour le candidat)
+// ══════════════════════════════════════════════════════════════════
+
+export type ApplicationStatus = 'viewed' | 'interview' | 'offer' | 'hired' | 'rejected'
+
+const STATUS_CONFIG: Record<ApplicationStatus, {
+  label: string; headline: string; msg: string; bg: string; chipBg: string
+}> = {
+  viewed: {
+    label:    'CV consulté',
+    headline: 'Votre CV a été consulté !',
+    msg:      'Bonne nouvelle — un recruteur a regardé votre candidature. Restez disponible, la suite arrive bientôt.',
+    bg:       C.orange,
+    chipBg:   C.yellowSoft,
+  },
+  interview: {
+    label:    'Entretien planifié',
+    headline: 'Entretien planifié !',
+    msg:      'Félicitations ! Votre profil a retenu l&apos;attention. Rendez-vous dans votre agenda pour les détails.',
+    bg:       C.violet,
+    chipBg:   C.violetSoft,
+  },
+  offer: {
+    label:    'Offre reçue',
+    headline: 'Vous avez une offre !',
+    msg:      'Incroyable — vous avez reçu une offre d&apos;emploi. Connectez-vous pour consulter les détails et répondre.',
+    bg:       C.green,
+    chipBg:   C.greenSoft,
+  },
+  hired: {
+    label:    'Embauche confirmée',
+    headline: 'Félicitations, vous êtes embauché(e) !',
+    msg:      'C&apos;est officiel ! Toute l&apos;équipe Kazajob vous félicite. Bonne continuation dans ce nouveau chapitre.',
+    bg:       C.green,
+    chipBg:   C.greenSoft,
+  },
+  rejected: {
+    label:    'Candidature non retenue',
+    headline: 'Ne lâchez rien.',
+    msg:      'Votre candidature n&apos;a pas été retenue cette fois-ci. D&apos;autres opportunités vous attendent sur Kazajob 974.',
+    bg:       '#6B5A4A',
+    chipBg:   C.cream2,
+  },
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 4 — Email de bienvenue
+// ══════════════════════════════════════════════════════════════════
+
+export function welcomeEmail(data: {
+  fullName: string
+  role: 'candidate' | 'recruiter'
+}): { subject: string; html: string } {
+  const isCandidate = data.role === 'candidate'
+  const subject = `Bienvenue sur Kazajob 974, ${data.fullName.split(' ')[0]} !`
+  const headerBg = isCandidate ? C.orange : C.violet
+  const dashboardUrl = isCandidate
+    ? 'https://kazajob.re/candidate/dashboard'
+    : 'https://kazajob.re/recruiter/company-setup'
+
+  const stepsCandidate = `
+    ${stepBlock('1', 'Complète ton profil', 'Photo, CV, compétences — un profil complet est vu 3× plus.', C.orangeSoft)}
+    ${stepBlock('2', 'Explore les offres', 'Des centaines d\'offres locales, filtrées pour toi.', C.yellowSoft)}
+    ${stepBlock('3', 'Postule en 1 clic', 'Lettre de motivation générée par KazaIA en 5 secondes.', C.violetSoft)}`
+
+  const stepsRecruiter = `
+    ${stepBlock('1', 'Configurez votre entreprise', 'Logo, raison sociale, équipe — 3 minutes chrono.', C.violetSoft)}
+    ${stepBlock('2', 'Publiez votre première offre', 'Multi-diffusion automatique sur France Travail et plus.', C.orangeSoft)}
+    ${stepBlock('3', 'Gérez votre pipeline', 'KazaScore, entretiens, analytics — tout en un.', C.greenSoft)}`
+
+  const body = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:28px 32px 16px;">
+          <h1 style="margin:0;font-size:30px;font-weight:900;color:${C.ink};
+            letter-spacing:-0.03em;line-height:1.1;font-family:Arial,sans-serif;">
+            Bienvenue<br>sur Kazajob !
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 32px 24px;">
+          <p style="margin:0;font-size:14px;color:#2A2018;line-height:1.6;font-family:Arial,sans-serif;">
+            Bonjour <strong style="color:${C.ink};">${data.fullName}</strong>,<br><br>
+            ${isCandidate
+              ? 'Votre compte candidat est créé. Kazajob connecte les talents réunionnais aux meilleures opportunités locales — avec un peu d\'IA et beaucoup de soleil.'
+              : 'Votre compte recruteur est créé. Commencez par configurer votre espace entreprise pour publier vos offres et accéder au vivier de talents 974.'}
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 8px;">
+          <p style="margin:0;font-size:12px;font-weight:700;color:${C.mute};text-transform:uppercase;
+            letter-spacing:0.07em;font-family:Arial,sans-serif;">Par où commencer ?</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 32px 24px;">
+          ${isCandidate ? stepsCandidate : stepsRecruiter}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 28px;text-align:center;">
+          ${ctaButton(
+            isCandidate ? 'Accéder à mon espace' : 'Configurer mon entreprise',
+            dashboardUrl,
+            isCandidate ? C.orange : C.violet,
+            isCandidate ? C.ink : '#FFFFFF'
+          )}
+        </td>
+      </tr>
+    </table>`
+
+  return { subject, html: shell(headerBg, body) }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 5 — Nouvelle candidature (pour le recruteur)
+// ══════════════════════════════════════════════════════════════════
+
+export function newApplicationEmail(data: {
+  recruiterName:  string
+  candidateName:  string
+  candidateEmail: string
+  jobTitle:       string
+  companyName:    string
+  applicationId:  string
+  hasCoverLetter: boolean
+}): { subject: string; html: string } {
+  const subject = `Nouvelle candidature — ${data.candidateName} pour ${data.jobTitle}`
+
+  const body = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:24px 32px 16px;">
+          ${chip('Nouvelle candidature', C.greenSoft)}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 12px;">
+          <h1 style="margin:0;font-size:26px;font-weight:900;color:${C.ink};
+            letter-spacing:-0.03em;line-height:1.15;font-family:Arial,sans-serif;">
+            Vous avez un<br>nouveau candidat !
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 32px 20px;">
+          <p style="margin:0;font-size:14px;color:#2A2018;line-height:1.6;font-family:Arial,sans-serif;">
+            Bonjour <strong style="color:${C.ink};">${data.recruiterName}</strong>,<br><br>
+            <strong style="color:${C.orange};">${data.candidateName}</strong> vient de postuler
+            pour le poste de <strong style="color:${C.ink};">${data.jobTitle}</strong>
+            ${data.hasCoverLetter ? 'avec une lettre de motivation.' : 'sans lettre de motivation.'}
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="background-color:white;border:2px solid ${C.ink};border-radius:12px;overflow:hidden;">
+            ${detailRow('Candidat', data.candidateName)}
+            ${detailRow('Email', data.candidateEmail)}
+            ${detailRow('Poste', data.jobTitle)}
+            ${detailRow('Lettre de motivation', data.hasCoverLetter ? 'Oui' : 'Non')}
+            <tr><td colspan="2" style="height:1px;"></td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 32px 28px;text-align:center;">
+          ${ctaButton('Voir la candidature', `https://kazajob.re/recruiter/applications`)}
+        </td>
+      </tr>
+    </table>`
+
+  return { subject, html: shell(C.green, body) }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 6 — Alerte emploi (digest de nouvelles offres)
+// ══════════════════════════════════════════════════════════════════
+
+export interface JobAlertItem {
+  id:        string
+  title:     string
+  company:   string
+  location:  string
+  job_type:  string
+  salary:    string | null
+}
+
+export function jobAlertEmail(data: {
+  candidateName: string
+  jobs:          JobAlertItem[]
+  frequency:     'instant' | 'daily' | 'weekly'
+}): { subject: string; html: string } {
+  const count   = data.jobs.length
+  const period  = data.frequency === 'weekly' ? 'cette semaine' : 'aujourd\'hui'
+  const subject = `${count} nouvelle${count > 1 ? 's' : ''} offre${count > 1 ? 's' : ''} pour vous — Kazajob 974`
+
+  const jobRows = data.jobs.slice(0, 5).map(job => `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="background-color:white;border:1.5px solid ${C.line};border-radius:10px;margin-bottom:8px;">
+      <tr>
+        <td style="padding:14px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="width:40px;height:40px;background-color:${C.orangeSoft};border:1.5px solid ${C.ink};
+                border-radius:8px;text-align:center;vertical-align:middle;font-size:12px;font-weight:900;
+                color:${C.ink};font-family:Arial,sans-serif;">${job.company.slice(0,2).toUpperCase()}</td>
+              <td style="padding-left:12px;">
+                <p style="margin:0 0 2px;font-size:13px;font-weight:800;color:${C.ink};font-family:Arial,sans-serif;">${job.title}</p>
+                <p style="margin:0;font-size:11px;color:${C.mute};font-family:Arial,sans-serif;">
+                  ${job.company} &middot; ${job.location} &middot; ${job.job_type}
+                  ${job.salary ? ` &middot; ${job.salary}` : ''}
+                </p>
+              </td>
+              <td style="padding-left:8px;text-align:right;white-space:nowrap;">
+                <a href="https://kazajob.re/candidate/jobs/${job.id}"
+                  style="display:inline-block;background-color:${C.orangeSoft};border:1.5px solid ${C.ink};
+                  border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;color:${C.ink};
+                  text-decoration:none;font-family:Arial,sans-serif;">Voir &rarr;</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`).join('')
+
+  const body = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:24px 32px 16px;">
+          ${chip(`${count} nouvelle${count > 1 ? 's' : ''} offre${count > 1 ? 's' : ''} ${period}`, C.violetSoft, C.violet)}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 12px;">
+          <h1 style="margin:0;font-size:26px;font-weight:900;color:${C.ink};
+            letter-spacing:-0.03em;line-height:1.15;font-family:Arial,sans-serif;">
+            Des offres fraîches<br>rien que pour vous.
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 32px 20px;">
+          <p style="margin:0;font-size:14px;color:#2A2018;line-height:1.6;font-family:Arial,sans-serif;">
+            Bonjour <strong style="color:${C.ink};">${data.candidateName}</strong>,<br><br>
+            Voici les nouvelles offres publiées ${period} sur Kazajob 974.
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 20px;">
+          ${jobRows}
+          ${count > 5 ? `<p style="text-align:center;font-size:12px;color:${C.mute};margin:8px 0 0;font-family:Arial,sans-serif;">
+            + ${count - 5} autres offres disponibles sur Kazajob</p>` : ''}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 32px 28px;text-align:center;">
+          ${ctaButton('Voir toutes les offres', 'https://kazajob.re/candidate/jobs', C.violet, '#FFFFFF')}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 16px;">
+          <p style="margin:0;font-size:11px;color:${C.mute};text-align:center;font-family:Arial,sans-serif;">
+            Vous recevez ces alertes car vous les avez activées dans vos
+            <a href="https://kazajob.re/candidate/settings" style="color:${C.orange};text-decoration:none;">paramètres</a>.
+            Pour les désactiver, rendez-vous dans Paramètres → Alertes email.
+          </p>
+        </td>
+      </tr>
+    </table>`
+
+  return { subject, html: shell(C.violet, body) }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 7 — Nouveau message
+// ══════════════════════════════════════════════════════════════════
+
+export function newMessageEmail(data: {
+  recipientName: string
+  senderName:    string
+  messagePreview: string
+  jobTitle?:     string
+  role:          'candidate' | 'recruiter'
+}): { subject: string; html: string } {
+  const subject = `Nouveau message de ${data.senderName} — Kazajob`
+  const link = data.role === 'candidate'
+    ? 'https://kazajob.re/candidate/messages'
+    : 'https://kazajob.re/recruiter/messages'
+
+  const preview = data.messagePreview.length > 120
+    ? data.messagePreview.slice(0, 120) + '…'
+    : data.messagePreview
+
+  const body = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:24px 32px 16px;">
+          ${chip('Nouveau message', C.violetSoft)}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 12px;">
+          <h1 style="margin:0;font-size:26px;font-weight:900;color:${C.ink};
+            letter-spacing:-0.03em;line-height:1.15;font-family:Arial,sans-serif;">
+            ${data.senderName}<br>vous a écrit.
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 32px 20px;">
+          <p style="margin:0;font-size:14px;color:#2A2018;line-height:1.6;font-family:Arial,sans-serif;">
+            Bonjour <strong style="color:${C.ink};">${data.recipientName}</strong>,
+            ${data.jobTitle ? `<br>concernant le poste <strong style="color:${C.orange};">${data.jobTitle}</strong>` : ''}
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="background-color:${C.cream2};border:1.5px dashed ${C.line};border-radius:10px;">
+            <tr>
+              <td style="padding:16px;">
+                <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:${C.mute};
+                  text-transform:uppercase;letter-spacing:0.06em;font-family:Arial,sans-serif;">
+                  Aperçu du message
+                </p>
+                <p style="margin:0;font-size:14px;color:${C.ink};line-height:1.6;
+                  font-style:italic;font-family:Arial,sans-serif;">&ldquo;${preview}&rdquo;</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 32px 28px;text-align:center;">
+          ${ctaButton('Répondre dans Kazajob', link)}
+        </td>
+      </tr>
+    </table>`
+
+  return { subject, html: shell(C.orange, body) }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 8 — Demande de rejoindre une équipe (pour l'owner)
+// ══════════════════════════════════════════════════════════════════
+
+export function joinRequestEmail(data: {
+  ownerName:      string
+  companyName:    string
+  requesterName:  string
+  requesterEmail: string
+  message?:       string | null
+}): { subject: string; html: string } {
+  const subject = `${data.requesterName} souhaite rejoindre ${data.companyName} sur Kazajob`
+
+  const body = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:24px 32px 16px;">
+          ${chip("Demande d'adhésion", C.violetSoft, C.violet)}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 12px;">
+          <h1 style="margin:0;font-size:24px;font-weight:900;color:${C.ink};
+            letter-spacing:-0.03em;line-height:1.15;font-family:Arial,sans-serif;">
+            Quelqu&rsquo;un veut<br>rejoindre votre équipe.
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 32px 20px;">
+          <p style="margin:0;font-size:14px;color:#2A2018;line-height:1.6;font-family:Arial,sans-serif;">
+            Bonjour <strong style="color:${C.ink};">${data.ownerName}</strong>,<br><br>
+            <strong style="color:${C.orange};">${data.requesterName}</strong> souhaite rejoindre
+            l&apos;espace recruteur de <strong style="color:${C.ink};">${data.companyName}</strong>.
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="background-color:white;border:2px solid ${C.ink};border-radius:12px;overflow:hidden;">
+            ${detailRow('Demandeur', data.requesterName)}
+            ${detailRow('Email', data.requesterEmail)}
+            ${data.message ? detailRow('Message', data.message) : ''}
+            <tr><td colspan="2" style="height:1px;"></td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 32px 28px;text-align:center;">
+          ${ctaButton("Gérer l'équipe", 'https://kazajob.re/recruiter/company/team', C.violet, '#FFFFFF')}
+        </td>
+      </tr>
+    </table>`
+
+  return { subject, html: shell(C.violet, body) }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 9 — Réponse à une demande d'adhésion
+// ══════════════════════════════════════════════════════════════════
+
+export function joinResponseEmail(data: {
+  recruiterName: string
+  companyName:   string
+  approved:      boolean
+}): { subject: string; html: string } {
+  const subject = data.approved
+    ? `Vous avez rejoint ${data.companyName} sur Kazajob !`
+    : `Votre demande pour ${data.companyName} n'a pas été acceptée`
+
+  const body = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:24px 32px 16px;">
+          ${chip(data.approved ? 'Demande acceptée' : 'Demande refusée',
+            data.approved ? C.greenSoft : C.cream2,
+            data.approved ? C.green : C.mute)}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 12px;">
+          <h1 style="margin:0;font-size:26px;font-weight:900;color:${C.ink};
+            letter-spacing:-0.03em;line-height:1.15;font-family:Arial,sans-serif;">
+            ${data.approved
+              ? `Bienvenue dans<br>l&rsquo;équipe !`
+              : `Votre demande<br>n&rsquo;a pas abouti.`}
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 32px 20px;">
+          <p style="margin:0;font-size:14px;color:#2A2018;line-height:1.6;font-family:Arial,sans-serif;">
+            Bonjour <strong style="color:${C.ink};">${data.recruiterName}</strong>,<br><br>
+            ${data.approved
+              ? `Votre demande pour rejoindre <strong style="color:${C.orange};">${data.companyName}</strong> a été <strong>acceptée</strong>. Vous avez maintenant accès à l&apos;espace recruteur de l&apos;entreprise.`
+              : `Votre demande pour rejoindre <strong style="color:${C.orange};">${data.companyName}</strong> n&apos;a pas été acceptée. Vous pouvez contacter directement l&apos;administrateur ou chercher une autre entreprise.`}
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 32px 28px;text-align:center;">
+          ${data.approved
+            ? ctaButton("Accéder à l'espace entreprise", 'https://kazajob.re/recruiter/company', C.green, '#FFFFFF')
+            : ctaButton("Chercher une entreprise", 'https://kazajob.re/recruiter/company-setup')}
+        </td>
+      </tr>
+    </table>`
+
+  return { subject, html: shell(data.approved ? C.green : '#6B5A4A', body) }
+}
+
+export function applicationStatusEmail(data: {
+  candidateName: string
+  jobTitle:      string
+  companyName:   string
+  status:        ApplicationStatus
+}): { subject: string; html: string } {
+  const conf = STATUS_CONFIG[data.status]
+
+  const subject = data.status === 'hired'
+    ? `Kazajob — Félicitations ! Vous êtes embauché(e) chez ${data.companyName}`
+    : `Kazajob — ${conf.label} : ${data.jobTitle} chez ${data.companyName}`
+
+  const body = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:24px 32px 16px;">
+          ${chip(conf.label, conf.chipBg)}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 12px;">
+          <h1 style="margin:0;font-size:26px;font-weight:900;color:${C.ink};
+            letter-spacing:-0.03em;line-height:1.15;font-family:Arial,sans-serif;">
+            ${conf.headline}
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 32px 20px;">
+          <p style="margin:0;font-size:14px;color:#2A2018;line-height:1.6;font-family:Arial,sans-serif;">
+            Bonjour <strong style="color:${C.ink};">${data.candidateName}</strong>,<br><br>
+            ${conf.msg}
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="background-color:white;border:2px solid ${C.ink};border-radius:12px;overflow:hidden;">
+            ${detailRow('Poste', data.jobTitle)}
+            ${detailRow('Entreprise', data.companyName)}
+            ${detailRow('Statut', conf.label)}
+            <tr><td colspan="2" style="height:1px;"></td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 32px 28px;text-align:center;">
+          ${ctaButton('Voir ma candidature', 'https://kazajob.re/candidate/applications')}
+        </td>
+      </tr>
+    </table>`
+
+  return { subject, html: shell(conf.bg, body) }
 }

@@ -70,6 +70,13 @@ export default function CompanyTeamPage() {
         .update({ status: 'rejected', reviewed_by: profile.id })
         .eq('id', req.id)
     }
+    // Notifier le demandeur par email (fire & forget)
+    fetch('/api/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'join_response', requestId: req.id, approved: approve }),
+    }).catch(() => {})
+
     await fetchAll()
     setProcessingId(null)
   }

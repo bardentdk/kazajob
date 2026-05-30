@@ -100,6 +100,13 @@ export function useMessages(conversationId?: string, currentUserId?: string) {
       .from('conversations')
       .update({ last_message_at: new Date().toISOString() })
       .eq('id', conversationId)
+
+    // Email notification au destinataire (fire & forget)
+    fetch('/api/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'new_message', conversationId, senderId: currentUserId }),
+    }).catch(() => {})
   }, [conversationId, currentUserId, supabase])
 
   return { messages, loading, sendMessage, bottomRef }
