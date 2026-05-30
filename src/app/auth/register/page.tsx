@@ -32,7 +32,15 @@ function RegisterForm() {
     setError('')
     const { error: err } = await signUp(email, password, fullName, role)
     if (err) {
-      setError('Une erreur est survenue. Verifie tes informations.')
+      if (err.includes('fetch') || err.includes('network') || err.includes('Failed')) {
+        setError('Connexion impossible au serveur. Vérifie ta connexion internet et réessaie.')
+      } else if (err.includes('already registered') || err.includes('already been registered')) {
+        setError('Cet email est déjà utilisé. Connecte-toi ou utilise un autre email.')
+      } else if (err.includes('Password')) {
+        setError('Le mot de passe doit contenir au moins 8 caractères.')
+      } else {
+        setError('Une erreur est survenue. Vérifie tes informations et réessaie.')
+      }
       setLoading(false)
     } else {
       // Email de bienvenue (fire & forget)

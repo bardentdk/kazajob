@@ -24,6 +24,8 @@ export interface Profile {
   boosted_until: string | null
   referral_code: string | null
   company_id: string | null
+  gamification_enabled: boolean
+  avatar_config: Record<string, string> | null
   created_at: string
   updated_at: string
 }

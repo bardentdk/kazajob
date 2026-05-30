@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Bell, Mail, Sparkles, Shield, CheckCheck } from 'lucide-react'
+import { Bell, Mail, Sparkles, Shield, CheckCheck, Gamepad2 } from 'lucide-react'
+import { useGamification } from '@/features/gamification/useGamification'
+import { useApplications } from '@/features/applications/useApplications'
+import { useFavorites } from '@/features/favorites/useFavorites'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/features/auth/useAuth'
@@ -45,6 +48,9 @@ export default function CandidateSettingsPage() {
   const supabase = createClient()
   const [saving, setSaving] = useState<string | null>(null)
   const [saved, setSaved] = useState<string | null>(null)
+  const { applications } = useApplications(profile?.id)
+  const { favorites } = useFavorites(profile?.id)
+  const gami = useGamification(profile, applications.length, favorites.length)
 
   const [settings, setSettings] = useState({
     email_alerts_enabled:  true,
@@ -189,6 +195,73 @@ export default function CandidateSettingsPage() {
           )}
         </div>
       )}
+
+      {/* Expérience — Gamification */}
+      <div className="kz-card bg-white mb-5">
+        <div className="px-6 py-4 border-b border-[#E8DDC9] flex items-center gap-2" style={{ background: KZ.violetSoft }}>
+          <Gamepad2 size={16} style={{ color: KZ.violet }} />
+          <span className="text-sm font-bold text-[#1A1410]">Expérience &amp; Gamification</span>
+          <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#1A1410]"
+            style={{ background: KZ.violet, color: 'white' }}>BETA</span>
+        </div>
+        <div className="px-6 py-5">
+          {/* Toggle principal */}
+          <div className="flex items-start gap-4 mb-5">
+            <div className="w-9 h-9 rounded-xl border border-[#E8DDC9] flex items-center justify-center shrink-0"
+              style={{ background: KZ.violetSoft, color: KZ.violet }}>
+              <Gamepad2 size={18} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-sm font-bold text-[#1A1410]">Mode Quête actif</span>
+                {gami.enabled && <Badge color="violet" size="sm">ON</Badge>}
+              </div>
+              <p className="text-xs text-[#6B5A4A] leading-relaxed">
+                Transforme ton tableau de bord en jeu de quêtes — niveaux, XP, défis à accomplir.
+                Désactive pour retrouver l&apos;interface classique.
+              </p>
+            </div>
+            <Toggle
+              checked={gami.enabled}
+              onChange={() => gami.toggle()}
+              disabled={saving === 'gami'}
+            />
+          </div>
+
+          {/* Aperçu du niveau quand actif */}
+          {gami.enabled && (
+            <div
+              className="rounded-xl border-2 border-[#1A1410] p-4"
+              style={{ background: '#1A1410', boxShadow: '3px 3px 0 ' + gami.level.color }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{gami.level.emoji}</span>
+                  <div>
+                    <div className="text-[10px] opacity-60 font-bold" style={{ color: KZ.cream }}>TON NIVEAU</div>
+                    <div className="text-sm font-extrabold" style={{ color: gami.level.color }}>{gami.level.title}</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-base font-extrabold" style={{ color: KZ.cream }}>
+                    {gami.xp.toLocaleString('fr-FR')} XP
+                  </div>
+                  <div className="text-[10px] opacity-50" style={{ color: KZ.cream }}>
+                    {gami.doneQuests.length}/{gami.quests.length} quêtes accomplies
+                  </div>
+                </div>
+              </div>
+              {/* Mini barre XP */}
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${gami.xpProgress}%`, background: gami.level.color }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Confidentialité */}
       <div className="kz-card bg-white">

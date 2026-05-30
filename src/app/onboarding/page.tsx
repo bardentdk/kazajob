@@ -2,20 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, ArrowLeft, Check, Sparkles, FileText } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Check, Sparkles, FileText, Gamepad2, Star, Flame } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Progress } from '@/components/ui/Progress'
 import { Badge } from '@/components/ui/Badge'
 import { Logo } from '@/components/layout/Logo'
+import { AvatarBuilder } from '@/components/ui/AvatarBuilder'
 import { useAuth } from '@/features/auth/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import { PROFESSION_CATEGORIES } from '@/lib/onboarding-categories'
 import { KZ } from '@/lib/constants'
 import { Soleil, Palme, Hibiscus } from '@/components/illustrations/Tropical'
+import { type AvatarConfig, buildAvatarUrl } from '@/lib/avatar'
 
-const TOTAL_STEPS = 4
+const TOTAL_STEPS = 6  // +2 : Avatar (étape 2) + Gamification Welcome (étape 6)
 
 export default function OnboardingPage() {
   const { profile, refetch } = useAuth()
@@ -28,7 +30,9 @@ export default function OnboardingPage() {
   const [location, setLocation] = useState('')
   const [phone, setPhone] = useState('')
   const [bio, setBio] = useState('')
+  const [avatarConfig, setAvatarConfig] = useState<AvatarConfig | null>(null)
   const [saving, setSaving] = useState(false)
+  const [savingAvatar, setSavingAvatar] = useState(false)
 
   useEffect(() => {
     if (profile) {
@@ -56,19 +60,30 @@ export default function OnboardingPage() {
   const selectedCategories = PROFESSION_CATEGORIES.filter(c => selected.includes(c.id))
   const suggestedSkills = [...new Set(selectedCategories.flatMap(c => c.skills))].slice(0, 8)
 
+  const handleSaveAvatar = async (config: AvatarConfig) => {
+    if (!profile) return
+    setSavingAvatar(true)
+    setAvatarConfig(config)
+    await supabase.from('profiles')
+      .update({ avatar_config: config, updated_at: new Date().toISOString() })
+      .eq('id', profile.id)
+    setSavingAvatar(false)
+    setStep(3) // → Profil info
+  }
+
   const handleFinish = async () => {
     if (!profile) return
     setSaving(true)
-
-    const primaryCat = PROFESSION_CATEGORIES.find(c => c.id === selected[0])
 
     await supabase.from('profiles').update({
       full_name: fullName,
       location,
       phone,
       bio,
-      avatar_category:   selected[0] ?? null,
-      avatar_categories: selected,
+      avatar_category:      selected[0] ?? null,
+      avatar_categories:    selected,
+      avatar_config:        avatarConfig ?? null,
+      gamification_enabled: true,
       onboarding_completed: true,
       updated_at: new Date().toISOString(),
     }).eq('id', profile.id)
@@ -93,12 +108,11 @@ export default function OnboardingPage() {
 
     await refetch?.()
     setSaving(false)
-    router.push('/onboarding/cv-builder')
+    setStep(6) // → Gamification Welcome avant le CV builder
   }
 
   const canNext = step === 1 ? selected.length > 0
-    : step === 2 ? fullName.trim().length > 0
-    : step === 3 ? true
+    : step === 3 ? fullName.trim().length > 0
     : true
 
   return (
@@ -181,8 +195,41 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── Étape 2 : Infos de base ─────────────────────────── */}
+          {/* ── Étape 2 : Avatar Builder ────────────────────────── */}
           {step === 2 && (
+            <div className="animate-slide-up max-w-[560px] mx-auto">
+              <div className="text-center mb-6">
+                <Badge color="orange" size="lg" className="mb-4">Étape 2 — Ton avatar</Badge>
+                <h1 className="text-3xl lg:text-[38px] font-extrabold tracking-tight text-[#1A1410] mb-2">
+                  Crée ton<br />
+                  <span style={{ color: KZ.orange }}>personnage</span>
+                </h1>
+                <p className="text-sm text-[#6B5A4A] max-w-[400px] mx-auto">
+                  Personnalise ton avatar. Il représente qui tu es — sans photo, sans discrimination.
+                </p>
+              </div>
+              <div className="kz-card p-6 bg-white">
+                <AvatarBuilder
+                  initialConfig={avatarConfig}
+                  onSave={handleSaveAvatar}
+                  saving={savingAvatar}
+                  compact
+                />
+              </div>
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => setStep(3)}
+                  className="text-sm text-[#6B5A4A] font-semibold hover:text-[#1A1410] underline"
+                >
+                  Passer cette étape →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Étape 3 : Infos de base ─────────────────────────── */}
+          {step === 3 && (
             <div className="animate-slide-up max-w-[500px] mx-auto">
               <div className="text-center mb-8">
                 <Badge color="orange" size="lg" className="mb-4">Étape 2 — Tes infos</Badge>
@@ -224,8 +271,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── Étape 3 : Compétences suggérées ─────────────────── */}
-          {step === 3 && (
+          {/* ── Étape 4 : Compétences suggérées ─────────────────── */}
+          {step === 4 && (
             <div className="animate-slide-up max-w-[540px] mx-auto">
               <div className="text-center mb-8">
                 <Badge color="green" size="lg" className="mb-4">Étape 3 — Tes compétences</Badge>
@@ -277,8 +324,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── Étape 4 : Génération CV ──────────────────────────── */}
-          {step === 4 && (
+          {/* ── Étape 5 : Bio + Finish ───────────────────────────── */}
+          {step === 5 && (
             <div className="animate-slide-up max-w-[500px] mx-auto text-center">
               <div className="mb-8">
                 <Badge color="violet" size="lg" className="mb-4">Étape 4 — Ton CV</Badge>
@@ -323,14 +370,78 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Navigation */}
+          {/* ── Étape 6 : Gamification Welcome ──────────────────── */}
+          {step === 6 && (
+            <div className="animate-slide-up max-w-[520px] mx-auto text-center">
+              <div className="text-6xl mb-4">🎮</div>
+              <Badge color="violet" size="lg" className="mb-4">Mode Quête activé !</Badge>
+              <h1 className="text-3xl lg:text-[38px] font-extrabold tracking-tight text-[#1A1410] mb-3">
+                L&apos;aventure<br />
+                <span style={{ color: KZ.violet }}>commence !</span>
+              </h1>
+              <p className="text-sm text-[#6B5A4A] mb-6">
+                Tu démarres à <strong>Niveau 1 · Débutant</strong>. Accomplis des quêtes pour gagner des XP et progresser.
+              </p>
+
+              {/* Level card */}
+              <div className="rounded-2xl border-2 border-[#1A1410] p-5 mb-5 text-left"
+                style={{ background: '#1A1410', boxShadow: '5px 5px 0 #6B5A4A' }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl">🌱</span>
+                    <div>
+                      <div className="text-xs opacity-50 font-bold uppercase tracking-widest" style={{ color: KZ.cream }}>NIVEAU ACTUEL</div>
+                      <div className="text-base font-extrabold" style={{ color: '#6B5A4A' }}>Débutant</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-extrabold" style={{ color: KZ.cream }}>0 <span className="text-sm opacity-50">XP</span></div>
+                    <div className="text-[10px] opacity-40" style={{ color: KZ.cream }}>→ 1 000 XP pour Niveau 2</div>
+                  </div>
+                </div>
+                <div className="h-3 rounded-full border border-white/20 overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                  <div className="h-full w-0 rounded-full" style={{ background: '#6B5A4A' }} />
+                </div>
+              </div>
+
+              {/* Premières quêtes */}
+              <div className="kz-card p-4 bg-white text-left mb-6">
+                <p className="text-xs font-extrabold text-[#1A1410] uppercase tracking-widest mb-3">
+                  Tes premières quêtes
+                </p>
+                {[
+                  { icon: '📄', label: 'Crée ton CV', xp: '+50 XP' },
+                  { icon: '🎯', label: 'Postule à ta 1ère offre', xp: '+30 XP' },
+                  { icon: '💼', label: 'Ajoute 3 compétences', xp: '+40 XP' },
+                ].map(q => (
+                  <div key={q.label} className="flex items-center gap-3 py-2 border-b border-[#E8DDC9] last:border-0">
+                    <span className="text-lg">{q.icon}</span>
+                    <span className="flex-1 text-sm font-semibold text-[#1A1410]">{q.label}</span>
+                    <span className="text-xs font-extrabold px-2 py-0.5 rounded-full border border-[#1A1410]"
+                      style={{ background: KZ.violetSoft, color: KZ.violet }}>{q.xp}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                kind="primary" size="lg" full
+                icon={<Gamepad2 size={16} />}
+                onClick={() => router.push('/onboarding/cv-builder')}
+              >
+                Commencer l&apos;aventure →
+              </Button>
+            </div>
+          )}
+
+          {/* Navigation (masquée aux étapes 2, 6) */}
+          {step !== 2 && step !== 6 && (
           <div className="flex gap-3 mt-8 max-w-[500px] mx-auto">
             {step > 1 && (
               <Button kind="soft" size="lg" icon={<ArrowLeft size={16} />} onClick={() => setStep(s => s - 1)}>
                 Retour
               </Button>
             )}
-            {step < TOTAL_STEPS ? (
+            {step < 5 ? (
               <Button
                 kind="primary"
                 size="lg"
@@ -350,10 +461,11 @@ export default function OnboardingPage() {
                 loading={saving}
                 onClick={handleFinish}
               >
-                Créer mon CV personnalisé
+                Finaliser mon profil
               </Button>
             )}
           </div>
+          )}
 
           {step === 1 && (
             <div className="text-center mt-4">

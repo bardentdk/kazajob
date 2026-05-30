@@ -76,15 +76,21 @@ export function useAuth() {
     role: 'candidate' | 'recruiter' = 'candidate'
   ) => {
     // Passer le rôle dans les métadonnées → le trigger l'utilisera
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name, role },
-      },
-    })
+    let data, error
+    try {
+      const result = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name, role } },
+      })
+      data  = result.data
+      error = result.error
+    } catch (networkErr) {
+      // Erreur réseau (Failed to fetch) — projet Supabase pausé ou pas de connexion
+      return { error: 'Failed to fetch — vérifie ta connexion ou réessaie dans quelques secondes.' }
+    }
 
-    if (error || !data.user) return { error }
+    if (error || !data?.user) return { error: error?.message ?? 'Erreur inconnue' }
 
     // Upsert du profil (idempotent — fonctionne même si le trigger a déjà créé la ligne)
     await supabase.from('profiles').upsert({

@@ -324,12 +324,14 @@ export default function CandidateProfilePage() {
             <p className="text-xs text-[#6B5A4A] mb-3 leading-relaxed">
               Boostez votre profil et apparaissez en priorité dans les recherches recruteurs pendant 48h.
             </p>
-            <KazaBoostButton
-              profileId={profile!.id}
-              xp={profile?.xp ?? 0}
-              boostedUntil={profile?.boosted_until ?? null}
-              onBoost={refetch}
-            />
+            {profile && (
+              <KazaBoostButton
+                profileId={profile.id}
+                xp={profile.xp ?? 0}
+                boostedUntil={profile.boosted_until ?? null}
+                onBoost={refetch}
+              />
+            )}
           </div>
         </div>
 

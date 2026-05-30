@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, Eye, Briefcase, Sparkles, Star, Flame } from 'lucide-react'
+import { ArrowRight, Eye, Briefcase, Sparkles, Star, Flame, Gamepad2 } from 'lucide-react'
 import { StatCard } from '@/components/ui/StatCard'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -14,6 +14,8 @@ import { useAuth } from '@/features/auth/useAuth'
 import { useApplications } from '@/features/applications/useApplications'
 import { useJobs } from '@/features/jobs/useJobs'
 import { useFavorites } from '@/features/favorites/useFavorites'
+import { useGamification } from '@/features/gamification/useGamification'
+import { GameDashboard } from '@/components/gamification/GameDashboard'
 import { KZ } from '@/lib/constants'
 import { Soleil } from '@/components/illustrations/Tropical'
 
@@ -22,6 +24,7 @@ export default function CandidateDashboard() {
   const { applications, loading: appsLoading } = useApplications(profile?.id)
   const { jobs: recommendedJobs, loading: jobsLoading } = useJobs({ limit: 4 })
   const { favorites } = useFavorites(profile?.id)
+  const gami = useGamification(profile, applications.length, favorites.length)
 
   const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -30,6 +33,21 @@ export default function CandidateDashboard() {
 
   const pendingApps   = applications.filter(a => a.status === 'pending').length
   const interviewApps = applications.filter(a => a.status === 'interview').length
+
+  // ── Mode gamification ────────────────────────────────────────────
+  if (gami.enabled && profile) {
+    return (
+      <GameDashboard
+        profile={profile}
+        gami={gami}
+        applications={applications}
+        appsLoading={appsLoading}
+        recommendedJobs={recommendedJobs as Parameters<typeof GameDashboard>[0]['recommendedJobs']}
+        jobsLoading={jobsLoading}
+        favoritesCount={favorites.length}
+      />
+    )
+  }
 
   return (
     <div className="max-w-[1100px] mx-auto">
@@ -46,9 +64,19 @@ export default function CandidateDashboard() {
             }
           </h1>
         </div>
-        <Link href="/candidate/jobs" className="shrink-0">
-          <Button kind="primary" size="md" iconRight={<ArrowRight size={15} />}>Voir les offres</Button>
-        </Link>
+        <div className="flex gap-2 items-center shrink-0">
+          <button
+            onClick={() => gami.toggle()}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[#1A1410] text-xs font-bold transition-all hover:shadow-[2px_2px_0_#1A1410]"
+            style={{ background: KZ.violetSoft, color: KZ.violet }}
+            title="Activer le mode Quête"
+          >
+            <Gamepad2 size={14} /> Mode Quête
+          </button>
+          <Link href="/candidate/jobs" className="shrink-0">
+            <Button kind="primary" size="md" iconRight={<ArrowRight size={15} />}>Voir les offres</Button>
+          </Link>
+        </div>
       </div>
 
       {/* KPI cards — 2 cols sur mobile, 4 sur desktop */}

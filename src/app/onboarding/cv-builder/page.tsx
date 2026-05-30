@@ -414,6 +414,36 @@ export default function CvBuilderPage() {
         logging: false,
         width:  element.offsetWidth,
         height: element.offsetHeight,
+        // Fix : html2canvas ne supporte pas oklch/oklab (Tailwind v4).
+        // On réinitialise les CSS custom properties de Tailwind qui en contiennent.
+        onclone: (clonedDoc: Document) => {
+          const style = clonedDoc.createElement('style')
+          style.textContent = `
+            *, *::before, *::after {
+              --tw-ring-color: rgba(59,130,246,0.5) !important;
+              --tw-ring-shadow: 0 0 #0000 !important;
+              --tw-shadow: 0 0 #0000 !important;
+              --tw-shadow-colored: 0 0 #0000 !important;
+              --tw-inset-shadow: 0 0 #0000 !important;
+              --tw-inset-shadow-colored: 0 0 #0000 !important;
+              --tw-outline-style: solid !important;
+            }
+          `
+          clonedDoc.head.appendChild(style)
+
+          // Sécurité : remplacer inline oklch/oklab résiduels par rgb
+          clonedDoc.querySelectorAll<HTMLElement>('*').forEach(el => {
+            const s = el.style
+            const props = ['color','backgroundColor','borderColor','borderTopColor',
+              'borderRightColor','borderBottomColor','borderLeftColor','outlineColor']
+            props.forEach(p => {
+              const v = s.getPropertyValue(p)
+              if (v && (v.includes('oklab(') || v.includes('oklch('))) {
+                el.style.setProperty(p, '#1a1410')
+              }
+            })
+          })
+        },
       })
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95)
