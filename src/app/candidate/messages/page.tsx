@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MessageCircle, Send } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
@@ -17,6 +17,12 @@ export default function CandidateMessagesPage() {
   const { messages, sendMessage, bottomRef } = useMessages(activeConvId ?? undefined, profile?.id)
   const [input, setInput] = useState('')
   const [showList, setShowList] = useState(true)
+
+  // Deep-link : ?c=<conversationId> ouvre directement la conversation.
+  useEffect(() => {
+    const c = new URLSearchParams(window.location.search).get('c')
+    if (c) { setActiveConvId(c); setShowList(false) }
+  }, [])
 
   const activeConv = conversations.find((c) => c.id === activeConvId)
   const otherUser = (conv: typeof conversations[0]) =>

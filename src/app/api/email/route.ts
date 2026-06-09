@@ -99,6 +99,10 @@ export async function POST(req: NextRequest) {
     if (type === 'welcome') {
       const { email: to, fullName, role } = body
       if (!to || !fullName) return NextResponse.json({ error: 'Champs manquants' }, { status: 400 })
+      // Anti-spam : on n'envoie le mail de bienvenue qu'à sa propre adresse.
+      if (session.user.email && to !== session.user.email) {
+        return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
+      }
       const { subject, html } = welcomeEmail({ fullName, role: role ?? 'candidate' })
       const { error } = await resend.emails.send({ from: FROM, to, subject, html })
       if (error) throw new Error(error.message)

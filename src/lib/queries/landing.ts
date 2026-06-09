@@ -3,7 +3,7 @@
  */
 import { count, desc, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { companies, jobs, profiles } from '@/lib/db/schema'
+import { companies, jobs, profiles, trainingOffers } from '@/lib/db/schema'
 import type { Company } from '@/lib/types'
 import { serialize } from './_serialize'
 
@@ -57,6 +57,17 @@ export async function getSitemapJobs(): Promise<Array<{ id: string; updated_at: 
     .from(jobs)
     .where(eq(jobs.isActive, true))
     .orderBy(desc(jobs.updatedAt))
+    .limit(500)
+  return rows.map((r) => ({ id: r.id, updated_at: r.updatedAt.toISOString() }))
+}
+
+/** Formations actives pour le sitemap. */
+export async function getSitemapTrainings(): Promise<Array<{ id: string; updated_at: string }>> {
+  const rows = await db
+    .select({ id: trainingOffers.id, updatedAt: trainingOffers.updatedAt })
+    .from(trainingOffers)
+    .where(eq(trainingOffers.isActive, true))
+    .orderBy(desc(trainingOffers.updatedAt))
     .limit(500)
   return rows.map((r) => ({ id: r.id, updated_at: r.updatedAt.toISOString() }))
 }

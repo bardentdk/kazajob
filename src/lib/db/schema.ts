@@ -46,6 +46,7 @@ export const profiles = pgTable('profiles', {
   avatarConfig:  jsonb('avatar_config'),
   softSkills:    text('soft_skills').array().default(emptyArr),
   hobbies:       text('hobbies').array().default(emptyArr),
+  quizResult:    jsonb('quiz_result'),
   characterDomain: text('character_domain'),
   gender:        text(),
   createdAt:     now(),

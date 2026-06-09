@@ -19,6 +19,22 @@ import { GameDashboard } from '@/components/gamification/GameDashboard'
 import { KZ } from '@/lib/constants'
 import { Soleil } from '@/components/illustrations/Tropical'
 
+function QuizBanner() {
+  return (
+    <Link href="/candidate/quiz" className="block mb-5">
+      <div className="kz-card p-4 flex items-center gap-4 transition-all hover:translate-x-[-1px] hover:translate-y-[-1px]"
+        style={{ background: KZ.violetSoft, boxShadow: '4px 4px 0 #1A1410' }}>
+        <div className="text-3xl shrink-0">🎮</div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-extrabold text-[#1A1410]">Découvre ton profil en 2 min</div>
+          <div className="text-xs text-[#6B5A4A]">Un mini-quiz ludique — les recruteurs verront ton style de travail.</div>
+        </div>
+        <ArrowRight size={18} className="shrink-0" style={{ color: KZ.violet }} />
+      </div>
+    </Link>
+  )
+}
+
 export default function CandidateDashboard() {
   const { profile } = useAuth()
   const { applications, loading: appsLoading } = useApplications(profile?.id)
@@ -37,20 +53,24 @@ export default function CandidateDashboard() {
   // ── Mode gamification ────────────────────────────────────────────
   if (gami.enabled && profile) {
     return (
-      <GameDashboard
-        profile={profile}
-        gami={gami}
-        applications={applications}
-        appsLoading={appsLoading}
-        recommendedJobs={recommendedJobs as Parameters<typeof GameDashboard>[0]['recommendedJobs']}
-        jobsLoading={jobsLoading}
-        favoritesCount={favorites.length}
-      />
+      <div className="max-w-[1100px] mx-auto">
+        {!profile.quiz_result && <QuizBanner />}
+        <GameDashboard
+          profile={profile}
+          gami={gami}
+          applications={applications}
+          appsLoading={appsLoading}
+          recommendedJobs={recommendedJobs as Parameters<typeof GameDashboard>[0]['recommendedJobs']}
+          jobsLoading={jobsLoading}
+          favoritesCount={favorites.length}
+        />
+      </div>
     )
   }
 
   return (
     <div className="max-w-[1100px] mx-auto">
+      {!profile?.quiz_result && <QuizBanner />}
       {/* Greeting */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>

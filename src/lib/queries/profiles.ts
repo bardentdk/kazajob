@@ -7,6 +7,7 @@ import { db } from '@/lib/db'
 import { candidateSkills, profiles, skills } from '@/lib/db/schema'
 import type { Profile, Skill } from '@/lib/types'
 import { KAZA_BOOST_COST_XP, KAZA_BOOST_HOURS } from '@/lib/constants'
+import { scoreQuiz } from '@/lib/quiz'
 import { serialize } from './_serialize'
 
 type ProfileInsert = typeof profiles.$inferInsert
@@ -98,6 +99,17 @@ export async function boostProfile(userId: string): Promise<{ error: string | nu
     .set({ boostedUntil: expiry, xp: sql`${profiles.xp} - ${KAZA_BOOST_COST_XP}` })
     .where(eq(profiles.id, userId))
   return { error: null }
+}
+
+/** Calcule (serveur, anti-triche) et enregistre le résultat du quiz candidat. */
+export async function saveQuizResult(
+  userId: string,
+  answers: number[],
+): Promise<{ error: string | null; result?: ReturnType<typeof scoreQuiz> }> {
+  const result = scoreQuiz(answers)
+  if (!result) return { error: 'Réponses invalides' }
+  await db.update(profiles).set({ quizResult: result }).where(eq(profiles.id, userId))
+  return { error: null, result }
 }
 
 /** Profil public d'un candidat (sans hash), pour la vue recruteur. */

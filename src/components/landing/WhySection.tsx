@@ -120,7 +120,7 @@ export function WhySection() {
           <div className="text-center mb-10">
             <p className="kz-eyebrow mb-3" style={{ color: KZ.orange }}>Comparatif</p>
             <h2 className="text-2xl lg:text-[36px] font-extrabold tracking-tight text-white mb-3">
-              Kazajob vs la concurrence locale
+              Kazajob vs les autres plateformes
             </h2>
             <p className="text-sm text-white/60">Le seul outil de recherche d&apos;emploi conçu pour La Réunion de A à Z.</p>
           </div>
@@ -130,8 +130,8 @@ export function WhySection() {
             <div className="grid grid-cols-[1fr_auto_auto_auto] gap-0 px-5 py-3 border-b border-white/10">
               <div className="text-xs font-bold text-white/50 uppercase tracking-wider">Fonctionnalité</div>
               <div className="text-center w-24 text-xs font-bold" style={{ color: KZ.orange }}>Kazajob</div>
-              <div className="text-center w-24 text-xs font-bold text-white/50">Koann</div>
-              <div className="text-center w-24 text-xs font-bold text-white/50">Pôle Emploi</div>
+              <div className="text-center w-24 text-xs font-bold text-white/50">Sites péi</div>
+              <div className="text-center w-24 text-xs font-bold text-white/50">Sites nationaux</div>
             </div>
 
             {/* Rows */}

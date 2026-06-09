@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 
-// Routes publiques sous /candidate accessibles sans connexion
-const PUBLIC_CANDIDATE_PATHS = ['/candidate/jobs']
+// Routes publiques sous /candidate accessibles sans connexion (SEO + visiteurs)
+const PUBLIC_CANDIDATE_PATHS = ['/candidate/jobs', '/candidate/training']
 
 const DASHBOARD: Record<string, string> = {
   candidate: '/candidate/dashboard',

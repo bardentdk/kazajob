@@ -9,6 +9,9 @@ import { Tag } from '@/components/ui/Tag'
 import { Avatar } from '@/components/ui/Avatar'
 import { Progress } from '@/components/ui/Progress'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
+import { useAuth } from '@/features/auth/useAuth'
+import { useStartConversation } from '@/features/messages/useMessages'
+import { ARCHETYPES, type ArchetypeKey } from '@/lib/quiz'
 import type { Profile, Application } from '@/lib/types'
 import { APPLICATION_STATUSES, KZ } from '@/lib/constants'
 import { timeAgo } from '@/lib/utils'
@@ -17,10 +20,21 @@ import type { BadgeColor } from '@/lib/types'
 
 export default function CandidateDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const { profile } = useAuth()
+  const startConversation = useStartConversation()
   const [candidate, setCandidate] = useState<Profile | null>(null)
   const [applications, setApplications] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
+  const [messaging, setMessaging] = useState(false)
   const router = useRouter()
+
+  const handleMessage = async () => {
+    if (!profile?.id || !candidate) return
+    setMessaging(true)
+    const convId = await startConversation(candidate.id, profile.id)
+    if (convId) router.push(`/recruiter/messages?c=${convId}`)
+    setMessaging(false)
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -87,14 +101,8 @@ export default function CandidateDetailPage() {
                   </Button>
                 </a>
               )}
-              {/* CV Builder */}
-              {!!(candidate as unknown as Record<string,unknown>).cv_data && (
-                <Button kind="violet" size="sm" full icon={<Download size={14} />}
-                  onClick={() => window.open(`/candidate/profile`, '_blank')}>
-                  Voir le CV Builder
-                </Button>
-              )}
-              <Button kind="outline" size="sm" full icon={<MessageCircle size={14} />}>
+              <Button kind="outline" size="sm" full icon={<MessageCircle size={14} />}
+                loading={messaging} onClick={handleMessage}>
                 Envoyer un message
               </Button>
             </div>
@@ -119,6 +127,23 @@ export default function CandidateDetailPage() {
 
         {/* Right */}
         <div className="flex flex-col gap-4">
+          {/* Indicateur profil (quiz) */}
+          {candidate.quiz_result?.archetype && ARCHETYPES[candidate.quiz_result.archetype as ArchetypeKey] && (() => {
+            const a = ARCHETYPES[candidate.quiz_result.archetype as ArchetypeKey]
+            return (
+              <div className="kz-card p-5 bg-white" style={{ boxShadow: `4px 4px 0 ${a.color}` }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-3xl">{a.emoji}</span>
+                  <div>
+                    <div className="kz-eyebrow" style={{ color: a.color }}>Profil candidat</div>
+                    <div className="text-base font-extrabold text-[#1A1410]">{a.label}</div>
+                  </div>
+                </div>
+                <p className="text-sm text-[#2A2018] leading-relaxed">{a.recruiterHint}</p>
+              </div>
+            )
+          })()}
+
           {candidate.bio && (
             <div className="kz-card p-5 bg-white">
               <h3 className="kz-h3 text-[#1A1410] mb-3">Bio</h3>

@@ -2,11 +2,31 @@
  * KAZAJOB — Requêtes Drizzle pour les offres de formation.
  * Couche serveur. Renvoie des objets conformes à `TrainingOffer` (snake_case).
  */
+import { cache } from 'react'
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { trainingApplications, trainingOffers } from '@/lib/db/schema'
 import type { TrainingOffer } from '@/lib/types'
 import { serialize } from './_serialize'
+
+/** Données d'une formation pour le SEO (sans incrément de vues). */
+export const getTrainingSeo = cache(async (id: string) => {
+  const row = await db.query.trainingOffers.findFirst({
+    where: eq(trainingOffers.id, id),
+    columns: {
+      title: true, description: true, location: true, certification: true,
+      durationValue: true, durationUnit: true, isActive: true,
+    },
+    with: { company: { columns: { name: true } } },
+  })
+  if (!row) return null
+  const r = row as typeof row & { company?: { name: string } | null }
+  return {
+    title: r.title, description: r.description, location: r.location,
+    certification: r.certification, durationValue: r.durationValue, durationUnit: r.durationUnit,
+    isActive: r.isActive, company: r.company?.name ?? null,
+  }
+})
 
 const WITH_REL = {
   company: { columns: { name: true, logoUrl: true } },

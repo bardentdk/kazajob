@@ -1,5 +1,22 @@
 # Migration Supabase → Neon — suivi
 
+## 🔒 Audit complet (FAIT — bugs + sécurité)
+- **`next build` prod : OK** (82 pages, 0 erreur/warning).
+- **Bug systémique corrigé** : `/api/me` renvoyait du camelCase → `profile.*` undefined partout
+  (crash navigation). Fix = `serialize()` + passthrough jsonb (`cv_data`/`avatar_config` non altérés).
+- **CV builder** : erreur oklab → migré `html2canvas` → `html2canvas-pro` (support Tailwind v4).
+- **Failles d'accès corrigées + retestées (403 OK)** :
+  1. `/api/conversations/[id]/messages` (GET/POST) : ajout `isParticipant` (IDOR lecture/écriture msgs).
+  2. `/api/companies/[id]` + `/team` : ajout `isCompanyMember` (fuite abonnement/membres/emails).
+  3. `/api/profiles/[id]` : réservé rôle recruteur/admin (fuite email/tel + candidatures d'autrui).
+  4. `/api/recruiter/{jobs,trainings,events}` POST : gate rôle recruteur (anti-pollution).
+  5. `/api/email` welcome : destinataire restreint à l'email de session (anti-spam).
+- **Vérifié OK** : proxy (redirections rôle candidat/recruteur/admin + login), pas d'escalade via
+  PATCH `/api/profile` (whitelist sans role/xp/company_id/referral_code/boosted_until),
+  password_hash jamais exposé, parcours candidat+recruteur+messagerie testés contre Neon.
+- **Résiduel mineur (acceptable lancement)** : `/api/email` (autres types) = vecteur de spam limité
+  si replay d'ids ; `getJob/getTraining` incrémentent les vues à chaque GET. À durcir post-lancement.
+
 ## Stack cible (validée)
 - **DB** : Neon PostgreSQL + **Drizzle ORM** (driver `@neondatabase/serverless` HTTP)
 - **Auth** : **Auth.js (NextAuth)** — Credentials (email + mot de passe), sessions JWT,

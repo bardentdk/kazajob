@@ -30,7 +30,7 @@ const FAQ_ITEMS = [
     a: 'Oui. Le plan Starter est entièrement gratuit sans limite de temps — tu peux publier jusqu\'à 2 offres simultanément. Les plans payants incluent un essai de 14 jours sans carte bancaire requise. Tu passes au plan supérieur seulement si tu en as besoin.',
   },
   {
-    q: 'Quelle est la différence avec Koann Games ou Pôle Emploi Réunion ?',
+    q: 'Quelle est la différence avec les autres sites d\'emploi ?',
     a: 'Kazajob est la seule plateforme locale à combiner : matching IA personnalisé, KazaIA pour la rédaction et la préparation, CV Builder visuel, gamification, et une expérience mobile-first. Là où les autres affichent des offres, Kazajob t\'accompagne tout au long de ta recherche.',
   },
   {

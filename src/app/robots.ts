@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/candidate/jobs', '/candidate/jobs/'],
+        allow: ['/', '/candidate/jobs', '/candidate/jobs/', '/candidate/training', '/candidate/training/'],
         disallow: [
           '/candidate/dashboard',
           '/candidate/applications',
@@ -21,10 +21,10 @@ export default function robots(): MetadataRoute.Robots {
           '/auth/',
         ],
       },
-      // Autorise Googlebot à indexer les offres d'emploi publiques
+      // Autorise Googlebot à indexer les offres + formations publiques
       {
         userAgent: 'Googlebot',
-        allow: ['/', '/candidate/jobs', '/candidate/jobs/'],
+        allow: ['/', '/candidate/jobs', '/candidate/jobs/', '/candidate/training', '/candidate/training/'],
       },
     ],
     sitemap: 'https://kazajob.re/sitemap.xml',

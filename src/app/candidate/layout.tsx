@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { LayoutDashboard, Search, Heart, Briefcase, MessageCircle, User, Sparkles, Calendar, Settings, Star, Users, Flame, Gamepad2, GraduationCap } from 'lucide-react'
 import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
+import { NavLanding } from '@/components/layout/NavLanding'
+import { Footer } from '@/components/layout/Footer'
 import { useAuth } from '@/features/auth/useAuth'
 import { FullPageLoader } from '@/components/ui/LogoLoader'
 import { ChatAssistantDrawer } from '@/components/ui/ChatAssistantDrawer'
@@ -29,19 +31,39 @@ const NAV_ITEMS: NavItem[] = [
 export default function CandidateLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading, authChecked } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const gami = useGamification(profile, 0, 0)  // counts approx — dashboard a les vrais
   const level = getLevel(profile?.xp ?? 0)
 
+  // Pages publiques (offres + formations) : accessibles sans connexion (SEO + visiteurs).
+  const isPublicPath = ['/candidate/jobs', '/candidate/training'].some(
+    (p) => pathname === p || pathname.startsWith(p + '/')
+  )
+
   useEffect(() => {
     if (!authChecked) return
-    if (!profile) { router.push('/auth/login'); return }
+    if (!profile) { if (!isPublicPath) router.push('/auth/login'); return }
     if (profile.role === 'recruiter') router.push('/recruiter/dashboard')
     if (profile.role === 'admin')     router.push('/admin/dashboard')
-  }, [profile, authChecked, router])
+  }, [profile, authChecked, router, isPublicPath])
 
-  if (!authChecked || loading || !profile) {
+  if (!authChecked || loading) {
     return <FullPageLoader />
+  }
+
+  // Visiteur non connecté sur une page publique → coquille publique (nav + footer).
+  if (!profile) {
+    if (isPublicPath) {
+      return (
+        <div className="min-h-screen flex flex-col" style={{ background: KZ.cream }}>
+          <NavLanding />
+          <main className="flex-1 px-4 sm:px-8 lg:px-12 py-6">{children}</main>
+          <Footer />
+        </div>
+      )
+    }
+    return <FullPageLoader />  // redirection vers login en cours
   }
 
   return (

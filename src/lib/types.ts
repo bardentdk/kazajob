@@ -70,6 +70,7 @@ export interface Profile {
   avatar_config: Record<string, string> | null
   soft_skills: string[] | null
   hobbies: string[] | null
+  quiz_result: { archetype: string; scores?: Record<string, number>; completed_at: string } | null
   character_domain: string | null
   gender: string | null
   created_at: string

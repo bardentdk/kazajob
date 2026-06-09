@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Users, Calendar, Video, Phone, MapPin } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Users, Calendar, Video, Phone, MapPin, MessageCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
@@ -13,6 +14,7 @@ import { EmptyState } from '@/components/feedback/EmptyState'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
 import { useAuth } from '@/features/auth/useAuth'
 import { useInterviews } from '@/features/interviews/useInterviews'
+import { useStartConversation } from '@/features/messages/useMessages'
 import type { Application, BadgeColor } from '@/lib/types'
 import { APPLICATION_STATUSES, KZ } from '@/lib/constants'
 import { timeAgo } from '@/lib/utils'
@@ -28,7 +30,18 @@ export default function RecruiterApplicationsPage() {
     visioType: 'jitsi' as 'jitsi'|'external', externalLink: '', location: '', notes: '',
   })
   const [scheduling, setScheduling] = useState(false)
+  const [messagingId, setMessagingId] = useState<string | null>(null)
   const { create: createInterview } = useInterviews()
+  const startConversation = useStartConversation()
+  const router = useRouter()
+
+  const handleMessage = async (candidateId: string, jobId: string) => {
+    if (!profile?.id) return
+    setMessagingId(candidateId)
+    const convId = await startConversation(candidateId, profile.id, jobId)
+    if (convId) router.push(`/recruiter/messages?c=${convId}`)
+    setMessagingId(null)
+  }
 
   useEffect(() => {
     if (!profile) return
@@ -134,6 +147,13 @@ export default function RecruiterApplicationsPage() {
                       <option key={k} value={k}>{v.label}</option>
                     ))}
                   </select>
+                  {candidate && (
+                    <Button kind="soft" size="sm" icon={<MessageCircle size={13} />}
+                      loading={messagingId === candidate.id}
+                      onClick={() => handleMessage(candidate.id, app.job_id)}>
+                      Message
+                    </Button>
+                  )}
                   {candidate && (
                     <Button kind="soft" size="sm" icon={<Calendar size={13} />} onClick={() => setScheduleFor(app)}>
                       Entretien

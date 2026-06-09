@@ -2,11 +2,31 @@
  * KAZAJOB — Requêtes Drizzle pour les offres (jobs).
  * Couche serveur uniquement. Renvoie des objets conformes à `Job` (snake_case).
  */
+import { cache } from 'react'
 import { and, desc, eq, gte, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { jobs } from '@/lib/db/schema'
 import type { Job, JobFilters } from '@/lib/types'
 import { serialize } from './_serialize'
+
+/** Données d'une offre pour le SEO (métadonnées + JobPosting). Sans incrément de vues. */
+export const getJobSeo = cache(async (id: string) => {
+  const row = await db.query.jobs.findFirst({
+    where: eq(jobs.id, id),
+    columns: {
+      title: true, description: true, location: true, remote: true, jobType: true,
+      salaryMin: true, salaryMax: true, isActive: true, createdAt: true,
+    },
+    with: { company: { columns: { name: true } } },
+  })
+  if (!row) return null
+  const r = row as typeof row & { company?: { name: string } | null }
+  return {
+    title: r.title, description: r.description, location: r.location, remote: r.remote,
+    jobType: r.jobType, salaryMin: r.salaryMin, salaryMax: r.salaryMax,
+    isActive: r.isActive, createdAt: r.createdAt, company: r.company?.name ?? null,
+  }
+})
 
 type JobRow = typeof jobs.$inferSelect & {
   company: unknown
