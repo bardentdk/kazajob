@@ -9,7 +9,6 @@ import { Modal } from '@/components/ui/Modal'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import { KZ, EVENT_TYPES } from '@/lib/constants'
 import type { BadgeColor } from '@/lib/types'
 
@@ -40,7 +39,6 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
 
 export default function RecruiterEventsPage() {
   const { profile } = useAuth()
-  const supabase = createClient()
   const [events, setEvents] = useState<KazaEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
@@ -55,18 +53,10 @@ export default function RecruiterEventsPage() {
 
   const fetchEvents = async () => {
     if (!profile?.id) return
-    const { data } = await supabase
-      .from('events')
-      .select('*, registrations:event_registrations(count)')
-      .eq('organizer_id', profile.id)
-      .order('date', { ascending: false })
-
-    setEvents(
-      (data ?? []).map((e: KazaEvent & { registrations: { count: number }[] }) => ({
-        ...e,
-        registrations_count: e.registrations?.[0]?.count ?? 0,
-      }))
-    )
+    try {
+      const res = await fetch('/api/recruiter/events')
+      if (res.ok) setEvents((await res.json()) as KazaEvent[])
+    } catch { /* noop */ }
     setLoading(false)
   }
 
@@ -75,20 +65,17 @@ export default function RecruiterEventsPage() {
   const handleCreate = async () => {
     if (!profile?.id || !form.title || !form.date) return
     setSaving(true)
-    const jitsiRoom = `kaza-event-${Date.now().toString(36)}`
-    const { error } = await supabase.from('events').insert({
-      organizer_id: profile.id,
-      title: form.title,
-      type: form.type,
-      date: new Date(form.date).toISOString(),
-      duration_minutes: parseInt(form.duration_minutes),
-      max_participants: parseInt(form.max_participants),
-      location: form.location,
-      description: form.description || null,
-      jitsi_room: jitsiRoom,
-      is_published: true,
+    const res = await fetch('/api/recruiter/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...form,
+        date: new Date(form.date).toISOString(),
+        jitsi_room: `kaza-event-${Date.now().toString(36)}`,
+        is_published: true,
+      }),
     })
-    if (!error) {
+    if (res.ok) {
       setModal(false)
       setForm({ title: '', type: 'job_dating', date: '', duration_minutes: '60', max_participants: '30', location: 'En ligne', description: '' })
       await fetchEvents()
@@ -99,7 +86,7 @@ export default function RecruiterEventsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Supprimer cet événement ? Les inscriptions seront annulées.')) return
     setDeletingId(id)
-    await supabase.from('events').delete().eq('id', id)
+    await fetch(`/api/recruiter/events/${id}`, { method: 'DELETE' })
     await fetchEvents()
     setDeletingId(null)
   }

@@ -9,7 +9,6 @@ import { Tag } from '@/components/ui/Tag'
 import { Avatar } from '@/components/ui/Avatar'
 import { Progress } from '@/components/ui/Progress'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
-import { createClient } from '@/lib/supabase/client'
 import type { Profile, Application } from '@/lib/types'
 import { APPLICATION_STATUSES, KZ } from '@/lib/constants'
 import { timeAgo } from '@/lib/utils'
@@ -22,19 +21,20 @@ export default function CandidateDetailPage() {
   const [applications, setApplications] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
-    const fetch = async () => {
-      const [{ data: prof }, { data: apps }] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', id).single(),
-        supabase.from('applications').select('*, job:jobs(title, company:companies(name))').eq('candidate_id', id),
-      ])
-      if (prof) setCandidate(prof as Profile)
-      if (apps) setApplications(apps as Application[])
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/profiles/${id}`)
+        if (res.ok) {
+          const { profile, applications: apps } = await res.json()
+          if (profile) setCandidate(profile as Profile)
+          if (apps) setApplications(apps as Application[])
+        }
+      } catch { /* noop */ }
       setLoading(false)
     }
-    fetch()
+    load()
   }, [id])
 
   if (loading) return <PageLoader />

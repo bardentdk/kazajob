@@ -22,9 +22,17 @@ import { useAuth } from '@/features/auth/useAuth'
 import { useApplications } from '@/features/applications/useApplications'
 import { useAvatarUpload, useCvUpload } from '@/features/profile/useUpload'
 import { createClient } from '@/lib/supabase/client'
-import { KZ } from '@/lib/constants'
+import { KZ, SOFT_SKILLS, HOBBIES } from '@/lib/constants'
 
 interface SkillRow { id: string; name: string; category: string | null }
+
+async function patchProfile(patch: Record<string, unknown>) {
+  await fetch('/api/profile', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  })
+}
 
 export default function CandidateProfilePage() {
   const { profile, refetch } = useAuth()
@@ -39,6 +47,8 @@ export default function CandidateProfilePage() {
   const [location, setLocation] = useState('')
   const [phone, setPhone] = useState('')
   const [skills, setSkills] = useState<SkillRow[]>([])
+  const [softSkills, setSoftSkills] = useState<string[]>([])
+  const [hobbies, setHobbies] = useState<string[]>([])
   const [allSkills, setAllSkills] = useState<SkillRow[]>([])
   const [skillSearch, setSkillSearch] = useState('')
   const [showSkillSearch, setShowSkillSearch] = useState(false)
@@ -52,35 +62,38 @@ export default function CandidateProfilePage() {
       setBio(profile.bio ?? '')
       setLocation(profile.location ?? '')
       setPhone(profile.phone ?? '')
+      setSoftSkills(profile.soft_skills ?? [])
+      setHobbies(profile.hobbies ?? [])
     }
   }, [profile])
 
   useEffect(() => {
     if (!profile?.id) return
     const fetchSkills = async () => {
-      const { data } = await supabase
-        .from('candidate_skills')
-        .select('skill:skills(id, name, category)')
-        .eq('candidate_id', profile.id)
-      if (data) setSkills(data.map((r: { skill: unknown }) => r.skill as SkillRow).filter(Boolean))
+      const res = await fetch('/api/candidate-skills')
+      if (res.ok) setSkills(((await res.json()) as SkillRow[]).filter(Boolean))
     }
     fetchSkills()
-  }, [profile?.id, supabase])
+  }, [profile?.id])
 
   useEffect(() => {
     if (!showSkillSearch) return
-    supabase.from('skills').select('id, name, category').order('name').then(({ data }) => {
-      if (data) setAllSkills(data as SkillRow[])
-    })
-  }, [showSkillSearch, supabase])
+    fetch('/api/skills')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setAllSkills(d as SkillRow[]))
+  }, [showSkillSearch])
 
   const handleSave = async () => {
     if (!profile) return
     setSaving(true)
-    await supabase.from('profiles').update({
-      full_name: fullName, bio, location, phone,
-      updated_at: new Date().toISOString(),
-    }).eq('id', profile.id)
+    await fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        full_name: fullName, bio, location, phone,
+        soft_skills: softSkills, hobbies,
+      }),
+    })
     await refetch?.()
     setSaving(false)
     setEditing(false)
@@ -118,9 +131,7 @@ export default function CandidateProfilePage() {
     const signedResult = await supabase.storage
       .from('video-pitches').createSignedUrl(path, 60 * 60 * 24 * 365)
     const signedUrl = signedResult.data?.signedUrl ?? null
-    await supabase.from('profiles')
-      .update({ video_pitch_url: `video-pitches/${path}`, updated_at: new Date().toISOString() })
-      .eq('id', profile.id)
+    await patchProfile({ video_pitch_url: `video-pitches/${path}` })
     await refetch?.()
     return { url: signedUrl, error: null }
   }
@@ -128,20 +139,24 @@ export default function CandidateProfilePage() {
   const handleVideoPitchDelete = async () => {
     if (!profile?.id) return
     await supabase.storage.from('video-pitches').remove([`${profile.id}/pitch.webm`])
-    await supabase.from('profiles').update({ video_pitch_url: null }).eq('id', profile.id)
+    await patchProfile({ video_pitch_url: null })
     await refetch?.()
   }
 
   const addSkill = async (skill: SkillRow) => {
     if (!profile?.id || skills.find(s => s.id === skill.id)) return
-    await supabase.from('candidate_skills').insert({ candidate_id: profile.id, skill_id: skill.id })
+    await fetch('/api/candidate-skills', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ skillId: skill.id }),
+    })
     setSkills(prev => [...prev, skill])
     setSkillSearch('')
   }
 
   const removeSkill = async (skillId: string) => {
     if (!profile?.id) return
-    await supabase.from('candidate_skills').delete().eq('candidate_id', profile.id).eq('skill_id', skillId)
+    await fetch(`/api/candidate-skills?skillId=${skillId}`, { method: 'DELETE' })
     setSkills(prev => prev.filter(s => s.id !== skillId))
   }
 
@@ -422,6 +437,70 @@ export default function CandidateProfilePage() {
                     {s.name}
                     <button onClick={() => removeSkill(s.id)} className="text-[#6B5A4A] hover:text-red-600"><X size={10} /></button>
                   </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Soft skills */}
+          <div className="kz-card p-5 bg-white">
+            <h2 className="text-lg font-bold text-[#1A1410] mb-1">Soft skills</h2>
+            <p className="text-xs text-[#6B5A4A] mb-4">Savoir-être — visible sur ton CV.</p>
+            {editing ? (
+              <div className="flex flex-wrap gap-1.5">
+                {SOFT_SKILLS.map(s => {
+                  const on = softSkills.includes(s)
+                  return (
+                    <button key={s} type="button"
+                      onClick={() => setSoftSkills(prev => on ? prev.filter(x => x !== s) : [...prev, s])}
+                      className="px-2.5 py-1 text-xs font-semibold border rounded-full transition-all"
+                      style={on ? { background: KZ.violet, color: 'white', borderColor: KZ.violet }
+                                : { background: KZ.paper, color: '#2A2018', borderColor: '#E8DDC9' }}>
+                      {on && '✓ '}{s}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : softSkills.length === 0 ? (
+              <div className="text-sm text-[#6B5A4A] py-4 text-center border border-dashed border-[#E8DDC9] rounded-lg">
+                Aucun soft skill — clique sur &quot;Modifier&quot;.
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {softSkills.map(s => (
+                  <span key={s} className="px-2.5 py-1 text-xs font-semibold border border-[#1A1410] rounded-md" style={{ background: KZ.violetSoft }}>{s}</span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Loisirs */}
+          <div className="kz-card p-5 bg-white">
+            <h2 className="text-lg font-bold text-[#1A1410] mb-1">Loisirs</h2>
+            <p className="text-xs text-[#6B5A4A] mb-4">Centres d&apos;intérêt — visible sur ton CV.</p>
+            {editing ? (
+              <div className="flex flex-wrap gap-1.5">
+                {HOBBIES.map(h => {
+                  const on = hobbies.includes(h)
+                  return (
+                    <button key={h} type="button"
+                      onClick={() => setHobbies(prev => on ? prev.filter(x => x !== h) : [...prev, h])}
+                      className="px-2.5 py-1 text-xs font-semibold border rounded-full transition-all"
+                      style={on ? { background: KZ.green, color: 'white', borderColor: KZ.green }
+                                : { background: KZ.paper, color: '#2A2018', borderColor: '#E8DDC9' }}>
+                      {on && '✓ '}{h}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : hobbies.length === 0 ? (
+              <div className="text-sm text-[#6B5A4A] py-4 text-center border border-dashed border-[#E8DDC9] rounded-lg">
+                Aucun loisir — clique sur &quot;Modifier&quot;.
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {hobbies.map(h => (
+                  <span key={h} className="px-2.5 py-1 text-xs font-semibold border border-[#1A1410] rounded-md" style={{ background: KZ.greenSoft }}>{h}</span>
                 ))}
               </div>
             )}

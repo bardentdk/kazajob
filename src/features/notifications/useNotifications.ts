@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 export interface Notification {
   id: string
@@ -25,58 +24,40 @@ export function getNotifIcon(type: string): string {
   return TYPE_ICON[type] ?? '🔔'
 }
 
+const POLL_MS = 10000
+
 export function useNotifications(userId: string | undefined) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const activeRef = useRef(true)
 
   const fetchNotifications = useCallback(async () => {
     if (!userId) return
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(30)
-    if (data) setNotifications(data as Notification[])
-    setLoading(false)
-  }, [userId, supabase])
+    try {
+      const res = await fetch('/api/notifications')
+      if (res.ok && activeRef.current) setNotifications((await res.json()) as Notification[])
+    } catch { /* garde l'état */ }
+    if (activeRef.current) setLoading(false)
+  }, [userId])
 
   useEffect(() => {
-    fetchNotifications()
-
     if (!userId) return
-
-    // ── Realtime subscription ──────────────────────────────────
-    const channel = supabase
-      .channel(`notifications:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event:  'INSERT',
-          schema: 'public',
-          table:  'notifications',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          setNotifications(prev => [payload.new as Notification, ...prev])
-        }
-      )
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  }, [userId, fetchNotifications, supabase])
+    activeRef.current = true
+    fetchNotifications()
+    const timer = setInterval(fetchNotifications, POLL_MS) // polling (remplace le realtime)
+    return () => { activeRef.current = false; clearInterval(timer) }
+  }, [userId, fetchNotifications])
 
   const markRead = useCallback(async (id: string) => {
-    await supabase.from('notifications').update({ read: true }).eq('id', id)
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
-  }, [supabase])
+    await fetch(`/api/notifications/${id}`, { method: 'PATCH' }).catch(() => {})
+  }, [])
 
   const markAllRead = useCallback(async () => {
     if (!userId) return
-    await supabase.from('notifications').update({ read: true }).eq('user_id', userId).eq('read', false)
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-  }, [userId, supabase])
+    await fetch('/api/notifications/all', { method: 'PATCH' }).catch(() => {})
+  }, [userId])
 
   const unreadCount = notifications.filter(n => !n.read).length
 

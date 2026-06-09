@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
-import { createClient } from '@/lib/supabase/client'
 import { KZ, CERTIFICATION_LEVELS } from '@/lib/constants'
 import type { TrainingOffer } from '@/lib/types'
 
@@ -15,21 +14,19 @@ const certLabel = (id: string) =>
   CERTIFICATION_LEVELS.find(c => c.id === id)?.label ?? id
 
 export default function CandidateTrainingPage() {
-  const supabase = createClient()
   const [offers, setOffers]   = useState<TrainingOffer[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch]   = useState('')
 
   useEffect(() => {
-    supabase
-      .from('training_offers')
-      .select('*, company:companies(name, logo_url), info_session:events!info_session_id(id,title,date,jitsi_room)')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setOffers((data ?? []) as TrainingOffer[])
-        setLoading(false)
-      })
+    const load = async () => {
+      try {
+        const res = await fetch('/api/trainings')
+        if (res.ok) setOffers((await res.json()) as TrainingOffer[])
+      } catch { /* noop */ }
+      setLoading(false)
+    }
+    load()
   }, [])
 
   const filtered = search

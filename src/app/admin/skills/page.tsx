@@ -5,7 +5,6 @@ import { Plus, Trash2, Search, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
-import { createClient } from '@/lib/supabase/client'
 import { KZ, JOB_SECTORS } from '@/lib/constants'
 
 interface Skill {
@@ -16,7 +15,6 @@ interface Skill {
 }
 
 export default function AdminSkillsPage() {
-  const supabase = createClient()
   const [skills, setSkills]       = useState<Skill[]>([])
   const [filtered, setFiltered]   = useState<Skill[]>([])
   const [loading, setLoading]     = useState(true)
@@ -27,28 +25,13 @@ export default function AdminSkillsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const fetchSkills = async () => {
-    // Récupérer les compétences avec leur nombre d'utilisations
-    const { data } = await supabase
-      .from('skills')
-      .select('id, name, category')
-      .order('name', { ascending: true })
-
-    const skillList = (data ?? []) as Skill[]
-
-    // Compter les usages via candidate_skills
-    const { data: usages } = await supabase
-      .from('candidate_skills')
-      .select('skill_id')
-
-    const usageMap = new Map<string, number>()
-    ;(usages ?? []).forEach((u: { skill_id: string }) => {
-      usageMap.set(u.skill_id, (usageMap.get(u.skill_id) ?? 0) + 1)
-    })
-
-    const enriched = skillList.map(s => ({ ...s, usage_count: usageMap.get(s.id) ?? 0 }))
-    enriched.sort((a, b) => (b.usage_count ?? 0) - (a.usage_count ?? 0))
-    setSkills(enriched)
-    setFiltered(enriched)
+    try {
+      const res = await fetch('/api/admin/skills')
+      const enriched = res.ok ? ((await res.json()) as Skill[]) : []
+      enriched.sort((a, b) => (b.usage_count ?? 0) - (a.usage_count ?? 0))
+      setSkills(enriched)
+      setFiltered(enriched)
+    } catch { /* noop */ }
     setLoading(false)
   }
 
@@ -64,18 +47,19 @@ export default function AdminSkillsPage() {
   const handleAdd = async () => {
     if (!newName.trim()) return
     setAdding(true)
-    const { error } = await supabase.from('skills').insert({
-      name: newName.trim(),
-      category: newCat.trim() || null,
+    const res = await fetch('/api/admin/skills', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName.trim(), category: newCat.trim() || null }),
     })
-    if (!error) { setNewName(''); setNewCat(''); await fetchSkills() }
+    if (res.ok) { setNewName(''); setNewCat(''); await fetchSkills() }
     setAdding(false)
   }
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Supprimer la compétence "${name}" ? Cela la retirera de tous les profils candidats.`)) return
     setDeletingId(id)
-    await supabase.from('skills').delete().eq('id', id)
+    await fetch(`/api/admin/skills/${id}`, { method: 'DELETE' })
     await fetchSkills()
     setDeletingId(null)
   }

@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
 import { REUNION_CITIES, JOB_TYPES, JOB_SECTORS, KZ, hasMentionHF } from '@/lib/constants'
-import { createClient } from '@/lib/supabase/client'
 import type { Job } from '@/lib/types'
 
 const CITY_OPTIONS = REUNION_CITIES.map((c) => ({ value: c, label: c }))
@@ -24,7 +23,6 @@ interface JobFormProps {
 
 export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps) {
   const router = useRouter()
-  const supabase = createClient()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -63,18 +61,22 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
       salary_min: salaryMin ? parseInt(salaryMin) : null,
       salary_max: salaryMax ? parseInt(salaryMax) : null,
       salary_currency: '€',
-      recruiter_id: recruiterId,
-      company_id: companyId ?? null,
-      published_by: recruiterId,
       is_anonymous: isAnonymous,
       is_active: true,
-      updated_at: new Date().toISOString(),
     }
 
     if (job?.id) {
-      await supabase.from('jobs').update(payload).eq('id', job.id)
+      await fetch(`/api/recruiter/jobs/${job.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
     } else {
-      await supabase.from('jobs').insert(payload)
+      await fetch('/api/recruiter/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, companyId: companyId ?? null }),
+      })
     }
 
     setSaving(false)

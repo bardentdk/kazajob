@@ -13,7 +13,6 @@ import { EmptyState } from '@/components/feedback/EmptyState'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
 import { useAuth } from '@/features/auth/useAuth'
 import { useInterviews } from '@/features/interviews/useInterviews'
-import { createClient } from '@/lib/supabase/client'
 import type { Application, BadgeColor } from '@/lib/types'
 import { APPLICATION_STATUSES, KZ } from '@/lib/constants'
 import { timeAgo } from '@/lib/utils'
@@ -30,29 +29,20 @@ export default function RecruiterApplicationsPage() {
   })
   const [scheduling, setScheduling] = useState(false)
   const { create: createInterview } = useInterviews()
-  const supabase = createClient()
 
   useEffect(() => {
     if (!profile) return
     const fetchApps = async () => {
-      let q = supabase
-        .from('applications')
-        .select(`
-          *,
-          job:jobs!inner(*, company:companies(*)),
-          candidate:profiles(*)
-        `)
-        .eq('jobs.recruiter_id', profile.id)
-        .order('created_at', { ascending: false })
-
-      if (filterStatus) q = q.eq('status', filterStatus)
-
-      const { data } = await q
-      if (data) setApplications(data as Application[])
+      try {
+        const res = await fetch('/api/applications?scope=recruiter')
+        let data = res.ok ? ((await res.json()) as Application[]) : []
+        if (filterStatus) data = data.filter((a) => a.status === filterStatus)
+        setApplications(data)
+      } catch { /* noop */ }
       setLoading(false)
     }
     fetchApps()
-  }, [profile, filterStatus, supabase])
+  }, [profile, filterStatus])
 
   const handleSchedule = async () => {
     if (!scheduleFor || !scheduleData.scheduledAt) return
@@ -76,7 +66,11 @@ export default function RecruiterApplicationsPage() {
   }
 
   const updateStatus = async (id: string, status: Application['status']) => {
-    await supabase.from('applications').update({ status }).eq('id', id)
+    await fetch(`/api/applications/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    })
     setApplications((prev) => prev.map((a) => a.id === id ? { ...a, status } : a))
   }
 

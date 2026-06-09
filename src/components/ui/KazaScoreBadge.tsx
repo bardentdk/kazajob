@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { KZ } from '@/lib/constants'
 
 interface KazaScoreData {
@@ -29,18 +28,18 @@ const SCORE_STYLE = (score: number) => {
 export function KazaScoreBadge({ recruiterId, size = 'md', showDetails = false }: KazaScoreBadgeProps) {
   const [data, setData]     = useState<KazaScoreData | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
 
   useEffect(() => {
     if (!recruiterId) return
     const fetchScore = async () => {
-      const { data: result } = await supabase
-        .rpc('compute_kaza_score', { p_recruiter_id: recruiterId })
-      if (result && result.length > 0) setData(result[0] as KazaScoreData)
+      try {
+        const res = await fetch(`/api/kaza-score/${recruiterId}`)
+        if (res.ok) setData((await res.json()) as KazaScoreData)
+      } catch { /* noop */ }
       setLoading(false)
     }
     fetchScore()
-  }, [recruiterId, supabase])
+  }, [recruiterId])
 
   if (loading) return null
   if (!data || data.total_apps === 0) {

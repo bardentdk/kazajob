@@ -9,7 +9,6 @@ import { Modal } from '@/components/ui/Modal'
 import { Textarea } from '@/components/ui/Textarea'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import { KZ, CERTIFICATION_LEVELS } from '@/lib/constants'
 import type { TrainingOffer } from '@/lib/types'
 
@@ -19,7 +18,6 @@ export default function TrainingDetailPage() {
   const { id }   = useParams<{ id: string }>()
   const router   = useRouter()
   const { profile } = useAuth()
-  const supabase = createClient()
 
   const [offer, setOffer]           = useState<TrainingOffer | null>(null)
   const [loading, setLoading]       = useState(true)
@@ -33,52 +31,40 @@ export default function TrainingDetailPage() {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
-        .from('training_offers')
-        .select('*, company:companies(name,logo_url), info_session:events!info_session_id(id,title,date,jitsi_room,max_participants)')
-        .eq('id', id)
-        .single()
-      if (data) {
-        setOffer(data as TrainingOffer)
-        // Incrémenter les vues
-        await supabase.from('training_offers').update({ views: (data.views ?? 0) + 1 }).eq('id', id)
-      }
+      try {
+        const res = await fetch(`/api/trainings/${id}`)
+        if (res.ok) {
+          const { offer: o, is_applied, is_ic_registered } = await res.json()
+          setOffer(o as TrainingOffer)
+          if (is_applied) setApplied(true)
+          if (is_ic_registered) setIcReg(true)
+        }
+      } catch { /* noop */ }
       setLoading(false)
     }
     load()
   }, [id])
 
-  // Vérifier si déjà candidaté
-  useEffect(() => {
-    if (!profile?.id) return
-    supabase.from('training_applications').select('id').eq('training_offer_id', id).eq('candidate_id', profile.id).single()
-      .then(({ data }) => { if (data) setApplied(true) })
-    if (offer?.info_session_id) {
-      supabase.from('event_registrations').select('id').eq('event_id', offer.info_session_id).eq('candidate_id', profile.id).single()
-        .then(({ data }) => { if (data) setIcReg(true) })
-    }
-  }, [profile?.id, offer?.info_session_id])
-
   const handleApply = async () => {
     if (!profile?.id) return
     setApplying(true); setError('')
-    const { error: err } = await supabase.from('training_applications').insert({
-      training_offer_id: id,
-      candidate_id: profile.id,
-      motivation: motivation.trim() || null,
+    const res = await fetch(`/api/trainings/${id}/apply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ motivation }),
     })
-    if (err) setError(err.message)
-    else { setApplied(true); setApplyModal(false) }
+    if (res.ok) { setApplied(true); setApplyModal(false) }
+    else {
+      const body = await res.json().catch(() => ({}))
+      setError(body.error ?? 'Erreur inconnue')
+    }
     setApplying(false)
   }
 
   const handleIcRegister = async () => {
     if (!profile?.id || !offer?.info_session_id) return
     setApplying(true)
-    await supabase.from('event_registrations').insert({
-      event_id: offer.info_session_id,
-      candidate_id: profile.id,
-    })
+    await fetch(`/api/events/${offer.info_session_id}/register`, { method: 'POST' })
     setIcReg(true); setIcModal(false); setApplying(false)
   }
 

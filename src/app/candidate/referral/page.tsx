@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { Copy, Check, Gift, Users, Share2, Link as LinkIcon, Smartphone, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import { KZ, SITE_URL } from '@/lib/constants'
 
 interface ReferralStats {
@@ -14,7 +13,6 @@ interface ReferralStats {
 
 export default function ReferralPage() {
   const { profile, refetch } = useAuth()
-  const supabase = createClient()
   const [stats, setStats] = useState<ReferralStats>({ count: 0, rewarded: 0 })
   const [copied, setCopied] = useState(false)
   const [generating, setGenerating] = useState(false)
@@ -24,16 +22,10 @@ export default function ReferralPage() {
 
   useEffect(() => {
     if (!profile?.id) return
-    supabase
-      .from('referrals')
-      .select('rewarded', { count: 'exact' })
-      .eq('referrer_id', profile.id)
-      .then(({ data, count }) => {
-        setStats({
-          count: count ?? 0,
-          rewarded: (data ?? []).filter((r: { rewarded: boolean }) => r.rewarded).length,
-        })
-      })
+    fetch('/api/referral')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setStats(d as ReferralStats) })
+      .catch(() => {})
   }, [profile?.id])
 
   const handleCopy = async () => {
@@ -52,8 +44,7 @@ export default function ReferralPage() {
   const generateCode = async () => {
     if (!profile?.id || referralCode) return
     setGenerating(true)
-    const code = Math.random().toString(36).slice(2, 10).toUpperCase()
-    await supabase.from('profiles').update({ referral_code: code }).eq('id', profile.id)
+    await fetch('/api/referral', { method: 'POST' })
     await refetch?.()
     setGenerating(false)
   }

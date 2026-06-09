@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Avatar } from '@/components/ui/Avatar'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
-import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/types'
 import { KZ } from '@/lib/constants'
 import { timeAgo } from '@/lib/utils'
@@ -23,21 +22,24 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const supabase = createClient()
 
   useEffect(() => {
     const fetchUsers = async () => {
-      let q = supabase.from('profiles').select('*').order('created_at', { ascending: false })
-      if (search) q = q.ilike('full_name', `%${search}%`)
-      const { data } = await q
-      if (data) setUsers(data as Profile[])
+      try {
+        const res = await fetch(`/api/admin/users${search ? `?search=${encodeURIComponent(search)}` : ''}`)
+        if (res.ok) setUsers((await res.json()) as Profile[])
+      } catch { /* noop */ }
       setLoading(false)
     }
     fetchUsers()
-  }, [search, supabase])
+  }, [search])
 
   const updateRole = async (userId: string, role: Profile['role']) => {
-    await supabase.from('profiles').update({ role }).eq('id', userId)
+    await fetch(`/api/admin/users/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role }),
+    })
     setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role } : u))
   }
 

@@ -12,9 +12,8 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Badge } from '@/components/ui/Badge'
 import { Logo } from '@/components/layout/Logo'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import { PROFESSION_CATEGORIES } from '@/lib/onboarding-categories'
-import { KZ } from '@/lib/constants'
+import { KZ, SOFT_SKILLS, HOBBIES } from '@/lib/constants'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -43,6 +42,8 @@ interface CvData {
   location: string
   bio: string
   skills: string[]
+  softSkills: string[]
+  hobbies: string[]
   experiences: CvExperience[]
   education: CvEducation[]
   links: { label: string; url: string }[]
@@ -146,6 +147,26 @@ function CvModern({ data, color }: { data: CvData; color: string }) {
             </Section>
           )}
 
+          {data.softSkills.length > 0 && (
+            <Section title="Soft skills" color={color} compact>
+              <div className="flex flex-wrap gap-1">
+                {data.softSkills.map(s => (
+                  <span key={s} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: `${color}18`, color }}>{s}</span>
+                ))}
+              </div>
+            </Section>
+          )}
+
+          {data.hobbies.length > 0 && (
+            <Section title="Loisirs" color={color} compact>
+              <div className="flex flex-wrap gap-1">
+                {data.hobbies.map(h => (
+                  <span key={h} className="text-[10px] text-[#4A4A4A]">{h}</span>
+                ))}
+              </div>
+            </Section>
+          )}
+
           {data.links.filter(l => l.url).length > 0 && (
             <Section title="Liens" color={color} compact>
               {data.links.filter(l => l.url).map((l, i) => (
@@ -191,6 +212,24 @@ function CvCreative({ data, color }: { data: CvData; color: string }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {data.softSkills.length > 0 && (
+            <div>
+              <div className="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-2">Soft skills</div>
+              <div className="flex flex-wrap gap-1">
+                {data.softSkills.map(s => (
+                  <span key={s} className="text-[10px] px-1.5 py-0.5 rounded bg-white/15 text-white/85">{s}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {data.hobbies.length > 0 && (
+            <div>
+              <div className="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-2">Loisirs</div>
+              <div className="text-[11px] text-white/80">{data.hobbies.join(' · ')}</div>
             </div>
           )}
         </div>
@@ -253,6 +292,22 @@ function CvMinimal({ data, color }: { data: CvData; color: string }) {
           </div>
         </div>
       )}
+      {data.softSkills.length > 0 && (
+        <div className="mb-5">
+          <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color }}>Soft skills</div>
+          <div className="flex flex-wrap gap-1.5">
+            {data.softSkills.map(s => (
+              <span key={s} className="text-[11px] px-2 py-0.5 rounded" style={{ background: `${color}18`, color }}>{s}</span>
+            ))}
+          </div>
+        </div>
+      )}
+      {data.hobbies.length > 0 && (
+        <div className="mb-5">
+          <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color }}>Loisirs</div>
+          <div className="text-[11px] text-[#4A4A4A]">{data.hobbies.join(' · ')}</div>
+        </div>
+      )}
       {data.experiences.length > 0 && (
         <div className="mb-5">
           <div className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color }}>Expériences</div>
@@ -303,7 +358,6 @@ function Section({ title, color, children, compact }: { title: string; color: st
 export default function CvBuilderPage() {
   const { profile, refetch } = useAuth()
   const router = useRouter()
-  const supabase = createClient()
   const printRef = useRef<HTMLDivElement>(null)
   const [downloading, setDownloading] = useState(false)
 
@@ -320,6 +374,8 @@ export default function CvBuilderPage() {
     location: '',
     bio: '',
     skills: [],
+    softSkills: [],
+    hobbies: [],
     experiences: [],
     education: [],
     links: [{ label: 'LinkedIn', url: '' }],
@@ -345,6 +401,8 @@ export default function CvBuilderPage() {
       bio:      profile.bio ?? '',
       title:    primaryCat?.label ?? '',
       skills:   [...new Set(suggestedSkills)].slice(0, 8),
+      softSkills: profile.soft_skills ?? prev.softSkills,
+      hobbies:    profile.hobbies ?? prev.hobbies,
     }))
 
     setColor(profile.cv_color ?? primaryCat?.accentColor ?? KZ.violet)
@@ -378,16 +436,30 @@ export default function CvBuilderPage() {
   }
   const removeSkill = (s: string) => update('skills', cvData.skills.filter(k => k !== s))
 
+  const toggleSoftSkill = (s: string) =>
+    update('softSkills', cvData.softSkills.includes(s)
+      ? cvData.softSkills.filter(k => k !== s)
+      : [...cvData.softSkills, s])
+  const toggleHobby = (h: string) =>
+    update('hobbies', cvData.hobbies.includes(h)
+      ? cvData.hobbies.filter(k => k !== h)
+      : [...cvData.hobbies, h])
+
   const handleSave = async () => {
     if (!profile) return
     setSaving(true)
-    await supabase.from('profiles').update({
-      cv_data:     cvData,
-      cv_template: template,
-      cv_color:    color,
-      onboarding_completed: true,
-      updated_at: new Date().toISOString(),
-    }).eq('id', profile.id)
+    await fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cv_data:     cvData,
+        cv_template: template,
+        cv_color:    color,
+        soft_skills: cvData.softSkills,
+        hobbies:     cvData.hobbies,
+        onboarding_completed: true,
+      }),
+    })
     await refetch?.()
     setSaving(false)
     router.push('/candidate/dashboard')
@@ -399,9 +471,10 @@ export default function CvBuilderPage() {
     setDownloading(true)
 
     try {
-      // Import dynamique pour éviter le SSR
+      // Import dynamique pour éviter le SSR.
+      // html2canvas-pro : fork qui supporte les couleurs oklch/oklab de Tailwind v4.
       const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import('html2canvas'),
+        import('html2canvas-pro'),
         import('jspdf'),
       ])
 
@@ -473,6 +546,8 @@ export default function CvBuilderPage() {
     { id: 'info',        label: 'Informations' },
     { id: 'bio',         label: 'Bio' },
     { id: 'skills',      label: 'Compétences' },
+    { id: 'softskills',  label: 'Soft skills' },
+    { id: 'hobbies',     label: 'Loisirs' },
     { id: 'experiences', label: 'Expériences' },
     { id: 'education',   label: 'Formation' },
   ]
@@ -596,6 +671,40 @@ export default function CvBuilderPage() {
                         <Button kind="primary" size="sm" icon={<Plus size={13} />} onClick={addSkill} />
                       </div>
                     </>
+                  )}
+
+                  {section.id === 'softskills' && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {SOFT_SKILLS.map(s => {
+                        const on = cvData.softSkills.includes(s)
+                        return (
+                          <button key={s} onClick={() => toggleSoftSkill(s)}
+                            className="px-2.5 py-1 text-xs font-semibold border rounded-full transition-all"
+                            style={on
+                              ? { background: KZ.violet, color: 'white', borderColor: KZ.violet }
+                              : { background: KZ.paper, color: '#2A2018', borderColor: '#E8DDC9' }}>
+                            {on && '✓ '}{s}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {section.id === 'hobbies' && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {HOBBIES.map(h => {
+                        const on = cvData.hobbies.includes(h)
+                        return (
+                          <button key={h} onClick={() => toggleHobby(h)}
+                            className="px-2.5 py-1 text-xs font-semibold border rounded-full transition-all"
+                            style={on
+                              ? { background: KZ.green, color: 'white', borderColor: KZ.green }
+                              : { background: KZ.paper, color: '#2A2018', borderColor: '#E8DDC9' }}>
+                            {on && '✓ '}{h}
+                          </button>
+                        )
+                      })}
+                    </div>
                   )}
 
                   {section.id === 'experiences' && (

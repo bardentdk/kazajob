@@ -1,54 +1,39 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import type { Job, JobFilters } from '@/lib/types'
+
+function toQuery(f: JobFilters): string {
+  const sp = new URLSearchParams()
+  if (f.q) sp.set('q', f.q)
+  if (f.location) sp.set('location', f.location)
+  if (f.job_type) sp.set('job_type', f.job_type)
+  if (f.sector) sp.set('sector', f.sector)
+  if (f.remote !== undefined) sp.set('remote', String(f.remote))
+  if (f.salary_min) sp.set('salary_min', String(f.salary_min))
+  sp.set('page', String(f.page ?? 1))
+  sp.set('limit', String(f.limit ?? 12))
+  return sp.toString()
+}
 
 export function useJobs(initialFilters?: JobFilters) {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
   const [count, setCount] = useState(0)
   const [filters, setFilters] = useState<JobFilters>(initialFilters ?? { page: 1, limit: 12 })
-  const supabase = createClient()
 
   const fetchJobs = useCallback(async (f: JobFilters) => {
     setLoading(true)
-    const page = f.page ?? 1
-    const limit = f.limit ?? 12
-    const from = (page - 1) * limit
-    const to = from + limit - 1
-
-    let query = supabase
-      .from('jobs')
-      .select(`
-        *,
-        company:companies(*),
-        skills:job_skills(skill:skills(*))
-      `, { count: 'exact' })
-      .eq('is_active', true)
-      .range(from, to)
-      .order('is_boosted', { ascending: false })
-      .order('created_at', { ascending: false })
-
-    if (f.q) query = query.or(`title.ilike.%${f.q}%,description.ilike.%${f.q}%`)
-    if (f.location) query = query.eq('location', f.location)
-    if (f.job_type) query = query.eq('job_type', f.job_type)
-    if (f.sector) query = query.eq('sector', f.sector)
-    if (f.remote !== undefined) query = query.eq('remote', f.remote)
-    if (f.salary_min) query = query.gte('salary_min', f.salary_min)
-
-    const { data, count: total, error } = await query
-
-    if (!error && data) {
-      const mapped = data.map((j: Record<string, unknown>) => ({
-        ...j,
-        skills: (j.skills as Array<{ skill: unknown }>)?.map((s) => s.skill) ?? [],
-      })) as Job[]
-      setJobs(mapped)
-      setCount(total ?? 0)
-    }
+    try {
+      const res = await fetch(`/api/jobs?${toQuery(f)}`)
+      if (res.ok) {
+        const { data, count: total } = await res.json()
+        setJobs((data ?? []) as Job[])
+        setCount(total ?? 0)
+      }
+    } catch { /* garde l'état précédent */ }
     setLoading(false)
-  }, [supabase])
+  }, [])
 
   useEffect(() => {
     fetchJobs(filters)
@@ -64,28 +49,18 @@ export function useJobs(initialFilters?: JobFilters) {
 export function useJob(id: string) {
   const [job, setJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
 
   useEffect(() => {
+    let cancelled = false
     const fetchJob = async () => {
-      const { data } = await supabase
-        .from('jobs')
-        .select(`*, company:companies(*), skills:job_skills(skill:skills(*))`)
-        .eq('id', id)
-        .single()
-
-      if (data) {
-        const mapped = {
-          ...data,
-          skills: data.skills?.map((s: { skill: unknown }) => s.skill) ?? [],
-        } as Job
-        setJob(mapped)
-        // Increment views
-        supabase.from('jobs').update({ views: (data.views ?? 0) + 1 }).eq('id', id)
-      }
-      setLoading(false)
+      try {
+        const res = await fetch(`/api/jobs/${id}`)
+        if (res.ok && !cancelled) setJob((await res.json()) as Job)
+      } catch { /* noop */ }
+      if (!cancelled) setLoading(false)
     }
     fetchJob()
+    return () => { cancelled = true }
   }, [id])
 
   return { job, loading }

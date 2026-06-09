@@ -8,8 +8,15 @@ import { useFavorites } from '@/features/favorites/useFavorites'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import { KZ } from '@/lib/constants'
+
+async function patchProfile(patch: Record<string, unknown>) {
+  await fetch('/api/profile', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  })
+}
 
 interface ToggleProps {
   checked: boolean
@@ -45,7 +52,6 @@ interface SettingRow {
 
 export default function CandidateSettingsPage() {
   const { profile, refetch } = useAuth()
-  const supabase = createClient()
   const [saving, setSaving] = useState<string | null>(null)
   const [saved, setSaved] = useState<string | null>(null)
   const { applications } = useApplications(profile?.id)
@@ -69,7 +75,7 @@ export default function CandidateSettingsPage() {
   const handleToggle = async (key: string, value: boolean) => {
     if (!profile) return
     setSaving(key)
-    await supabase.from('profiles').update({ [key]: value, updated_at: new Date().toISOString() }).eq('id', profile.id)
+    await patchProfile({ [key]: value })
     setSettings(prev => ({ ...prev, [key]: value }))
     await refetch?.()
     setSaving(null)
@@ -80,7 +86,7 @@ export default function CandidateSettingsPage() {
   const handleFrequency = async (freq: 'instant' | 'daily' | 'weekly') => {
     if (!profile) return
     setSaving('freq')
-    await supabase.from('profiles').update({ email_alert_frequency: freq, updated_at: new Date().toISOString() }).eq('id', profile.id)
+    await patchProfile({ email_alert_frequency: freq })
     setSettings(prev => ({ ...prev, email_alert_frequency: freq }))
     await refetch?.()
     setSaving(null)

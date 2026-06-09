@@ -12,15 +12,14 @@ import { ReassuranceBar }     from '@/components/landing/ReassuranceBar'
 import { WhySection }         from '@/components/landing/WhySection'
 import { KazaIASpotlight }    from '@/components/landing/KazaIASpotlight'
 import { TestimonialsSection } from '@/components/landing/TestimonialsSection'
-import { PricingSection }     from '@/components/landing/PricingSection'
 import { RoadmapSection }     from '@/components/landing/RoadmapSection'
 import { FaqSection }         from '@/components/landing/FaqSection'
 import { LandingViewToggle }  from '@/components/landing/LandingViewToggle'
 import { EnterpriseLanding }  from '@/components/landing/EnterpriseLanding'
+import { SectionDecor }       from '@/components/landing/SectionDecor'
 import { KZ } from '@/lib/constants'
-import { createClient } from '@/lib/supabase/server'
+import { getLandingData } from '@/lib/queries/landing'
 import { formatSalary } from '@/lib/utils'
-import type { Company } from '@/lib/types'
 
 // Contenu marketing statique — ne change pas en fonction des données
 const HOW_STEPS = [
@@ -42,63 +41,6 @@ const HOW_STEPS = [
 ]
 
 const CARD_COLORS = [KZ.orangeSoft, KZ.violetSoft, KZ.greenSoft, KZ.yellowSoft, KZ.blueSoft]
-
-// Fonction de fetch serveur
-async function getLandingData() {
-  const supabase = await createClient()
-
-  const [
-    { data: featuredJobs },
-    { data: companies },
-    { count: jobCount },
-    { count: companyCount },
-    { count: userCount },
-  ] = await Promise.all([
-    // Offres les plus récentes ou boostées
-    supabase
-      .from('jobs')
-      .select(`
-        id, title, location, job_type, salary_min, salary_max, remote, created_at, is_boosted,
-        company:companies(name),
-        skills:job_skills(skill:skills(name))
-      `)
-      .eq('is_active', true)
-      .order('is_boosted', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(6),
-
-    // Entreprises vérifiées pour le bandeau logos
-    supabase
-      .from('companies')
-      .select('id, name')
-      .eq('is_verified', true)
-      .order('name')
-      .limit(8),
-
-    // Compteurs pour la bande stats
-    supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('companies').select('*', { count: 'exact', head: true }),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'candidate'),
-  ])
-
-  type FeaturedJob = {
-    id: string; title: string; location: string; job_type: string
-    salary_min: number | null; salary_max: number | null; remote: boolean
-    created_at: string; is_boosted: boolean
-    company: { name: string } | null
-    skills: Array<{ skill: { name: string } | null }>
-  }
-
-  return {
-    featuredJobs: (featuredJobs ?? []) as unknown as FeaturedJob[],
-    companies: (companies ?? []) as Company[],
-    stats: {
-      jobs: jobCount ?? 0,
-      companies: companyCount ?? 0,
-      users: userCount ?? 0,
-    },
-  }
-}
 
 export default async function LandingPage({
   searchParams,
@@ -134,6 +76,7 @@ export default async function LandingPage({
 
       {/* HERO ──────────────────────────────────────────────── */}
       <section className="px-4 sm:px-8 lg:px-16 pt-10 lg:pt-20 pb-0 relative overflow-hidden" style={{ background: KZ.cream }}>
+        <SectionDecor src="/assets/img/deco/hero.png" opacity={0.08} position="right bottom" size="contain" />
         <div className="absolute top-16 left-4 opacity-40 hidden lg:block"><Sparkle size={36} color={KZ.violet} /></div>
         <div className="absolute bottom-56 right-10 opacity-40 hidden lg:block"><Sparkle size={28} color={KZ.green} /></div>
 
@@ -286,8 +229,9 @@ export default async function LandingPage({
       </section>
 
       {/* COMMENT CA MARCHE ──────────────────────────────────── */}
-      <section id="comment" className="px-4 sm:px-8 lg:px-16 py-12 lg:py-20" style={{ background: KZ.cream }}>
-        <div className="max-w-[1280px] mx-auto">
+      <section id="comment" className="px-4 sm:px-8 lg:px-16 py-12 lg:py-20 relative overflow-hidden" style={{ background: KZ.cream }}>
+        <SectionDecor src="/assets/img/deco/comment.png" opacity={0.08} position="left center" size="contain" />
+        <div className="max-w-[1280px] mx-auto relative z-10">
           <div className="text-center mb-10 lg:mb-14">
             <p className="kz-eyebrow mb-2" style={{ color: KZ.orange }}>Comment ça marche</p>
             <h2 className="text-2xl lg:text-[36px] font-extrabold tracking-tight text-[#1A1410] max-w-[720px] mx-auto">
@@ -323,9 +267,6 @@ export default async function LandingPage({
       {/* TÉMOIGNAGES ─────────────────────────────────────────── */}
       <TestimonialsSection />
 
-      {/* PRICING ─────────────────────────────────────────────── */}
-      <PricingSection />
-
       {/* ROADMAP ─────────────────────────────────────────────── */}
       <RoadmapSection />
 
@@ -349,11 +290,11 @@ export default async function LandingPage({
               <Link href="/auth/register?role=recruiter">
                 <Button kind="primary" size="lg">Publier une offre — gratuit</Button>
               </Link>
-              <a href="#tarifs">
+              <Link href="/?view=entreprise#tarifs-pro">
                 <Button kind="outline" size="lg" className="!text-[#FFF7EE] !border-[#FFF7EE] !bg-transparent">
                   Voir les tarifs
                 </Button>
-              </a>
+              </Link>
             </div>
           </div>
           <div className="hidden lg:grid grid-cols-2 gap-3" style={{ transform: 'rotate(2deg)' }}>
@@ -389,9 +330,9 @@ export default async function LandingPage({
           <Link href="/auth/register">
             <Button kind="primary" size="lg" className="w-full sm:w-auto">Créer mon profil — gratuit</Button>
           </Link>
-          <a href="#tarifs">
+          <Link href="/?view=entreprise#tarifs-pro">
             <Button kind="outline" size="lg" className="w-full sm:w-auto">Voir les tarifs recruteur</Button>
-          </a>
+          </Link>
         </div>
         <p className="text-xs text-[#6B5A4A]">
           Candidats : 100% gratuit · Recruteurs : essai 14 jours sans CB · Données hébergées en France

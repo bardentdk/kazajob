@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { Sparkles, ExternalLink, Zap, MessageCircle, FileText, Brain, Info } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { KZ } from '@/lib/constants'
 
 interface AIStats {
@@ -41,7 +40,6 @@ function StatBlock({ icon, label, value, sub, color }: {
 }
 
 export default function AdminAIPage() {
-  const supabase = createClient()
   const [stats, setStats] = useState<AIStats>({
     totalApplications: 0,
     applicationsWithCoverLetter: 0,
@@ -54,28 +52,24 @@ export default function AdminAIPage() {
 
   useEffect(() => {
     const load = async () => {
-      const [
-        { count: totalApps },
-        { count: appsWithCL },
-        { count: convs },
-      ] = await Promise.all([
-        supabase.from('applications').select('*', { count: 'exact', head: true }),
-        supabase.from('applications').select('*', { count: 'exact', head: true }).not('cover_letter', 'is', null).neq('cover_letter', ''),
-        supabase.from('conversations').select('*', { count: 'exact', head: true }),
-      ])
+      try {
+        const res = await fetch('/api/admin/ai-stats')
+        if (res.ok) {
+          const { totalApplications, applicationsWithCoverLetter, totalConversations } = await res.json()
+          const clCount   = applicationsWithCoverLetter ?? 0
+          const chatCount = (totalConversations ?? 0) * 3  // estimation moyenne 3 messages par conversation
+          const ipCount   = Math.round((totalApplications ?? 0) * 0.15)  // estimation 15% utilisent interview prep
 
-      const clCount   = appsWithCL ?? 0
-      const chatCount = (convs ?? 0) * 3  // estimation moyenne 3 messages par conversation
-      const ipCount   = Math.round((totalApps ?? 0) * 0.15)  // estimation 15% utilisent interview prep
-
-      setStats({
-        totalApplications:          totalApps ?? 0,
-        applicationsWithCoverLetter: clCount,
-        totalConversations:          convs ?? 0,
-        coverLettersEstimated:       clCount,
-        interviewPrepsEstimated:     ipCount,
-        chatsEstimated:              chatCount,
-      })
+          setStats({
+            totalApplications:          totalApplications ?? 0,
+            applicationsWithCoverLetter: clCount,
+            totalConversations:          totalConversations ?? 0,
+            coverLettersEstimated:       clCount,
+            interviewPrepsEstimated:     ipCount,
+            chatsEstimated:              chatCount,
+          })
+        }
+      } catch { /* noop */ }
       setLoading(false)
     }
     load()

@@ -12,7 +12,6 @@ import { useApplications } from '@/features/applications/useApplications'
 import { useAuth } from '@/features/auth/useAuth'
 import { APPLICATION_STATUSES, KZ } from '@/lib/constants'
 import { timeAgo } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
 import type { BadgeColor } from '@/lib/types'
 
 const STATUS_TABS = [
@@ -32,7 +31,6 @@ export default function ApplicationsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('all')
   const [cancelId, setCancelId] = useState<string | null>(null)
   const [cancelling, setCancelling] = useState(false)
-  const supabase = createClient()
 
   const filtered = (activeTab === 'all'
     ? applications
@@ -42,10 +40,7 @@ export default function ApplicationsPage() {
   const handleCancel = async () => {
     if (!cancelId) return
     setCancelling(true)
-    await supabase
-      .from('applications')
-      .update({ status: 'withdrawn', updated_at: new Date().toISOString() })
-      .eq('id', cancelId)
+    await fetch(`/api/applications/${cancelId}/withdraw`, { method: 'POST' })
     await refetch?.()
     setCancelling(false)
     setCancelId(null)

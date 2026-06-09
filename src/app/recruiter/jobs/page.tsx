@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import type { Job } from '@/lib/types'
 import { timeAgo, formatSalary } from '@/lib/utils'
 import { KZ } from '@/lib/constants'
@@ -17,30 +16,30 @@ export default function RecruiterJobsPage() {
   const { profile } = useAuth()
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
 
   const fetchJobs = async () => {
     if (!profile) return
-    const { data } = await supabase
-      .from('jobs')
-      .select('*, company:companies(name, logo_url), publisher:profiles!published_by(full_name)')
-      .eq('recruiter_id', profile.id)
-      .order('created_at', { ascending: false })
-
-    if (data) setJobs(data as Job[])
+    try {
+      const res = await fetch('/api/recruiter/jobs')
+      if (res.ok) setJobs((await res.json()) as Job[])
+    } catch { /* noop */ }
     setLoading(false)
   }
 
   useEffect(() => { if (profile) fetchJobs() }, [profile])
 
   const toggleActive = async (job: Job) => {
-    await supabase.from('jobs').update({ is_active: !job.is_active }).eq('id', job.id)
+    await fetch(`/api/recruiter/jobs/${job.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: !job.is_active }),
+    })
     fetchJobs()
   }
 
   const deleteJob = async (id: string) => {
     if (!confirm('Supprimer cette offre ?')) return
-    await supabase.from('jobs').delete().eq('id', id)
+    await fetch(`/api/recruiter/jobs/${id}`, { method: 'DELETE' })
     fetchJobs()
   }
 

@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Badge } from '@/components/ui/Badge'
-import { createClient } from '@/lib/supabase/client'
 import { KZ } from '@/lib/constants'
 import type { BadgeColor } from '@/lib/types'
 
@@ -28,7 +27,6 @@ const TARGET_OPTIONS: { value: Target; label: string; desc: string; color: Badge
 ]
 
 export default function AdminNotificationsPage() {
-  const supabase = createClient()
   const [title, setTitle]       = useState('')
   const [message, setMessage]   = useState('')
   const [link, setLink]         = useState('')
@@ -40,13 +38,13 @@ export default function AdminNotificationsPage() {
 
   // Compter les destinataires
   useEffect(() => {
-    const count = async () => {
-      let q = supabase.from('profiles').select('*', { count: 'exact', head: true })
-      if (target !== 'all') q = q.eq('role', target)
-      const { count } = await q
-      setRecipientCount(count ?? 0)
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/admin/users/count?role=${target}`)
+        if (res.ok) setRecipientCount((await res.json()).count ?? 0)
+      } catch { /* noop */ }
     }
-    count()
+    load()
   }, [target])
 
   // Historique (stocké en local state pour la session)
@@ -55,26 +53,15 @@ export default function AdminNotificationsPage() {
     setSending(true)
     setSent(false)
 
-    // Récupérer les IDs des destinataires
-    let q = supabase.from('profiles').select('id')
-    if (target !== 'all') q = q.eq('role', target)
-    const { data: users } = await q
-
-    if (users && users.length > 0) {
-      // Insérer en batch (max 1000 par appel)
-      const BATCH = 500
-      const notifs = users.map((u: { id: string }) => ({
-        user_id: u.id,
-        type: 'admin',
-        title: title.trim(),
-        message: message.trim(),
-        link: link.trim() || null,
-        is_read: false,
-      }))
-      for (let i = 0; i < notifs.length; i += BATCH) {
-        await supabase.from('notifications').insert(notifs.slice(i, i + BATCH))
-      }
-    }
+    let recipients = 0
+    try {
+      const res = await fetch('/api/admin/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, message, link, target }),
+      })
+      if (res.ok) recipients = (await res.json()).recipients ?? 0
+    } catch { /* noop */ }
 
     // Historique local
     const newEntry: SentNotif = {
@@ -83,7 +70,7 @@ export default function AdminNotificationsPage() {
       message: message.trim(),
       target,
       sent_at: new Date().toISOString(),
-      recipients: users?.length ?? 0,
+      recipients,
     }
     setHistory(h => [newEntry, ...h])
     setTitle(''); setMessage(''); setLink('')

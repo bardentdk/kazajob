@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { Download, TrendingUp, Users, Briefcase, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { createClient } from '@/lib/supabase/client'
 import { KZ } from '@/lib/constants'
 
 interface WeekBucket { label: string; users: number; jobs: number; apps: number }
@@ -28,7 +27,6 @@ function Bar({ value, max, color }: { value: number; max: number; color: string 
 }
 
 export default function AdminAnalyticsPage() {
-  const supabase = createClient()
   const [weeks, setWeeks]       = useState<WeekBucket[]>([])
   const [topCities, setTopCities] = useState<TopCity[]>([])
   const [topSectors, setTopSectors] = useState<TopSector[]>([])
@@ -37,29 +35,22 @@ export default function AdminAnalyticsPage() {
 
   useEffect(() => {
     const load = async () => {
-      const since8w = new Date()
-      since8w.setDate(since8w.getDate() - 56)
-      const since8wStr = since8w.toISOString()
-
-      const [
-        { data: profiles },
-        { data: jobs },
-        { data: apps },
-        { count: totalUsers },
-        { count: totalJobs },
-        { count: totalApps },
-        { count: totalCompanies },
-      ] = await Promise.all([
-        supabase.from('profiles').select('created_at').gte('created_at', since8wStr),
-        supabase.from('jobs').select('created_at, location, sector').gte('created_at', since8wStr),
-        supabase.from('applications').select('created_at').gte('created_at', since8wStr),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('jobs').select('*', { count: 'exact', head: true }),
-        supabase.from('applications').select('*', { count: 'exact', head: true }),
-        supabase.from('companies').select('*', { count: 'exact', head: true }),
-      ])
-
-      setTotals({ users: totalUsers ?? 0, jobs: totalJobs ?? 0, apps: totalApps ?? 0, companies: totalCompanies ?? 0 })
+      let profiles: { created_at: string }[] = []
+      let jobs: { created_at: string; location: string; sector: string | null }[] = []
+      let apps: { created_at: string }[] = []
+      try {
+        const res = await fetch('/api/admin/analytics')
+        if (res.ok) {
+          const d = await res.json()
+          profiles = d.profiles ?? []
+          jobs = d.jobs ?? []
+          apps = d.apps ?? []
+          setTotals({
+            users: d.totals?.users ?? 0, jobs: d.totals?.jobs ?? 0,
+            apps: d.totals?.apps ?? 0, companies: d.totals?.companies ?? 0,
+          })
+        }
+      } catch { /* noop */ }
 
       // Construire les buckets hebdomadaires (8 dernières semaines)
       const buckets: WeekBucket[] = []

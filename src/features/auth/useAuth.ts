@@ -1,73 +1,51 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import {
+  useSession,
+  signIn as nextSignIn,
+  signOut as nextSignOut,
+} from 'next-auth/react'
 import type { Profile } from '@/lib/types'
 
 export function useAuth() {
+  const { status } = useSession()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [authChecked, setAuthChecked] = useState(false)
-  const supabase = createClient()
 
   const fetchProfile = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      const res = await fetch('/api/me')
+      if (!res.ok) {
+        setProfile(null)
+      } else {
+        setProfile((await res.json()) as Profile)
+      }
+    } catch {
+      setProfile(null)
+    } finally {
+      setLoading(false)
+      setAuthChecked(true)
+    }
+  }, [])
 
-    if (!user) {
+  useEffect(() => {
+    if (status === 'loading') return
+    if (status === 'unauthenticated') {
       setProfile(null)
       setLoading(false)
       setAuthChecked(true)
       return
     }
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-
-    if (error || !data) {
-      // Profil absent ou 403 → le créer/recréer via upsert
-      const { data: upserted } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          email: user.email ?? '',
-          full_name: user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? '',
-          role: (user.user_metadata?.role as Profile['role']) ?? 'candidate',
-        }, { onConflict: 'id' })
-        .select()
-        .single()
-
-      setProfile(upserted ?? null)
-    } else {
-      setProfile(data as Profile)
-    }
-
-    setLoading(false)
-    setAuthChecked(true)
-  }, [supabase])
-
-  useEffect(() => {
+    // authenticated
     fetchProfile()
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session?.user) {
-        setProfile(null)
-        setLoading(false)
-        setAuthChecked(true)
-        return
-      }
-      fetchProfile()
-    })
-
-    return () => listener.subscription.unsubscribe()
-  }, [fetchProfile])
+  }, [status, fetchProfile])
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error }
-  }, [supabase])
+    const res = await nextSignIn('credentials', { email, password, redirect: false })
+    return { error: res?.error ? 'Email ou mot de passe incorrect.' : null }
+  }, [])
 
   const signUp = useCallback(async (
     email: string,
@@ -75,39 +53,34 @@ export function useAuth() {
     full_name: string,
     role: 'candidate' | 'recruiter' = 'candidate'
   ) => {
-    // Passer le rôle dans les métadonnées → le trigger l'utilisera
-    let data, error
+    let res: Response
     try {
-      const result = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name, role } },
+      res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, fullName: full_name, role }),
       })
-      data  = result.data
-      error = result.error
-    } catch (networkErr) {
-      // Erreur réseau (Failed to fetch) — projet Supabase pausé ou pas de connexion
+    } catch {
       return { error: 'Failed to fetch — vérifie ta connexion ou réessaie dans quelques secondes.' }
     }
 
-    if (error || !data?.user) return { error: error?.message ?? 'Erreur inconnue' }
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({ error: 'Erreur inconnue' }))
+      return { error: error ?? 'Erreur inconnue' }
+    }
 
-    // Upsert du profil (idempotent — fonctionne même si le trigger a déjà créé la ligne)
-    await supabase.from('profiles').upsert({
-      id: data.user.id,
-      email,
-      full_name,
-      role,
-    }, { onConflict: 'id' })
+    // Connexion automatique après inscription
+    const signInRes = await nextSignIn('credentials', { email, password, redirect: false })
+    if (signInRes?.error) return { error: 'Compte créé mais connexion impossible. Connecte-toi.' }
 
     return { error: null }
-  }, [supabase])
+  }, [])
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut()
+    await nextSignOut({ redirect: false })
     setProfile(null)
     setAuthChecked(true)
-  }, [supabase])
+  }, [])
 
   return { profile, loading, authChecked, signIn, signUp, signOut, refetch: fetchProfile }
 }

@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Zap, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { createClient } from '@/lib/supabase/client'
 import { KZ, KAZA_BOOST_COST_XP, KAZA_BOOST_HOURS } from '@/lib/constants'
 
 interface KazaBoostButtonProps {
@@ -13,10 +12,9 @@ interface KazaBoostButtonProps {
   onBoost?: () => void | Promise<void>
 }
 
-export function KazaBoostButton({ profileId, xp, boostedUntil, onBoost }: KazaBoostButtonProps) {
+export function KazaBoostButton({ xp, boostedUntil, onBoost }: KazaBoostButtonProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
-  const supabase = createClient()
 
   const isActive = !!boostedUntil && new Date(boostedUntil) > new Date()
   const canBoost = xp >= KAZA_BOOST_COST_XP && !isActive
@@ -26,15 +24,8 @@ export function KazaBoostButton({ profileId, xp, boostedUntil, onBoost }: KazaBo
     setLoading(true)
     setError('')
 
-    const expiry = new Date()
-    expiry.setHours(expiry.getHours() + KAZA_BOOST_HOURS)
-
-    const { error: err } = await supabase
-      .from('profiles')
-      .update({ boosted_until: expiry.toISOString(), xp: xp - KAZA_BOOST_COST_XP })
-      .eq('id', profileId)
-
-    if (err) setError('Erreur lors du boost. Réessayez.')
+    const res = await fetch('/api/profile/boost', { method: 'POST' })
+    if (!res.ok) setError('Erreur lors du boost. Réessayez.')
     else await onBoost?.()
     setLoading(false)
   }

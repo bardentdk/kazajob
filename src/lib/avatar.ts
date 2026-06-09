@@ -173,6 +173,51 @@ export function generateAvatarSvg(config: AvatarConfig): string {
   }
 }
 
+// ── Personnage par domaine métier ────────────────────────────────
+// On "évoque" le métier via tenue + couleur (DiceBear n'a pas de tenues
+// métier dédiées). Le candidat peut tout personnaliser ensuite.
+export const CHARACTER_GENDERS = [
+  { id: 'femme', label: 'Femme',  top: 'longButNotTooLong' },
+  { id: 'homme', label: 'Homme',  top: 'shortCurly'        },
+  { id: 'autre', label: 'Autre',  top: 'curly'             },
+]
+
+export interface CharacterDomain {
+  id: string
+  label: string
+  emoji: string
+  clothes: string
+  clothesColor: string
+  accessories?: string
+}
+
+export const CHARACTER_DOMAINS: CharacterDomain[] = [
+  { id: 'sante',          label: 'Santé & Social',        emoji: '🩺', clothes: 'shirtCrewNeck',    clothesColor: 'a7ffc4' },
+  { id: 'btp',            label: 'BTP & Artisanat',       emoji: '👷', clothes: 'overall',          clothesColor: 'ffdeb5' },
+  { id: 'tech',           label: 'Tech & Numérique',      emoji: '💻', clothes: 'hoodie',           clothesColor: '3c4f5c' },
+  { id: 'commerce',       label: 'Commerce & Vente',      emoji: '🛍️', clothes: 'blazerAndShirt',   clothesColor: 'ff488e' },
+  { id: 'restauration',   label: 'Hôtellerie & Resto',    emoji: '🍽️', clothes: 'collarAndSweater', clothesColor: 'ffdeb5' },
+  { id: 'tourisme',       label: 'Tourisme & Loisirs',    emoji: '🌴', clothes: 'shirtCrewNeck',    clothesColor: '65c9ff' },
+  { id: 'transport',      label: 'Transport & Logistique',emoji: '🚚', clothes: 'hoodie',           clothesColor: '929598' },
+  { id: 'education',      label: 'Éducation & Formation',  emoji: '📚', clothes: 'blazerAndSweater', clothesColor: '3c4f5c' },
+  { id: 'administration', label: 'Administration & Gestion',emoji: '📊', clothes: 'blazerAndShirt',  clothesColor: '3c4f5c' },
+  { id: 'agriculture',    label: 'Agriculture & Environnement', emoji: '🌱', clothes: 'overall',     clothesColor: 'a7ffc4' },
+  { id: 'autre',          label: 'Autre domaine',         emoji: '✨', clothes: 'shirtCrewNeck',    clothesColor: '65c9ff' },
+]
+
+/** Construit une config avatar "personnage" à partir d'un domaine + genre */
+export function buildCharacterConfig(domainId: string, genderId: string): AvatarConfig {
+  const domain = CHARACTER_DOMAINS.find(d => d.id === domainId)
+  const gender = CHARACTER_GENDERS.find(g => g.id === genderId)
+  return {
+    ...DEFAULT_AVATAR_CONFIG,
+    top:          gender?.top ?? DEFAULT_AVATAR_CONFIG.top,
+    clothes:      domain?.clothes ?? DEFAULT_AVATAR_CONFIG.clothes,
+    clothesColor: domain?.clothesColor ?? DEFAULT_AVATAR_CONFIG.clothesColor,
+    accessories:  domain?.accessories ?? 'blank',
+  }
+}
+
 /** Rétrocompatibilité — utilisé dans resolveAvatarSrc */
 export function buildAvatarUrl(_config: AvatarConfig): string {
   // Conservé pour compatibilité, mais generateAvatarSvg est préféré

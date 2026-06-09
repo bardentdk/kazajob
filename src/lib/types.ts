@@ -68,6 +68,10 @@ export interface Profile {
   company_id: string | null
   gamification_enabled: boolean
   avatar_config: Record<string, string> | null
+  soft_skills: string[] | null
+  hobbies: string[] | null
+  character_domain: string | null
+  gender: string | null
   created_at: string
   updated_at: string
 }

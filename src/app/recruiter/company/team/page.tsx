@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import { KZ } from '@/lib/constants'
 import type { CompanyMember, CompanyJoinRequest } from '@/lib/types'
 import type { BadgeColor } from '@/lib/types'
@@ -18,7 +17,6 @@ const ROLE_ICON: Record<string, React.ReactNode> = {
 
 export default function CompanyTeamPage() {
   const { profile } = useAuth()
-  const supabase = createClient()
   const [members, setMembers]   = useState<CompanyMember[]>([])
   const [requests, setRequests] = useState<CompanyJoinRequest[]>([])
   const [loading, setLoading]   = useState(true)
@@ -30,20 +28,14 @@ export default function CompanyTeamPage() {
 
   const fetchAll = async () => {
     if (!profile?.company_id) return
-    const [{ data: m }, { data: r }] = await Promise.all([
-      supabase.from('company_members')
-        .select('*, profile:profiles!recruiter_id(full_name, email, avatar_url)')
-        .eq('company_id', profile.company_id)
-        .eq('status', 'active')
-        .order('created_at'),
-      supabase.from('company_join_requests')
-        .select('*, profile:profiles!recruiter_id(full_name, email)')
-        .eq('company_id', profile.company_id)
-        .eq('status', 'pending')
-        .order('created_at'),
-    ])
-    setMembers((m ?? []) as CompanyMember[])
-    setRequests((r ?? []) as CompanyJoinRequest[])
+    try {
+      const res = await fetch(`/api/companies/${profile.company_id}/team`)
+      if (res.ok) {
+        const { members: m, requests: r } = await res.json()
+        setMembers((m ?? []) as CompanyMember[])
+        setRequests((r ?? []) as CompanyJoinRequest[])
+      }
+    } catch { /* noop */ }
     setLoading(false)
   }
 
@@ -52,24 +44,11 @@ export default function CompanyTeamPage() {
   const handleRequest = async (req: CompanyJoinRequest, approve: boolean) => {
     if (!profile?.company_id) return
     setProcessingId(req.id)
-    if (approve) {
-      await supabase.from('company_join_requests')
-        .update({ status: 'approved', reviewed_by: profile.id })
-        .eq('id', req.id)
-      // Ajouter dans company_members
-      await supabase.from('company_members').upsert({
-        company_id: profile.company_id,
-        recruiter_id: req.recruiter_id,
-        role: 'member',
-        status: 'active',
-      }, { onConflict: 'company_id,recruiter_id' })
-      // Mettre à jour profiles.company_id
-      await supabase.from('profiles').update({ company_id: profile.company_id }).eq('id', req.recruiter_id)
-    } else {
-      await supabase.from('company_join_requests')
-        .update({ status: 'rejected', reviewed_by: profile.id })
-        .eq('id', req.id)
-    }
+    await fetch(`/api/company-requests/${req.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ approve }),
+    })
     // Notifier le demandeur par email (fire & forget)
     fetch('/api/email', {
       method: 'POST',
@@ -81,18 +60,21 @@ export default function CompanyTeamPage() {
     setProcessingId(null)
   }
 
-  const handleRemoveMember = async (memberId: string, recruiterId: string) => {
+  const handleRemoveMember = async (memberId: string, _recruiterId: string) => {
     if (!confirm('Retirer ce membre de l\'équipe ?')) return
     setProcessingId(memberId)
-    await supabase.from('company_members').update({ status: 'suspended' }).eq('id', memberId)
-    await supabase.from('profiles').update({ company_id: null }).eq('id', recruiterId)
+    await fetch(`/api/company-members/${memberId}`, { method: 'DELETE' })
     await fetchAll()
     setProcessingId(null)
   }
 
   const handleChangeRole = async (memberId: string, newRole: 'admin' | 'member') => {
     setProcessingId(memberId)
-    await supabase.from('company_members').update({ role: newRole }).eq('id', memberId)
+    await fetch(`/api/company-members/${memberId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: newRole }),
+    })
     await fetchAll()
     setProcessingId(null)
   }

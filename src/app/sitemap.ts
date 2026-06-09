@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { getSitemapJobs } from '@/lib/queries/landing'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = 'https://kazajob.re'
@@ -16,24 +16,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ── Pages dynamiques : offres d'emploi publiques ──────────────
   let jobPages: MetadataRoute.Sitemap = []
   try {
-    const supabase = await createClient()
-    const { data: jobs } = await supabase
-      .from('jobs')
-      .select('id, updated_at')
-      .eq('is_active', true)
-      .order('updated_at', { ascending: false })
-      .limit(500)
-
-    if (jobs) {
-      jobPages = jobs.map((job) => ({
-        url: `${base}/candidate/jobs/${job.id}`,
-        lastModified: new Date(job.updated_at),
-        changeFrequency: 'weekly',
-        priority: 0.8,
-      }))
-    }
+    const jobs = await getSitemapJobs()
+    jobPages = jobs.map((job) => ({
+      url: `${base}/candidate/jobs/${job.id}`,
+      lastModified: new Date(job.updated_at),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    }))
   } catch {
-    // Supabase non dispo au build → sitemap statique uniquement
+    // DB non dispo au build → sitemap statique uniquement
   }
 
   return [...staticPages, ...jobPages]

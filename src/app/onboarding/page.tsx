@@ -11,18 +11,16 @@ import { Badge } from '@/components/ui/Badge'
 import { Logo } from '@/components/layout/Logo'
 import { AvatarBuilder } from '@/components/ui/AvatarBuilder'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import { PROFESSION_CATEGORIES } from '@/lib/onboarding-categories'
-import { KZ } from '@/lib/constants'
+import { KZ, SOFT_SKILLS, HOBBIES } from '@/lib/constants'
 import { Soleil, Palme, Hibiscus } from '@/components/illustrations/Tropical'
-import { type AvatarConfig, buildAvatarUrl } from '@/lib/avatar'
+import { type AvatarConfig, buildAvatarUrl, buildCharacterConfig, CHARACTER_GENDERS, CHARACTER_DOMAINS } from '@/lib/avatar'
 
 const TOTAL_STEPS = 6  // +2 : Avatar (étape 2) + Gamification Welcome (étape 6)
 
 export default function OnboardingPage() {
   const { profile, refetch } = useAuth()
   const router = useRouter()
-  const supabase = createClient()
 
   const [step, setStep] = useState(1)
   const [selected, setSelected] = useState<string[]>([])
@@ -31,8 +29,20 @@ export default function OnboardingPage() {
   const [phone, setPhone] = useState('')
   const [bio, setBio] = useState('')
   const [avatarConfig, setAvatarConfig] = useState<AvatarConfig | null>(null)
+  const [gender, setGender] = useState<string>('autre')
+  const [charDomain, setCharDomain] = useState<string>('autre')
+  const [softSkills, setSoftSkills] = useState<string[]>([])
+  const [hobbies, setHobbies] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [savingAvatar, setSavingAvatar] = useState(false)
+
+  // Génère un personnage "métier" à partir du genre + domaine choisis
+  const applyCharacter = (g: string, d: string) => {
+    setGender(g); setCharDomain(d)
+    setAvatarConfig(buildCharacterConfig(d, g))
+  }
+  const toggleIn = (arr: string[], v: string) =>
+    arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]
 
   useEffect(() => {
     if (profile) {
@@ -40,6 +50,10 @@ export default function OnboardingPage() {
       setLocation(profile.location ?? '')
       setPhone(profile.phone ?? '')
       setBio(profile.bio ?? '')
+      if (profile.gender) setGender(profile.gender)
+      if (profile.character_domain) setCharDomain(profile.character_domain)
+      if (profile.soft_skills) setSoftSkills(profile.soft_skills)
+      if (profile.hobbies) setHobbies(profile.hobbies)
     }
   }, [profile])
 
@@ -64,9 +78,11 @@ export default function OnboardingPage() {
     if (!profile) return
     setSavingAvatar(true)
     setAvatarConfig(config)
-    await supabase.from('profiles')
-      .update({ avatar_config: config, updated_at: new Date().toISOString() })
-      .eq('id', profile.id)
+    await fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ avatar_config: config }),
+    })
     setSavingAvatar(false)
     setStep(3) // → Profil info
   }
@@ -75,35 +91,33 @@ export default function OnboardingPage() {
     if (!profile) return
     setSaving(true)
 
-    await supabase.from('profiles').update({
-      full_name: fullName,
-      location,
-      phone,
-      bio,
-      avatar_category:      selected[0] ?? null,
-      avatar_categories:    selected,
-      avatar_config:        avatarConfig ?? null,
-      gamification_enabled: true,
-      onboarding_completed: true,
-      updated_at: new Date().toISOString(),
-    }).eq('id', profile.id)
+    await fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        full_name: fullName,
+        location,
+        phone,
+        bio,
+        avatar_category:      selected[0] ?? null,
+        avatar_categories:    selected,
+        avatar_config:        avatarConfig ?? null,
+        gender,
+        character_domain:     charDomain,
+        soft_skills:          softSkills,
+        hobbies,
+        gamification_enabled: true,
+        onboarding_completed: true,
+      }),
+    })
 
-    // Ajouter les compétences suggérées
+    // Ajouter les compétences suggérées (en masse, par nom)
     if (suggestedSkills.length > 0) {
-      const { data: skillRows } = await supabase
-        .from('skills')
-        .select('id, name')
-        .in('name', suggestedSkills)
-
-      if (skillRows && skillRows.length > 0) {
-        await supabase.from('candidate_skills').upsert(
-          skillRows.map((s: { id: string }) => ({
-            candidate_id: profile.id,
-            skill_id: s.id,
-          })),
-          { onConflict: 'candidate_id,skill_id' }
-        )
-      }
+      await fetch('/api/candidate-skills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ names: suggestedSkills }),
+      })
     }
 
     await refetch?.()
@@ -208,8 +222,44 @@ export default function OnboardingPage() {
                   Personnalise ton avatar. Il représente qui tu es — sans photo, sans discrimination.
                 </p>
               </div>
+              {/* Genre */}
+              <div className="kz-card p-4 bg-white mb-3">
+                <p className="text-xs font-extrabold text-[#1A1410] uppercase tracking-widest mb-2.5">Ton genre</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {CHARACTER_GENDERS.map(g => (
+                    <button key={g.id} type="button" onClick={() => applyCharacter(g.id, charDomain)}
+                      className="py-2.5 rounded-xl border-2 text-sm font-bold transition-all"
+                      style={gender === g.id
+                        ? { background: KZ.violet, color: 'white', borderColor: KZ.violet }
+                        : { background: KZ.paper, color: '#1A1410', borderColor: '#E8DDC9' }}>
+                      {g.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Personnage métier */}
+              <div className="kz-card p-4 bg-white mb-3">
+                <p className="text-xs font-extrabold text-[#1A1410] uppercase tracking-widest mb-2.5">
+                  Ton personnage métier <span className="text-[#6B5A4A] font-semibold normal-case">— génère une tenue adaptée</span>
+                </p>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {CHARACTER_DOMAINS.map(d => (
+                    <button key={d.id} type="button" onClick={() => applyCharacter(gender, d.id)}
+                      className="flex flex-col items-center gap-1 p-2 rounded-xl border-2 text-center transition-all"
+                      style={charDomain === d.id
+                        ? { background: KZ.orangeSoft, borderColor: KZ.orange, boxShadow: `2px 2px 0 ${KZ.orange}` }
+                        : { background: KZ.paper, borderColor: '#E8DDC9' }}>
+                      <span className="text-xl">{d.emoji}</span>
+                      <span className="text-[10px] font-bold text-[#1A1410] leading-tight">{d.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="kz-card p-6 bg-white">
                 <AvatarBuilder
+                  key={`${gender}-${charDomain}`}
                   initialConfig={avatarConfig}
                   onSave={handleSaveAvatar}
                   saving={savingAvatar}
@@ -307,6 +357,44 @@ export default function OnboardingPage() {
                 <p className="text-xs text-[#6B5A4A]">
                   Tu pourras ajouter ou supprimer des compétences depuis ton profil à tout moment.
                 </p>
+              </div>
+
+              {/* Soft skills */}
+              <div className="kz-card p-5 bg-white mt-4">
+                <p className="text-sm font-bold text-[#1A1410] mb-1">Tes soft skills <span className="text-[#6B5A4A] font-normal text-xs">(savoir-être)</span></p>
+                <p className="text-xs text-[#6B5A4A] mb-3">Ajoutés à ton profil et ton CV.</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {SOFT_SKILLS.map(s => {
+                    const on = softSkills.includes(s)
+                    return (
+                      <button key={s} type="button" onClick={() => setSoftSkills(prev => toggleIn(prev, s))}
+                        className="px-2.5 py-1 text-xs font-semibold border rounded-full transition-all"
+                        style={on ? { background: KZ.violet, color: 'white', borderColor: KZ.violet }
+                                  : { background: KZ.paper, color: '#2A2018', borderColor: '#E8DDC9' }}>
+                        {on && '✓ '}{s}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Loisirs */}
+              <div className="kz-card p-5 bg-white mt-4">
+                <p className="text-sm font-bold text-[#1A1410] mb-1">Tes loisirs <span className="text-[#6B5A4A] font-normal text-xs">(centres d&apos;intérêt)</span></p>
+                <p className="text-xs text-[#6B5A4A] mb-3">Ajoutés à ton profil et ton CV.</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {HOBBIES.map(h => {
+                    const on = hobbies.includes(h)
+                    return (
+                      <button key={h} type="button" onClick={() => setHobbies(prev => toggleIn(prev, h))}
+                        className="px-2.5 py-1 text-xs font-semibold border rounded-full transition-all"
+                        style={on ? { background: KZ.green, color: 'white', borderColor: KZ.green }
+                                  : { background: KZ.paper, color: '#2A2018', borderColor: '#E8DDC9' }}>
+                        {on && '✓ '}{h}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               {/* Récap domaines */}

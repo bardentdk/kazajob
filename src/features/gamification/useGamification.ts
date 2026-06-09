@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/types'
 
 // ── Système de niveaux ────────────────────────────────────────────
@@ -193,7 +192,6 @@ export function useGamification(
   applicationsCount: number,
   favoritesCount:    number,
 ): GamificationData {
-  const supabase = createClient()
   const [skillsCount, setSkillsCount]     = useState(0)
   const [enabled, setEnabled]             = useState(profile?.gamification_enabled ?? true)
 
@@ -208,11 +206,10 @@ export function useGamification(
   // Fetch skills count
   useEffect(() => {
     if (!profile?.id) return
-    supabase
-      .from('candidate_skills')
-      .select('*', { count: 'exact', head: true })
-      .eq('candidate_id', profile.id)
-      .then(({ count }) => setSkillsCount(count ?? 0))
+    fetch('/api/candidate-skills')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((skills: unknown[]) => setSkillsCount(Array.isArray(skills) ? skills.length : 0))
+      .catch(() => {})
   }, [profile?.id])
 
   const toggle = useCallback(async () => {
@@ -220,16 +217,15 @@ export function useGamification(
     const newVal = !enabled
     setEnabled(newVal) // optimistic update
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({ gamification_enabled: newVal })
-      .eq('id', profile.id)
-
-    if (error) {
-      // Rollback local si la colonne n'existe pas encore en DB
-      // → exécuter dans Supabase : ALTER TABLE profiles ADD COLUMN IF NOT EXISTS gamification_enabled BOOLEAN NOT NULL DEFAULT TRUE;
-      console.warn('[Gamification] Colonne gamification_enabled manquante en DB. Exécuter la migration SQL.', error.message)
-      setEnabled(!newVal) // rollback propre
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gamification_enabled: newVal }),
+      })
+      if (!res.ok) setEnabled(!newVal) // rollback propre
+    } catch {
+      setEnabled(!newVal)
     }
   }, [profile?.id, enabled])
 

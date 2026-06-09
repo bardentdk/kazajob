@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { KazaScoreCard } from '@/components/ui/KazaScoreBadge'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import { APPLICATION_STATUSES, KZ } from '@/lib/constants'
 import { timeAgo } from '@/lib/utils'
 import type { Application, Job, Conversation } from '@/lib/types'
@@ -19,7 +18,6 @@ interface RecruiterStats { totalViews: number; totalApplications: number; active
 
 export default function RecruiterDashboard() {
   const { profile } = useAuth()
-  const supabase = createClient()
   const [stats, setStats] = useState<RecruiterStats>({ totalViews: 0, totalApplications: 0, activeJobs: 0, conversionRate: '0%' })
   const [recentApps, setRecentApps] = useState<Application[]>([])
   const [activeJobs, setActiveJobs] = useState<Job[]>([])
@@ -31,22 +29,28 @@ export default function RecruiterDashboard() {
   useEffect(() => {
     if (!profile?.id) return
     const fetchAll = async () => {
-      const [{ data: jobs }, { data: applications }, { data: convs }] = await Promise.all([
-        supabase.from('jobs').select('*, company:companies(name)').eq('recruiter_id', profile.id).eq('is_active', true).order('created_at', { ascending: false }).limit(5),
-        supabase.from('applications').select('*, job:jobs!inner(title, recruiter_id, company:companies(name)), candidate:profiles(id, full_name)').eq('jobs.recruiter_id', profile.id).order('created_at', { ascending: false }).limit(10),
-        supabase.from('conversations').select('*, candidate:profiles!candidate_id(full_name), job:jobs(title)').eq('recruiter_id', profile.id).order('last_message_at', { ascending: false }).limit(5),
-      ])
-      const jobsList = (jobs ?? []) as Job[]
-      const appsList = (applications ?? []) as Application[]
-      setActiveJobs(jobsList); setRecentApps(appsList.slice(0, 5)); setConversations((convs ?? []) as Conversation[])
-      const totalViews = jobsList.reduce((s, j) => s + (j.views ?? 0), 0)
-      setStats({ totalViews, totalApplications: appsList.length, activeJobs: jobsList.length, conversionRate: totalViews > 0 ? ((appsList.length / totalViews) * 100).toFixed(1) + '%' : '0%' })
-      const counts = { pending: 0, viewed: 0, interview: 0, hired: 0 }
-      appsList.forEach(a => { if (a.status in counts) counts[a.status as keyof typeof counts]++ })
-      setPipelineCounts(counts); setLoading(false)
+      try {
+        const [jobsRes, appsRes, convsRes] = await Promise.all([
+          fetch('/api/recruiter/jobs'),
+          fetch('/api/applications?scope=recruiter'),
+          fetch('/api/conversations'),
+        ])
+        const allJobs = jobsRes.ok ? ((await jobsRes.json()) as Job[]) : []
+        const appsList = appsRes.ok ? ((await appsRes.json()) as Application[]) : []
+        const convs = convsRes.ok ? ((await convsRes.json()) as Conversation[]) : []
+
+        const jobsList = allJobs.filter(j => j.is_active).slice(0, 5)
+        setActiveJobs(jobsList); setRecentApps(appsList.slice(0, 5)); setConversations(convs.slice(0, 5))
+        const totalViews = jobsList.reduce((s, j) => s + (j.views ?? 0), 0)
+        setStats({ totalViews, totalApplications: appsList.length, activeJobs: jobsList.length, conversionRate: totalViews > 0 ? ((appsList.length / totalViews) * 100).toFixed(1) + '%' : '0%' })
+        const counts = { pending: 0, viewed: 0, interview: 0, hired: 0 }
+        appsList.forEach(a => { if (a.status in counts) counts[a.status as keyof typeof counts]++ })
+        setPipelineCounts(counts)
+      } catch { /* noop */ }
+      setLoading(false)
     }
     fetchAll()
-  }, [profile?.id, supabase])
+  }, [profile?.id])
 
   const PIPELINE = [
     { label: 'Postulations', count: stats.totalApplications, color: KZ.cream2 },

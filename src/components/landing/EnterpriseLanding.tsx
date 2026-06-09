@@ -3,6 +3,7 @@ import { ArrowRight, Check, Users, BarChart2, Zap, Shield, Globe, Landmark, Targ
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { KZ, SUBSCRIPTION_PLANS, PARTNERS } from '@/lib/constants'
+import { PartnerCarousel } from './PartnerCarousel'
 
 const PARTNER_ICON_MAP: Record<string, React.ReactNode> = {
   Landmark:  <Landmark  size={16} />,
@@ -93,8 +94,6 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
     { icon: <Shield size={24} />, color: KZ.orangeSoft, title: 'Conformité RGPD', desc: 'Données hébergées en France. Chiffrement E2E. Droit à l\'oubli automatisé.' },
   ]
 
-  const PARTNER_LIST = Object.values(PARTNERS)
-
   return (
     <>
       {/* HERO B2B ─────────────────────────────────────────────── */}
@@ -151,19 +150,8 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
         <p className="text-center text-xs font-bold text-[#6B5A4A] uppercase tracking-widest mb-6">
           Multi-diffusion automatique vers
         </p>
-        <div className="flex justify-center items-center gap-6 lg:gap-12 flex-wrap max-w-[900px] mx-auto">
-          {PARTNER_LIST.map(p => (
-            <div key={p.name} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#E8DDC9] bg-white">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: p.color + '18', color: p.color }}>
-                {PARTNER_ICON_MAP[p.icon]}
-              </div>
-              <div>
-                <div className="text-sm font-bold text-[#1A1410]">{p.name}</div>
-                <div className="text-[10px] text-[#6B5A4A]">{p.desc}</div>
-              </div>
-            </div>
-          ))}
+        <div className="max-w-[1100px] mx-auto">
+          <PartnerCarousel />
         </div>
       </section>
 

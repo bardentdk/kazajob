@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Sora } from 'next/font/google'
 import './globals.css'
+import { Providers } from './providers'
 
 const sora = Sora({
   subsets: ['latin'],
@@ -178,7 +179,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="bg-[#FFF7EE] text-[#1A1410] antialiased min-h-screen">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   )

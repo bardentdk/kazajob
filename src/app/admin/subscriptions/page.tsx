@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { TrendingUp, Users, Star } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
-import { createClient } from '@/lib/supabase/client'
 import { KZ, SUBSCRIPTION_PLANS } from '@/lib/constants'
 import type { BadgeColor } from '@/lib/types'
 
@@ -23,16 +22,18 @@ const STATUS_BADGE: Record<string, BadgeColor> = {
 }
 
 export default function AdminSubscriptionsPage() {
-  const supabase = createClient()
   const [subs, setSubs]   = useState<SubRow[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase
-      .from('company_subscriptions')
-      .select('*, company:companies!company_id(name, is_verified)')
-      .order('created_at', { ascending: false })
-      .then(({ data }) => { setSubs((data ?? []) as SubRow[]); setLoading(false) })
+    const load = async () => {
+      try {
+        const res = await fetch('/api/admin/subscriptions')
+        if (res.ok) setSubs((await res.json()) as SubRow[])
+      } catch { /* noop */ }
+      setLoading(false)
+    }
+    load()
   }, [])
 
   // KPIs
@@ -47,13 +48,21 @@ export default function AdminSubscriptionsPage() {
   const actives   = subs.filter(s => s.status === 'active').length
   const cancelled = subs.filter(s => s.status === 'cancelled' || s.status === 'expired').length
 
+  const patchSub = async (subId: string, body: Record<string, string>) => {
+    await fetch(`/api/admin/subscriptions/${subId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+  }
+
   const handleChangePlan = async (subId: string, newPlanId: string) => {
-    await supabase.from('company_subscriptions').update({ plan_id: newPlanId }).eq('id', subId)
+    await patchSub(subId, { planId: newPlanId })
     setSubs(prev => prev.map(s => s.id === subId ? { ...s, plan_id: newPlanId } : s))
   }
 
   const handleChangeStatus = async (subId: string, newStatus: string) => {
-    await supabase.from('company_subscriptions').update({ status: newStatus }).eq('id', subId)
+    await patchSub(subId, { status: newStatus })
     setSubs(prev => prev.map(s => s.id === subId ? { ...s, status: newStatus } : s))
   }
 

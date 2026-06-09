@@ -7,7 +7,6 @@ import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { useAuth } from '@/features/auth/useAuth'
 import { FullPageLoader } from '@/components/ui/LogoLoader'
-import { createClient } from '@/lib/supabase/client'
 import { KZ } from '@/lib/constants'
 
 const NAV_ITEMS: NavItem[] = [
@@ -24,20 +23,22 @@ const NAV_ITEMS: NavItem[] = [
 export default function RecruiterLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading, authChecked } = useAuth()
   const router = useRouter()
-  const supabase = createClient()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [company, setCompany] = useState<{ name: string; logo_url: string | null } | null>(null)
 
   useEffect(() => {
     if (!profile?.company_id) return
-    supabase.from('companies').select('name, logo_url').eq('id', profile.company_id).single()
-      .then(({ data }) => { if (data) setCompany(data as { name: string; logo_url: string | null }) })
+    fetch(`/api/companies/${profile.company_id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.company) setCompany(d.company) })
+      .catch(() => {})
   }, [profile?.company_id])
 
   useEffect(() => {
     if (!authChecked) return
     if (!profile) { router.push('/auth/login'); return }
     if (profile.role === 'candidate') router.push('/candidate/dashboard')
+    if (profile.role === 'admin')     router.push('/admin/dashboard')
   }, [profile, authChecked, router])
 
   if (!authChecked || loading || !profile) {

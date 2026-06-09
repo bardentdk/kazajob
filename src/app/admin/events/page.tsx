@@ -5,7 +5,6 @@ import { Star, Trash2, ExternalLink, Users, Calendar, UserCheck, Monitor, BookOp
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/feedback/EmptyState'
-import { createClient } from '@/lib/supabase/client'
 import { KZ, EVENT_TYPES } from '@/lib/constants'
 import type { BadgeColor } from '@/lib/types'
 
@@ -30,37 +29,33 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
 }
 
 export default function AdminEventsPage() {
-  const supabase = createClient()
   const [events, setEvents] = useState<AdminEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const fetchEvents = async () => {
-    const { data } = await supabase
-      .from('events')
-      .select('*, organizer:profiles!organizer_id(full_name, email), registrations:event_registrations(count)')
-      .order('date', { ascending: false })
-
-    setEvents(
-      (data ?? []).map((e: AdminEvent & { registrations: { count: number }[] }) => ({
-        ...e,
-        registrations_count: e.registrations?.[0]?.count ?? 0,
-      }))
-    )
+    try {
+      const res = await fetch('/api/admin/events')
+      if (res.ok) setEvents((await res.json()) as AdminEvent[])
+    } catch { /* noop */ }
     setLoading(false)
   }
 
   useEffect(() => { fetchEvents() }, [])
 
   const togglePublish = async (id: string, current: boolean) => {
-    await supabase.from('events').update({ is_published: !current }).eq('id', id)
+    await fetch(`/api/admin/events/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ published: !current }),
+    })
     await fetchEvents()
   }
 
   const deleteEvent = async (id: string) => {
     if (!confirm('Supprimer définitivement cet événement ?')) return
     setDeletingId(id)
-    await supabase.from('events').delete().eq('id', id)
+    await fetch(`/api/admin/events/${id}`, { method: 'DELETE' })
     await fetchEvents()
     setDeletingId(null)
   }

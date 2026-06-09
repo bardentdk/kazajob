@@ -5,7 +5,6 @@ import { Building2, Check, X } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
 import { EmptyState } from '@/components/feedback/EmptyState'
-import { createClient } from '@/lib/supabase/client'
 import type { Company } from '@/lib/types'
 import { KZ } from '@/lib/constants'
 import { timeAgo } from '@/lib/utils'
@@ -13,19 +12,24 @@ import { timeAgo } from '@/lib/utils'
 export default function AdminCompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
 
   useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase.from('companies').select('*').order('created_at', { ascending: false })
-      if (data) setCompanies(data as Company[])
+    const load = async () => {
+      try {
+        const res = await fetch('/api/admin/companies')
+        if (res.ok) setCompanies((await res.json()) as Company[])
+      } catch { /* noop */ }
       setLoading(false)
     }
-    fetch()
-  }, [supabase])
+    load()
+  }, [])
 
   const toggleVerified = async (company: Company) => {
-    await supabase.from('companies').update({ is_verified: !company.is_verified }).eq('id', company.id)
+    await fetch(`/api/admin/companies/${company.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ verified: !company.is_verified }),
+    })
     setCompanies((prev) => prev.map((c) => c.id === company.id ? { ...c, is_verified: !c.is_verified } : c))
   }
 

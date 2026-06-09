@@ -7,7 +7,6 @@ import { StatCard } from '@/components/ui/StatCard'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
-import { createClient } from '@/lib/supabase/client'
 import { KZ } from '@/lib/constants'
 
 interface AdminStats {
@@ -31,47 +30,26 @@ export default function AdminDashboard() {
   })
   const [recentJobs, setRecentJobs] = useState<Array<{ id: string; title: string; created_at: string; is_active: boolean }>>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
 
   useEffect(() => {
     const fetchStats = async () => {
-      const [
-        { count: users },
-        { count: jobs },
-        { count: companies },
-        { count: applications },
-        { count: candidates },
-        { count: recruiters },
-        { count: admins },
-        { count: events },
-        { count: skills },
-        { count: referrals },
-        { data: latestJobs },
-      ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('jobs').select('*', { count: 'exact', head: true }),
-        supabase.from('companies').select('*', { count: 'exact', head: true }),
-        supabase.from('applications').select('*', { count: 'exact', head: true }),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'candidate'),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'recruiter'),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'admin'),
-        supabase.from('events').select('*', { count: 'exact', head: true }),
-        supabase.from('skills').select('*', { count: 'exact', head: true }),
-        supabase.from('referrals').select('*', { count: 'exact', head: true }),
-        supabase.from('jobs').select('id, title, created_at, is_active').order('created_at', { ascending: false }).limit(5),
-      ])
-
-      setStats({
-        users: users ?? 0, jobs: jobs ?? 0, companies: companies ?? 0,
-        applications: applications ?? 0, candidates: candidates ?? 0,
-        recruiters: recruiters ?? 0, admins: admins ?? 0,
-        events: events ?? 0, skills: skills ?? 0, referrals: referrals ?? 0,
-      })
-      setRecentJobs((latestJobs ?? []) as typeof recentJobs)
+      try {
+        const res = await fetch('/api/admin/stats')
+        if (res.ok) {
+          const d = await res.json()
+          setStats({
+            users: d.users ?? 0, jobs: d.jobs ?? 0, companies: d.companies ?? 0,
+            applications: d.applications ?? 0, candidates: d.candidates ?? 0,
+            recruiters: d.recruiters ?? 0, admins: d.admins ?? 0,
+            events: d.events ?? 0, skills: d.skills ?? 0, referrals: d.referrals ?? 0,
+          })
+          setRecentJobs((d.recentJobs ?? []) as typeof recentJobs)
+        }
+      } catch { /* noop */ }
       setLoading(false)
     }
     fetchStats()
-  }, [supabase])
+  }, [])
 
   // Distribution réelle des rôles
   const total = stats.users || 1

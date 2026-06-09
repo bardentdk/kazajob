@@ -57,14 +57,18 @@ export function TrainingForm({ training, recruiterId, companyId, onSuccess }: Tr
   const [infoSessionId,  setInfoSessionId] = useState(training?.info_session_id ?? '')
 
   useEffect(() => {
-    supabase.from('events')
-      .select('id, title, date')
-      .eq('organizer_id', recruiterId)
-      .eq('is_published', true)
-      .gte('date', new Date().toISOString())
-      .eq('type', 'info_collective')
-      .order('date')
-      .then(({ data }) => setEvents((data ?? []) as typeof events))
+    fetch('/api/recruiter/events')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((all: Array<{ id: string; title: string; date: string; type: string }>) => {
+        const now = Date.now()
+        setEvents(
+          all
+            .filter((e) => e.type === 'info_collective' && new Date(e.date).getTime() >= now)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .map((e) => ({ id: e.id, title: e.title, date: e.date }))
+        )
+      })
+      .catch(() => {})
   }, [recruiterId])
 
   const toggleFinancing = (opt: string) =>
@@ -114,16 +118,21 @@ export function TrainingForm({ training, recruiterId, companyId, onSuccess }: Tr
       financing_options:   financing,
       image_url:           imageUrl,
       info_session_id:     infoSessionId || null,
-      recruiter_id:        recruiterId,
-      company_id:          companyId ?? null,
       is_active:           true,
-      updated_at:          new Date().toISOString(),
     }
 
     if (training?.id) {
-      await supabase.from('training_offers').update(payload).eq('id', training.id)
+      await fetch(`/api/recruiter/trainings/${training.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
     } else {
-      await supabase.from('training_offers').insert(payload)
+      await fetch('/api/recruiter/trainings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, companyId: companyId ?? null }),
+      })
     }
 
     setSaving(false)

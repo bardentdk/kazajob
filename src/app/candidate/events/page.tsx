@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import { KZ, EVENT_TYPES } from '@/lib/constants'
 
 const EVENT_ICONS: Record<string, React.ReactNode> = {
@@ -31,35 +30,25 @@ interface KazaEvent {
 
 export default function CandidateEventsPage() {
   const { profile } = useAuth()
-  const supabase = createClient()
   const [events, setEvents] = useState<KazaEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [registering, setRegistering] = useState<string | null>(null)
 
   const fetchEvents = async () => {
     if (!profile?.id) return
-    const { data: evts } = await supabase
-      .from('events')
-      .select('*, registrations:event_registrations(count)')
-      .eq('is_published', true)
-      .gte('date', new Date().toISOString())
-      .order('date', { ascending: true })
-
-    if (!evts) { setLoading(false); return }
-
-    // Vérifier les inscriptions du candidat
-    const { data: myRegs } = await supabase
-      .from('event_registrations')
-      .select('event_id')
-      .eq('candidate_id', profile.id)
-
-    const myEventIds = new Set((myRegs ?? []).map((r: { event_id: string }) => r.event_id))
-
-    setEvents(evts.map((e: KazaEvent & { registrations: {count: number}[] }) => ({
-      ...e,
-      registrations_count: e.registrations?.[0]?.count ?? 0,
-      is_registered: myEventIds.has(e.id),
-    })))
+    try {
+      const res = await fetch('/api/events')
+      if (res.ok) {
+        const all = (await res.json()) as KazaEvent[]
+        // À venir uniquement, triés par date croissante
+        const now = Date.now()
+        setEvents(
+          all
+            .filter((e) => new Date(e.date).getTime() >= now)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        )
+      }
+    } catch { /* noop */ }
     setLoading(false)
   }
 
@@ -68,13 +57,7 @@ export default function CandidateEventsPage() {
   const handleRegister = async (eventId: string, isReg: boolean) => {
     if (!profile?.id) return
     setRegistering(eventId)
-    if (isReg) {
-      await supabase.from('event_registrations')
-        .delete().eq('event_id', eventId).eq('candidate_id', profile.id)
-    } else {
-      await supabase.from('event_registrations')
-        .insert({ event_id: eventId, candidate_id: profile.id })
-    }
+    await fetch(`/api/events/${eventId}/register`, { method: isReg ? 'DELETE' : 'POST' })
     await fetchEvents()
     setRegistering(null)
   }

@@ -7,38 +7,38 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import { KZ } from '@/lib/constants'
 import type { TrainingOffer } from '@/lib/types'
 
 export default function RecruiterTrainingPage() {
   const { profile } = useAuth()
-  const supabase = createClient()
   const [offers, setOffers]   = useState<TrainingOffer[]>([])
   const [loading, setLoading] = useState(true)
 
-  const fetch = async () => {
+  const load = async () => {
     if (!profile?.id) return
-    const { data } = await supabase
-      .from('training_offers')
-      .select('*')
-      .eq('recruiter_id', profile.id)
-      .order('created_at', { ascending: false })
-    setOffers((data ?? []) as TrainingOffer[])
+    try {
+      const res = await fetch('/api/recruiter/trainings')
+      if (res.ok) setOffers((await res.json()) as TrainingOffer[])
+    } catch { /* noop */ }
     setLoading(false)
   }
 
-  useEffect(() => { if (profile?.id) fetch() }, [profile?.id])
+  useEffect(() => { if (profile?.id) load() }, [profile?.id])
 
   const toggleActive = async (offer: TrainingOffer) => {
-    await supabase.from('training_offers').update({ is_active: !offer.is_active }).eq('id', offer.id)
-    fetch()
+    await fetch(`/api/recruiter/trainings/${offer.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: !offer.is_active }),
+    })
+    load()
   }
 
   const deleteOffer = async (id: string) => {
     if (!confirm('Supprimer cette offre de formation ?')) return
-    await supabase.from('training_offers').delete().eq('id', id)
-    fetch()
+    await fetch(`/api/recruiter/trainings/${id}`, { method: 'DELETE' })
+    load()
   }
 
   return (

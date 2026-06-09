@@ -28,9 +28,19 @@ export default function LoginPage() {
     if (err) {
       setError('Email ou mot de passe incorrect.')
       setLoading(false)
-    } else {
-      router.push('/candidate/dashboard')
+      return
     }
+    // Redirection selon le rôle réel du compte
+    let role: string | undefined
+    try {
+      const res = await fetch('/api/me')
+      if (res.ok) role = (await res.json())?.role
+    } catch { /* fallback ci-dessous */ }
+    router.push(
+      role === 'admin'     ? '/admin/dashboard'
+      : role === 'recruiter' ? '/recruiter/dashboard'
+      : '/candidate/dashboard'
+    )
   }
 
   return (

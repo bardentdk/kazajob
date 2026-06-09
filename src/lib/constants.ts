@@ -196,3 +196,21 @@ export const TRAINING_STATUS: Record<string, { label: string; color: string }> =
 export function hasMentionHF(title: string): boolean {
   return /\(H\/F\)|\(F\/H\)/i.test(title)
 }
+
+// ── Soft skills (savoir-être) — catalogue candidat ────────────────
+export const SOFT_SKILLS = [
+  'Travail en équipe', 'Communication', 'Autonomie', 'Rigueur', 'Adaptabilité',
+  'Sens de l\'organisation', 'Créativité', 'Esprit d\'initiative', 'Gestion du stress',
+  'Écoute active', 'Leadership', 'Résolution de problèmes', 'Esprit critique',
+  'Empathie', 'Ponctualité', 'Curiosité', 'Persévérance', 'Sens du service client',
+  'Esprit d\'analyse', 'Gestion du temps', 'Négociation', 'Polyvalence',
+]
+
+// ── Loisirs / centres d'intérêt — catalogue candidat ──────────────
+export const HOBBIES = [
+  'Sport', 'Randonnée', 'Musique', 'Lecture', 'Cuisine', 'Voyage', 'Photographie',
+  'Jeux vidéo', 'Cinéma', 'Bénévolat', 'Jardinage', 'Danse', 'Plongée', 'Surf',
+  'Pêche', 'Bricolage', 'Dessin', 'Yoga', 'Course à pied', 'Football', 'Musculation',
+  'Chant', 'Théâtre', 'Astronomie',
+]
+

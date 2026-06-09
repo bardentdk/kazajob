@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { auth, getCurrentUser } from '@/lib/auth'
+import { getCandidateSkills } from '@/lib/queries/profiles'
 import { streamText } from '@/lib/ai/provider'
 import { SYSTEM_PROMPTS } from '@/lib/ai/prompts'
 import type { AIMessage } from '@/lib/ai/provider'
@@ -11,32 +12,16 @@ export async function POST(req: NextRequest) {
       jobContext?: { title?: string; company?: string }
     }
 
-    const supabase = await createClient()
-
     // Auth (optionnelle pour le chat — enrichit le contexte si connecté)
-    const { data: { user } } = await supabase.auth.getUser()
+    const session = await auth()
 
     let candidateContext: { name?: string; skills?: string[]; location?: string | null } = {}
 
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, location')
-        .eq('id', user.id)
-        .single()
-
-      const { data: skillRows } = await supabase
-        .from('candidate_skills')
-        .select('skill:skills(name)')
-        .eq('candidate_id', user.id)
-
-      const skills = (skillRows ?? []).map((s: Record<string, unknown>) => {
-        const skill = s.skill as { name?: string } | null
-        return skill?.name
-      }).filter(Boolean) as string[]
-
+    if (session?.user?.id) {
+      const profile = await getCurrentUser()
+      const skills = (await getCandidateSkills(session.user.id)).map((s) => s.name)
       candidateContext = {
-        name:     profile?.full_name,
+        name:     profile?.fullName,
         location: profile?.location,
         skills,
       }

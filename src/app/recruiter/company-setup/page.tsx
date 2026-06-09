@@ -94,34 +94,29 @@ export default function CompanySetupPage() {
     setQuery(q)
     if (q.length < 2) { setResults([]); return }
     setSearching(true)
-    const { data } = await supabase.from('companies').select('id, name, location, sector, logo_url, is_verified')
-      .ilike('name', `%${q}%`).limit(6)
-    setResults((data ?? []) as Company[])
+    try {
+      const res = await fetch(`/api/companies/search?q=${encodeURIComponent(q)}`)
+      setResults(res.ok ? ((await res.json()) as Company[]) : [])
+    } catch { setResults([]) }
     setSearching(false)
-  }, [supabase])
+  }, [])
 
   const handleJoin = async () => {
     if (!selectedCompany || !profile?.id) return
     setJoining(true)
-    await supabase.from('company_join_requests').upsert({
-      company_id: selectedCompany.id,
-      recruiter_id: profile.id,
-      message: joinMessage.trim() || null,
-      status: 'pending',
-    }, { onConflict: 'company_id,recruiter_id' })
+    const res = await fetch(`/api/companies/${selectedCompany.id}/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: joinMessage }),
+    })
+    const { id } = await res.json().catch(() => ({}))
 
     // Notifier l'owner par email (fire & forget)
-    const { data: newReq } = await supabase
-      .from('company_join_requests')
-      .select('id')
-      .eq('company_id', selectedCompany.id)
-      .eq('recruiter_id', profile.id)
-      .single()
-    if (newReq) {
+    if (id) {
       fetch('/api/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'join_request', requestId: newReq.id }),
+        body: JSON.stringify({ type: 'join_request', requestId: id }),
       }).catch(() => {})
     }
 
@@ -151,38 +146,17 @@ export default function CompanySetupPage() {
       }
     }
 
-    // Créer la company
-    const { data: company, error } = await supabase.from('companies').insert({
-      owner_id: profile.id,
-      name: form.name.trim(),
-      legal_name: form.legal_name.trim() || null,
-      siret: form.siret.trim() || null,
-      sector: form.sector || null,
-      size: form.size,
-      website: form.website.trim() || null,
-      description: form.description.trim() || null,
-      location: form.location.trim() || null,
-      address: form.address.trim() || null,
-      phone: form.phone.trim() || null,
-      logo_url: logoUrl,
-      is_setup_complete: true,
-    }).select().single()
-
-    if (error || !company) { setCreating(false); return }
-
-    // Ajouter comme owner dans company_members
-    await supabase.from('company_members').insert({
-      company_id: company.id,
-      recruiter_id: profile.id,
-      role: 'owner',
-      status: 'active',
+    // Créer la company (+ owner member + rattachement profil) côté serveur
+    const res = await fetch('/api/companies', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...form, logoUrl }),
     })
-
-    // Mettre à jour profiles.company_id
-    await supabase.from('profiles').update({ company_id: company.id }).eq('id', profile.id)
+    if (!res.ok) { setCreating(false); return }
+    const company = (await res.json()) as Company
     await refetch?.()
 
-    setNewCompany(company as Company)
+    setNewCompany(company)
     setCreating(false)
     setStep(3)
     setMode('plan')
@@ -193,16 +167,11 @@ export default function CompanySetupPage() {
     if (!company) { setStep(4); setMode('done'); return }
     setPlanSaving(true)
 
-    const trialEnd = new Date()
-    trialEnd.setDate(trialEnd.getDate() + 14)
-
-    await supabase.from('company_subscriptions').upsert({
-      company_id: company.id,
-      plan_id: planId,
-      status: 'trial',
-      trial_ends_at: trialEnd.toISOString(),
-      seats_used: 1,
-    }, { onConflict: 'company_id' })
+    await fetch(`/api/companies/${company.id}/subscription`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ planId }),
+    })
 
     setPlanSaving(false)
     setStep(4)

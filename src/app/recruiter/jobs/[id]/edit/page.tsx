@@ -7,7 +7,6 @@ import Link from 'next/link'
 import { JobForm } from '@/components/forms/JobForm'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import type { Job } from '@/lib/types'
 
 export default function EditJobPage() {
@@ -15,16 +14,13 @@ export default function EditJobPage() {
   const { profile } = useAuth()
   const [job, setJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
 
   useEffect(() => {
     const fetchJob = async () => {
-      const { data } = await supabase
-        .from('jobs')
-        .select('*')
-        .eq('id', id)
-        .single()
-      if (data) setJob(data as Job)
+      try {
+        const res = await fetch(`/api/recruiter/jobs/${id}`)
+        if (res.ok) setJob((await res.json()) as Job)
+      } catch { /* noop */ }
       setLoading(false)
     }
     fetchJob()

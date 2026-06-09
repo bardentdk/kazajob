@@ -6,7 +6,6 @@ import { Building2, Users, ArrowRight, Edit3, Check, Globe, Star, Landmark, Targ
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import { KZ, SUBSCRIPTION_PLANS, PARTNERS } from '@/lib/constants'
 
 const PARTNER_ICONS: Record<string, React.ReactNode> = {
@@ -20,7 +19,6 @@ import type { Company, CompanySubscription } from '@/lib/types'
 
 export default function CompanyPage() {
   const { profile } = useAuth()
-  const supabase = createClient()
   const [company, setCompany]       = useState<Company | null>(null)
   const [sub, setSub]               = useState<CompanySubscription | null>(null)
   const [memberCount, setMemberCount] = useState(0)
@@ -30,16 +28,16 @@ export default function CompanyPage() {
   useEffect(() => {
     if (!profile?.company_id) return
     const load = async () => {
-      const [{ data: co }, { data: s }, { count: mc }, { count: jc }] = await Promise.all([
-        supabase.from('companies').select('*').eq('id', profile.company_id!).single(),
-        supabase.from('company_subscriptions').select('*').eq('company_id', profile.company_id!).maybeSingle(),
-        supabase.from('company_members').select('*', { count: 'exact', head: true }).eq('company_id', profile.company_id!).eq('status', 'active'),
-        supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('company_id', profile.company_id!).eq('is_active', true),
-      ])
-      setCompany(co as Company)
-      setSub(s as CompanySubscription | null)
-      setMemberCount(mc ?? 0)
-      setJobCount(jc ?? 0)
+      try {
+        const res = await fetch(`/api/companies/${profile.company_id}`)
+        if (res.ok) {
+          const d = await res.json()
+          setCompany(d.company as Company)
+          setSub(d.subscription as CompanySubscription | null)
+          setMemberCount(d.member_count ?? 0)
+          setJobCount(d.job_count ?? 0)
+        }
+      } catch { /* noop */ }
       setLoading(false)
     }
     load()

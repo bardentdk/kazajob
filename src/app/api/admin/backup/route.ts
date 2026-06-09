@@ -1,29 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/admin-guard'
 import { exportSupabaseData, formatBytes } from '@/lib/backup/supabase-export'
 import { uploadToDrive, listBackups } from '@/lib/backup/google-drive'
 
-// ── Vérification admin ────────────────────────────────────────────
-async function requireAdmin(req: NextRequest) {
-  // Support cron secret (Vercel Cron)
-  const auth = req.headers.get('authorization')
-  if (auth === `Bearer ${process.env.CRON_SECRET}`) return true
-
-  // Sinon vérifier le rôle via Supabase
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return false
-
-  const { data: profile } = await supabase
-    .from('profiles').select('role').eq('id', user.id).single()
-
-  return profile?.role === 'admin'
+// ── Vérification admin (ou cron secret) ───────────────────────────
+// NB : `exportSupabaseData` exporte toujours depuis Supabase (legacy/rollback).
+async function isAuthorized(req: NextRequest) {
+  const cronSecret = process.env.CRON_SECRET
+  const authHeader = req.headers.get('authorization')
+  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true
+  return !!(await requireAdmin())
 }
 
 // ── POST — déclencher un backup ───────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
-    const isAdmin = await requireAdmin(req)
+    const isAdmin = await isAuthorized(req)
     if (!isAdmin) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
@@ -68,7 +60,7 @@ export async function POST(req: NextRequest) {
 // ── GET — lister les backups existants ────────────────────────────
 export async function GET(req: NextRequest) {
   try {
-    const isAdmin = await requireAdmin(req)
+    const isAdmin = await isAuthorized(req)
     if (!isAdmin) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
