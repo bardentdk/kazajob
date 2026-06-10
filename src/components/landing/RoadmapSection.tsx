@@ -118,8 +118,8 @@ export function RoadmapSection() {
         <div className="mt-8 text-center">
           <p className="text-sm text-[#6B5A4A]">
             Tu as une idée de feature ?{' '}
-            <a href="mailto:product@kazajob.re" className="font-bold hover:underline" style={{ color: KZ.violet }}>
-              product@kazajob.re
+            <a href="mailto:kazajob.re@gmail.com" className="font-bold hover:underline" style={{ color: KZ.violet }}>
+              kazajob.re@gmail.com
             </a>{' '}
             — chaque suggestion est lue par l&apos;équipe.
           </p>

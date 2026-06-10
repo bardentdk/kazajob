@@ -134,7 +134,7 @@ const jsonLd = {
       contactPoint: {
         '@type': 'ContactPoint',
         contactType: 'customer service',
-        email: 'hello@kazajob.re',
+        email: 'kazajob.re@gmail.com',
         availableLanguage: 'French',
       },
       sameAs: ['https://linkedin.com/company/kazajob', 'https://instagram.com/kazajob_re'],
@@ -150,21 +150,6 @@ const jsonLd = {
         target: { '@type': 'EntryPoint', urlTemplate: 'https://kazajob.re/candidate/jobs?q={search_term_string}' },
         'query-input': 'required name=search_term_string',
       },
-    },
-    {
-      '@type': 'JobPosting',
-      title: 'Offres d\'emploi La Réunion',
-      description: 'Trouvez votre prochain emploi à La Réunion parmi 12 400+ offres locales',
-      hiringOrganization: { '@id': 'https://kazajob.re/#organization' },
-      jobLocation: {
-        '@type': 'Place',
-        address: {
-          '@type': 'PostalAddress',
-          addressRegion: 'La Réunion',
-          addressCountry: 'FR',
-        },
-      },
-      employmentType: ['FULL_TIME', 'PART_TIME', 'CONTRACTOR', 'INTERN'],
     },
   ],
 }

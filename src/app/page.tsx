@@ -76,7 +76,7 @@ export default async function LandingPage({
 
       {/* HERO ──────────────────────────────────────────────── */}
       <section className="px-4 sm:px-8 lg:px-16 pt-10 lg:pt-20 pb-0 relative overflow-hidden" style={{ background: KZ.cream }}>
-        <SectionDecor src="/assets/img/deco/hero.png" opacity={0.08} position="right bottom" size="contain" />
+        <SectionDecor className="w-full" src="/assets/img/logimage.png" opacity={0.08} position="center bottom" size="cover" />
         <div className="absolute top-16 left-4 opacity-40 hidden lg:block"><Sparkle size={36} color={KZ.violet} /></div>
         <div className="absolute bottom-56 right-10 opacity-40 hidden lg:block"><Sparkle size={28} color={KZ.green} /></div>
 
@@ -112,8 +112,8 @@ export default async function LandingPage({
             <HeroIllustrationNew />
           </div>
         </div>
-      </section>
        <section className='my-10 '></section>   
+      </section>
       {/* STATS BAND — vraies données ────────────────────────── */}
       <section className="px-4 sm:px-8 lg:px-16 py-6 lg:py-8 border-y border-[#1A1410]" style={{ background: KZ.ink }}>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-[1280px] mx-auto">
@@ -230,7 +230,7 @@ export default async function LandingPage({
 
       {/* COMMENT CA MARCHE ──────────────────────────────────── */}
       <section id="comment" className="px-4 sm:px-8 lg:px-16 py-12 lg:py-20 relative overflow-hidden" style={{ background: KZ.cream }}>
-        <SectionDecor src="/assets/img/deco/comment.png" opacity={0.08} position="left center" size="contain" />
+        {/* <SectionDecor src="/assets/img/deco/comment.png" opacity={0.08} position="left center" size="contain" /> */}
         <div className="max-w-[1280px] mx-auto relative z-10">
           <div className="text-center mb-10 lg:mb-14">
             <p className="kz-eyebrow mb-2" style={{ color: KZ.orange }}>Comment ça marche</p>
@@ -321,7 +321,7 @@ export default async function LandingPage({
           <Palme size={48} />
         </div>
         <h2 className="text-[40px] sm:text-[52px] lg:text-[64px] font-extrabold tracking-[-0.04em] leading-none text-[#1A1410] mb-4">
-          Anou commencé ?
+          Alon commencé ?
         </h2>
         <p className="text-base lg:text-lg text-[#2A2018] mb-7 max-w-[540px] mx-auto">
           3 minutes pour créer ton profil. 0 € pour postuler.
@@ -335,7 +335,7 @@ export default async function LandingPage({
           </Link>
         </div>
         <p className="text-xs text-[#6B5A4A]">
-          Candidats : 100% gratuit · Recruteurs : essai 14 jours sans CB · Données hébergées en France
+          Candidats : 100% gratuit · Recruteurs : essai 14 jours sans CB · Données hébergées en Europe
         </p>
       </section>
 
