@@ -70,6 +70,7 @@ export const APPLICATION_STATUSES = {
   offer:       { label: 'Offre reçue',         color: 'violet' },
   hired:       { label: 'Embauché',            color: 'green'  },
   rejected:    { label: 'Refusé',              color: 'orange' },
+  withdrawn:   { label: 'Retirée',             color: 'cream'  },
 } as const
 
 export const ROLES = {
@@ -125,22 +126,22 @@ export interface SubscriptionPlan {
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: 'starter', name: 'Starter', priceCts: 2900, maxMembers: 1, maxJobs: 3,
-    partners: [], apiAccess: false, highlight: false, trialDays: 14,
+    partners: [], apiAccess: false, highlight: false, trialDays: 30,
     features: ['1 recruteur', '3 offres actives', 'Diffusion Kazajob uniquement', 'KazaScore recruteur', 'Messagerie candidats'],
   },
   {
     id: 'pro', name: 'Pro', priceCts: 8900, maxMembers: 3, maxJobs: 10,
-    partners: ['france_travail'], apiAccess: false, highlight: true, trialDays: 14,
+    partners: ['france_travail'], apiAccess: false, highlight: true, trialDays: 30,
     features: ['3 recruteurs', '10 offres actives', 'Diffusion France Travail', 'KazaScore + Analytics', 'Gestion d\'équipe', 'Support prioritaire'],
   },
   {
     id: 'business', name: 'Business', priceCts: 17900, maxMembers: 10, maxJobs: -1,
-    partners: ['france_travail', 'mission_locale', 'apec'], apiAccess: false, highlight: false, trialDays: 14,
+    partners: ['france_travail', 'mission_locale', 'apec'], apiAccess: false, highlight: false, trialDays: 30,
     features: ['10 recruteurs', 'Offres illimitées', 'France Travail · Mission Locale · APEC', 'Analytics avancés', 'Rôles & permissions', 'SLA 24h'],
   },
   {
     id: 'enterprise', name: 'Entreprise', priceCts: 34900, maxMembers: 50, maxJobs: -1,
-    partners: ['france_travail', 'mission_locale', 'apec', 'indeed', 'aggregator'], apiAccess: true, highlight: false, trialDays: 14,
+    partners: ['france_travail', 'mission_locale', 'apec', 'indeed', 'aggregator'], apiAccess: true, highlight: false, trialDays: 30,
     features: ['50 recruteurs', 'Offres illimitées', 'Toutes plateformes + flux XML', 'API entrante/sortante', 'Intégration ATS', 'CSM dédié', 'Contrat sur-mesure'],
   },
 ]

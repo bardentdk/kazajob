@@ -27,7 +27,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'En tant que recruteur, puis-je tester avant de payer ?',
-    a: 'Oui. Le plan Starter est entièrement gratuit sans limite de temps — tu peux publier jusqu\'à 2 offres simultanément. Les plans payants incluent un essai de 14 jours sans carte bancaire requise. Tu passes au plan supérieur seulement si tu en as besoin.',
+    a: 'Oui. Tous les plans recruteur incluent un essai gratuit de 30 jours, sans carte bancaire requise. Tu ne passes au paiement que si tu décides de continuer après l\'essai.',
   },
   {
     q: 'Quelle est la différence avec les autres sites d\'emploi ?',
@@ -35,7 +35,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'À quoi ressemble la roadmap de Kazajob ?',
-    a: 'Dans les 3 prochains mois : alertes temps réel, KazaScore recruteur (réactivité), Video Pitch candidat (30s), KazaReviews (avis employeurs). D\'ici 1 an : Salary Insights 974 (baromètre des salaires locaux), Job Dating numérique, évaluation de compétences IA, et une application mobile native.',
+    a: 'Dans les 3 prochains mois : paiement & abonnement en ligne, analytics recruteur avancés, multi-diffusion France Travail et alertes push. D\'ici 6 mois : annonces boostées, accompagnement recrutement & partenariats locaux, baromètre des salaires 974, intégration ATS et application mobile native.',
   },
 ]
 

@@ -39,7 +39,7 @@ function PriceCard({ plan, isHighlight }: { plan: typeof SUBSCRIPTION_PLANS[0]; 
         {euros}€
         <span className="text-base font-semibold opacity-60">/mois</span>
       </div>
-      <div className="text-xs opacity-60 mb-4">14 jours gratuits · sans CB</div>
+      <div className="text-xs opacity-60 mb-4">30 jours gratuits · sans CB</div>
 
       <div className="flex flex-col gap-2 mb-6 flex-1">
         {plan.features.map(f => (
@@ -78,7 +78,7 @@ function PriceCard({ plan, isHighlight }: { plan: typeof SUBSCRIPTION_PLANS[0]; 
           full
           iconRight={<ArrowRight size={14} />}
         >
-          Essai gratuit 14 jours
+          Essai gratuit 30 jours
         </Button>
       </Link>
     </div>
@@ -113,7 +113,7 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
             <div className="flex flex-wrap gap-3">
               <Link href="/auth/register?role=recruiter">
                 <Button kind="primary" size="lg" iconRight={<ArrowRight size={15} />}>
-                  Essai gratuit 14 jours
+                  Essai gratuit 30 jours
                 </Button>
               </Link>
               <a href="#tarifs-pro">
@@ -130,10 +130,10 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
           {/* Stats */}
           <div className="grid grid-cols-2 gap-3">
             {[
-              { v: stats.companies || '12+', l: 'Entreprises actives', color: KZ.violetSoft },
-              { v: stats.users || '200+',    l: 'Candidats disponibles', color: KZ.orangeSoft },
-              { v: stats.jobs || '50+',      l: 'Offres diffusées', color: KZ.greenSoft },
-              { v: '48h',                    l: 'Délai moyen recrutement', color: KZ.yellowSoft },
+              { v: stats.companies || '—', l: 'Entreprises inscrites', color: KZ.violetSoft },
+              { v: stats.users || '—',     l: 'Candidats inscrits', color: KZ.orangeSoft },
+              { v: stats.jobs || '—',      l: 'Offres publiées', color: KZ.greenSoft },
+              { v: '974',                  l: '100% La Réunion', color: KZ.yellowSoft },
             ].map(c => (
               <div key={c.l} className="p-4 rounded-2xl border border-white/10 text-center"
                 style={{ background: 'rgba(255,255,255,0.06)' }}>
@@ -201,7 +201,7 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
             <h2 className="text-2xl lg:text-[36px] font-extrabold tracking-tight text-[#1A1410]">
               Un forfait pour chaque taille d&apos;entreprise.
             </h2>
-            <p className="text-sm text-[#6B5A4A] mt-2">14 jours gratuits sur tous les plans · Sans carte bancaire</p>
+            <p className="text-sm text-[#6B5A4A] mt-2">30 jours gratuits sur tous les plans · Sans carte bancaire</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-end">
             {SUBSCRIPTION_PLANS.map(plan => (
@@ -209,7 +209,7 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
             ))}
           </div>
           <p className="text-center text-xs text-[#6B5A4A] mt-6">
-            Tarifs HT · TVA 20% applicable · Paiement mensuel ou annuel (−2 mois offerts)
+            Tarifs nets · TVA non applicable, art. 293 B du CGI (micro-entreprise) · Paiement mensuel
           </p>
         </div>
       </section>

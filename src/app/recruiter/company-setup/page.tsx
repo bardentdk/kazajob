@@ -385,7 +385,7 @@ export default function CompanySetupPage() {
           {mode === 'plan' && (
             <div>
               <h2 className="text-lg font-bold text-[#1A1410] mb-1">Choisissez votre forfait</h2>
-              <p className="text-sm text-[#6B5A4A] mb-5">14 jours gratuits · Sans carte bancaire · Annulable à tout moment.</p>
+              <p className="text-sm text-[#6B5A4A] mb-5">30 jours gratuits · Sans carte bancaire · Annulable à tout moment.</p>
 
               <div className="flex flex-col gap-3 mb-5">
                 {SUBSCRIPTION_PLANS.map(plan => {

@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     siteName: 'Kazajob',
     title: 'Kazajob — Emploi La Réunion 974 | Matching IA',
     description:
-      'La plateforme d\'emploi nouvelle génération pour La Réunion. Matching IA, CV Builder, KazaIA. 12 400+ offres locales. 100% gratuit pour les candidats.',
+      'La plateforme d\'emploi nouvelle génération pour La Réunion. Matching IA, CV Builder, KazaIA. une multitude d\'offres d\'emplois et d\'offres de formations à La Réunion. 100% gratuit pour les candidats.',
     images: [
       {
         url: '/og-image.png',
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     site: '@kazajob_re',
     creator: '@kazajob_re',
     title: 'Kazajob — Emploi La Réunion 974',
-    description: 'La plateforme emploi pour La Réunion. Matching IA, 12 400+ offres, gratuit pour les candidats.',
+    description: 'La plateforme emploi pour La Réunion. Matching IA, une multitude d\'offres d\'emplois et d\'offres de formations à La Réunion, gratuit pour les candidats.',
     images: ['/og-image.png'],
   },
 

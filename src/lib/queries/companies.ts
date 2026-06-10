@@ -105,7 +105,7 @@ export async function requestToJoin(
   return row?.id
 }
 
-/** Crée/renouvelle l'abonnement (essai 14 j). Réservé à l'owner. */
+/** Crée/renouvelle l'abonnement (essai 30 j). Réservé à l'owner. */
 export async function setCompanySubscription(
   actorId: string,
   companyId: string,
@@ -118,7 +118,7 @@ export async function setCompanySubscription(
   if (company.ownerId !== actorId) return { error: 'Non autorisé' }
 
   const trialEnd = new Date()
-  trialEnd.setDate(trialEnd.getDate() + 14)
+  trialEnd.setDate(trialEnd.getDate() + 30)
 
   await db.insert(companySubscriptions)
     .values({ companyId, planId, status: 'trial', trialEndsAt: trialEnd, seatsUsed: 1 })

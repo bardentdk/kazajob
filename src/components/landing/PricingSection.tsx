@@ -307,7 +307,7 @@ export function PricingSection() {
           {[
             { label: 'Sans engagement', desc: 'Annulation à tout moment' },
             { label: 'Données en France', desc: 'RGPD conforme · Hébergement EU' },
-            { label: 'Essai 14 jours', desc: 'Carte bancaire non requise' },
+            { label: 'Essai 30 jours', desc: 'Carte bancaire non requise' },
             { label: 'Support 974', desc: 'Équipe locale, réponse <24h' },
           ].map(g => (
             <div key={g.label} className="text-center p-4 rounded-xl border border-[#E8DDC9]" style={{ background: KZ.cream2 }}>
@@ -316,6 +316,10 @@ export function PricingSection() {
             </div>
           ))}
         </div>
+
+        <p className="text-center text-xs text-[#6B5A4A] mt-6">
+          Tarifs nets · TVA non applicable, art. 293 B du CGI (micro-entreprise).
+        </p>
       </div>
     </section>
   )

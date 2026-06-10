@@ -266,7 +266,7 @@ export const subscriptionPlans = pgTable('subscription_plans', {
   maxJobs:    integer('max_jobs').notNull(),
   partners:   text().array().notNull().default(emptyArr),
   apiAccess:  boolean('api_access').notNull().default(false),
-  trialDays:  integer('trial_days').notNull().default(14),
+  trialDays:  integer('trial_days').notNull().default(30),
   highlight:  boolean().notNull().default(false),
   isActive:   boolean('is_active').notNull().default(true),
 })

@@ -11,7 +11,6 @@ import { Soleil, Palme, Hibiscus, Sparkle } from '@/components/illustrations/Tro
 import { ReassuranceBar }     from '@/components/landing/ReassuranceBar'
 import { WhySection }         from '@/components/landing/WhySection'
 import { KazaIASpotlight }    from '@/components/landing/KazaIASpotlight'
-import { TestimonialsSection } from '@/components/landing/TestimonialsSection'
 import { RoadmapSection }     from '@/components/landing/RoadmapSection'
 import { FaqSection }         from '@/components/landing/FaqSection'
 import { LandingViewToggle }  from '@/components/landing/LandingViewToggle'
@@ -56,7 +55,7 @@ export default async function LandingPage({
     { v: stats.jobs > 0 ? `${stats.jobs.toLocaleString('fr-FR')}` : '—', l: 'Offres actives' },
     { v: stats.companies > 0 ? `${stats.companies}` : '—', l: 'Entreprises locales' },
     { v: stats.users > 0 ? `${stats.users.toLocaleString('fr-FR')}` : '—', l: 'Candidats inscrits' },
-    { v: '48 h', l: '1er entretien en moyenne' },
+    { v: '0 €', l: 'Pour les candidats' },
   ]
 
   return (
@@ -235,7 +234,7 @@ export default async function LandingPage({
           <div className="text-center mb-10 lg:mb-14">
             <p className="kz-eyebrow mb-2" style={{ color: KZ.orange }}>Comment ça marche</p>
             <h2 className="text-2xl lg:text-[36px] font-extrabold tracking-tight text-[#1A1410] max-w-[720px] mx-auto">
-              Trois étapes, zéro chichi, ton premier entretien en 48 h.
+              Trois étapes, zéro chichi : crée ton profil, matche, postule en 1 clic.
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -264,9 +263,6 @@ export default async function LandingPage({
       {/* KAZAIA SPOTLIGHT ───────────────────────────────────── */}
       <KazaIASpotlight />
 
-      {/* TÉMOIGNAGES ─────────────────────────────────────────── */}
-      <TestimonialsSection />
-
       {/* ROADMAP ─────────────────────────────────────────────── */}
       <RoadmapSection />
 
@@ -284,7 +280,7 @@ export default async function LandingPage({
               <span style={{ color: KZ.orange }}>Pas de spam. Pas de bruit.</span>
             </h2>
             <p className="text-base leading-relaxed opacity-80 mb-6 max-w-[520px]" style={{ color: KZ.cream }}>
-              Offres illimitées, IA de tri automatique, pipeline Kanban, analytics, et une communauté locale de candidats actifs. Essai 14 jours gratuit.
+              Offres illimitées, IA de tri automatique, pipeline Kanban et suivi de vos performances. Essai 30 jours gratuit.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/auth/register?role=recruiter">
@@ -335,7 +331,7 @@ export default async function LandingPage({
           </Link>
         </div>
         <p className="text-xs text-[#6B5A4A]">
-          Candidats : 100% gratuit · Recruteurs : essai 14 jours sans CB · Données hébergées en Europe
+          Candidats : 100% gratuit · Recruteurs : essai 30 jours sans CB · Données hébergées en Europe
         </p>
       </section>
 

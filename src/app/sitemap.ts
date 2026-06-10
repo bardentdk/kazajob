@@ -6,12 +6,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
 
   // ── Pages statiques ───────────────────────────────────────────
+  // Pages d'auth volontairement exclues (cohérence avec robots.txt qui disallow /auth/)
   const staticPages: MetadataRoute.Sitemap = [
     { url: base,                         lastModified: now, changeFrequency: 'daily',   priority: 1.0 },
     { url: `${base}/candidate/jobs`,     lastModified: now, changeFrequency: 'hourly',  priority: 0.9 },
     { url: `${base}/candidate/training`, lastModified: now, changeFrequency: 'daily',   priority: 0.8 },
-    { url: `${base}/auth/login`,         lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
-    { url: `${base}/auth/register`,      lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
   ]
 
   // ── Pages dynamiques : offres + formations publiques ──────────

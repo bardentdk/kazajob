@@ -25,12 +25,19 @@ export async function POST(req: NextRequest) {
   const session = await auth()
   const userId = session?.user?.id
   if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  // Seul un candidat peut postuler (un recruteur/admin connecté ne doit pas pouvoir).
+  if (session.user.role !== 'candidate') {
+    return NextResponse.json({ error: 'Réservé aux candidats' }, { status: 403 })
+  }
 
   const { jobId, coverLetter } = await req.json().catch(() => ({}))
   if (!jobId) return NextResponse.json({ error: 'jobId requis' }, { status: 400 })
 
   const result = await applyToJob(userId, jobId, coverLetter)
-  if (result.error) return NextResponse.json({ error: result.error }, { status: 409 })
+  if (result.error) {
+    const status = result.error === 'Offre introuvable' ? 404 : 409
+    return NextResponse.json({ error: result.error }, { status })
+  }
 
   return NextResponse.json({ id: result.id })
 }

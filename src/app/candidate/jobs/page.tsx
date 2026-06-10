@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Search, MapPin, SlidersHorizontal, Briefcase, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -13,17 +14,29 @@ import { useJobs } from '@/features/jobs/useJobs'
 import { useFavorites } from '@/features/favorites/useFavorites'
 import { useAuth } from '@/features/auth/useAuth'
 import { REUNION_CITIES, JOB_TYPES, JOB_SECTORS } from '@/lib/constants'
+import type { JobFilters } from '@/lib/types'
 
 const CITY_OPTIONS = [{ value: '', label: 'Toute la Reunion' }, ...REUNION_CITIES.map((c) => ({ value: c, label: c }))]
 const TYPE_OPTIONS = [{ value: '', label: 'Tous les types' }, ...JOB_TYPES.map((t) => ({ value: t, label: t }))]
 const SECTOR_OPTIONS = [{ value: '', label: 'Tous les secteurs' }, ...JOB_SECTORS.map((s) => ({ value: s, label: s }))]
 
-export default function CandidateJobsPage() {
+function JobsContent() {
+  const searchParams = useSearchParams()
+  // Initialise les filtres depuis l'URL (recherche home → listing : ?q=, ville, type…)
+  const [initialFilters] = useState<JobFilters>(() => ({
+    q:        searchParams.get('q') || undefined,
+    location: searchParams.get('location') || undefined,
+    job_type: searchParams.get('job_type') || undefined,
+    sector:   searchParams.get('sector') || undefined,
+    remote:   searchParams.get('remote') === 'true' ? true : undefined,
+    page: 1,
+    limit: 12,
+  }))
   const { profile } = useAuth()
-  const { jobs, loading, count, filters, updateFilters } = useJobs({ limit: 12 })
+  const { jobs, loading, count, filters, updateFilters } = useJobs(initialFilters)
   const { isFavorite, toggle } = useFavorites(profile?.id)
   const [showFilters, setShowFilters] = useState(false)
-  const [searchInput, setSearchInput] = useState('')
+  const [searchInput, setSearchInput] = useState(initialFilters.q ?? '')
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -127,5 +140,13 @@ export default function CandidateJobsPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function CandidateJobsPage() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <JobsContent />
+    </Suspense>
   )
 }

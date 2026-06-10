@@ -43,6 +43,15 @@ export async function applyToJob(
   jobId: string,
   coverLetter?: string,
 ): Promise<{ error: string | null; id?: string }> {
+  // Valide que l'offre existe et est toujours active avant toute candidature.
+  const [job] = await db
+    .select({ isActive: jobs.isActive })
+    .from(jobs)
+    .where(eq(jobs.id, jobId))
+    .limit(1)
+  if (!job) return { error: 'Offre introuvable' }
+  if (!job.isActive) return { error: 'Cette offre n\'est plus disponible' }
+
   const [existing] = await db
     .select({ id: applications.id })
     .from(applications)

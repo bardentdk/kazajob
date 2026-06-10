@@ -166,7 +166,7 @@ export interface Application {
   job_id: string
   candidate_id: string
   cover_letter: string | null
-  status: 'pending' | 'viewed' | 'interview' | 'offer' | 'hired' | 'rejected'
+  status: 'pending' | 'viewed' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
   recruiter_notes: string | null
   created_at: string
   updated_at: string

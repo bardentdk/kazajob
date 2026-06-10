@@ -35,7 +35,7 @@ export default function ApplicationsPage() {
   const filtered = (activeTab === 'all'
     ? applications
     : applications.filter((a) => a.status === activeTab)
-  ).filter(a => (a.status as string) !== 'withdrawn')
+  ).filter(a => a.status !== 'withdrawn')
 
   const handleCancel = async () => {
     if (!cancelId) return
@@ -52,14 +52,14 @@ export default function ApplicationsPage() {
     <div className="max-w-[800px] mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-extrabold tracking-tight text-[#1A1410] mb-1">Mes candidatures</h1>
-        <p className="text-sm text-[#6B5A4A]">{applications.filter(a => (a.status as string) !== 'withdrawn').length} candidature(s) active(s)</p>
+        <p className="text-sm text-[#6B5A4A]">{applications.filter(a => a.status !== 'withdrawn').length} candidature(s) active(s)</p>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1.5 mb-6 p-1 rounded-xl border border-[#1A1410] bg-white overflow-x-auto">
         {STATUS_TABS.map((tab) => {
           const cnt = tab.key === 'all'
-            ? applications.filter(a => (a.status as string) !== 'withdrawn').length
+            ? applications.filter(a => a.status !== 'withdrawn').length
             : applications.filter((a) => a.status === tab.key).length
           return (
             <button
