@@ -242,7 +242,7 @@ export const companyMembers = pgTable('company_members', {
   recruiterId: uuid('recruiter_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
   role:        text().notNull().default('member'),
   status:      text().notNull().default('active'),
-  invitedBy:   uuid('invited_by').references(() => profiles.id),
+  invitedBy:   uuid('invited_by').references(() => profiles.id, { onDelete: 'set null' }),
   createdAt:   now(),
 }, (t) => [unique().on(t.companyId, t.recruiterId)])
 
@@ -253,7 +253,7 @@ export const companyJoinRequests = pgTable('company_join_requests', {
   recruiterId: uuid('recruiter_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
   message:     text(),
   status:      text().notNull().default('pending'),
-  reviewedBy:  uuid('reviewed_by').references(() => profiles.id),
+  reviewedBy:  uuid('reviewed_by').references(() => profiles.id, { onDelete: 'set null' }),
   createdAt:   now(),
 }, (t) => [unique().on(t.companyId, t.recruiterId)])
 
@@ -264,10 +264,10 @@ export const companyInvitations = pgTable('company_invitations', {
   email:       text(),                                   // optionnel : invitation ciblée
   token:       text().notNull().unique(),
   role:        text().notNull().default('member'),       // member | admin
-  invitedBy:   uuid('invited_by').references(() => profiles.id),
+  invitedBy:   uuid('invited_by').references(() => profiles.id, { onDelete: 'set null' }),
   status:      text().notNull().default('pending'),      // pending | accepted | revoked
   expiresAt:   timestamp('expires_at', { withTimezone: true }),
-  acceptedBy:  uuid('accepted_by').references(() => profiles.id),
+  acceptedBy:  uuid('accepted_by').references(() => profiles.id, { onDelete: 'set null' }),
   createdAt:   now(),
 })
 

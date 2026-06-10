@@ -13,7 +13,6 @@ import { WhySection }         from '@/components/landing/WhySection'
 import { KazaIASpotlight }    from '@/components/landing/KazaIASpotlight'
 import { RoadmapSection }     from '@/components/landing/RoadmapSection'
 import { FaqSection }         from '@/components/landing/FaqSection'
-import { LandingViewToggle }  from '@/components/landing/LandingViewToggle'
 import { EnterpriseLanding }  from '@/components/landing/EnterpriseLanding'
 import { SectionDecor }       from '@/components/landing/SectionDecor'
 import { KZ } from '@/lib/constants'
@@ -60,8 +59,7 @@ export default async function LandingPage({
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: KZ.cream }}>
-      <NavLanding />
-      <LandingViewToggle current={isEnterprise ? 'entreprise' : 'candidat'} />
+      <NavLanding view={isEnterprise ? 'entreprise' : 'candidat'} />
 
       {/* ── VUE ENTREPRISE ──────────────────────────────────────── */}
       {isEnterprise ? (
@@ -86,7 +84,7 @@ export default async function LandingPage({
             </Badge>
             <h1 className="text-[48px] sm:text-[64px] lg:text-[80px] font-extrabold tracking-[-0.04em] leading-[0.92] text-[#1A1410] mb-5">
               Ton kaz<br />
-              <span style={{ color: KZ.orange }}>ton job</span><br />
+              <span style={{ color: KZ.violet }}>ton job</span><br />
               ton pei.
             </h1>
             <p className="text-base lg:text-lg leading-relaxed text-[#2A2018] max-w-[520px] mb-6">
