@@ -34,14 +34,20 @@ function formatTime(d: Date): string {
   return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
+// ── Logo (PNG hébergé — SVG non fiable en email) ───────────────────
+const LOGO_URL = 'https://kazajob.re/kazajob.png'
+
 // ── Shell commun (wrapper email) ───────────────────────────────────
 function shell(headerAccent: string, body: string): string {
+  const year = new Date().getFullYear()
   return `<!DOCTYPE html>
 <html lang="fr" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Kazajob</title>
   <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
 </head>
@@ -54,27 +60,24 @@ function shell(headerAccent: string, body: string): string {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
         style="max-width:580px;background-color:${C.cream};border:2px solid ${C.ink};border-radius:16px;overflow:hidden;">
 
-        <!-- HEADER -->
+        <!-- Barre d'accent -->
         <tr>
-          <td style="background-color:${headerAccent};padding:0;">
+          <td style="height:6px;background-color:${headerAccent};font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td>
+        </tr>
+
+        <!-- HEADER (logo réel sur fond clair, façon Brevo) -->
+        <tr>
+          <td style="background-color:${C.cream};padding:26px 32px 22px;border-bottom:1px solid ${C.line};">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td style="padding:28px 32px;">
-                  <!-- Logo -->
-                  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                    <tr>
-                      <td style="background-color:${C.ink};border-radius:8px;padding:6px 12px;">
-                        <span style="font-size:18px;font-weight:900;color:${C.cream};letter-spacing:-0.04em;font-family:Arial,sans-serif;">kaza<span style="color:${C.orange};">job</span></span>
-                      </td>
-                      <td style="padding-left:12px;">
-                        <span style="font-size:11px;font-weight:700;color:${C.ink};opacity:0.7;letter-spacing:0.05em;text-transform:uppercase;">La Réunion · 974</span>
-                      </td>
-                    </tr>
-                  </table>
+                <td style="vertical-align:middle;">
+                  <a href="https://kazajob.re" style="text-decoration:none;">
+                    <img src="${LOGO_URL}" alt="Kazajob" height="30"
+                      style="display:block;border:0;outline:none;text-decoration:none;height:30px;width:auto;">
+                  </a>
                 </td>
-                <!-- Cercle déco -->
-                <td width="80" style="padding:0;vertical-align:bottom;text-align:right;">
-                  <div style="width:80px;height:80px;border-radius:50%;background-color:rgba(255,247,238,0.2);display:inline-block;"></div>
+                <td style="vertical-align:middle;text-align:right;">
+                  <span style="font-size:11px;font-weight:700;color:${C.mute};letter-spacing:0.06em;text-transform:uppercase;font-family:Arial,sans-serif;">La Réunion · 974</span>
                 </td>
               </tr>
             </table>
@@ -90,13 +93,17 @@ function shell(headerAccent: string, body: string): string {
 
         <!-- FOOTER -->
         <tr>
-          <td style="border-top:1px solid ${C.line};padding:18px 32px;background-color:${C.cream2};">
+          <td style="border-top:1px solid ${C.line};padding:24px 32px;background-color:${C.cream2};">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td style="font-size:11px;color:${C.mute};line-height:1.6;text-align:center;">
-                  <strong style="color:${C.ink};">Kazajob</strong> · Saint-Denis, La Réunion 974<br>
-                  <a href="https://kazajob.re" style="color:${C.orange};text-decoration:none;font-weight:700;">kazajob.re</a>
-                  &nbsp;·&nbsp;Cet email est automatique, merci de ne pas y répondre directement.
+                <td style="text-align:center;">
+                  <img src="${LOGO_URL}" alt="Kazajob" height="22"
+                    style="display:inline-block;border:0;outline:none;text-decoration:none;height:22px;width:auto;margin-bottom:10px;">
+                  <p style="margin:0;font-size:11px;color:${C.mute};line-height:1.7;font-family:Arial,sans-serif;">
+                    Saint-Denis, La Réunion 974 &nbsp;·&nbsp;
+                    <a href="https://kazajob.re" style="color:${C.orange};text-decoration:none;font-weight:700;">kazajob.re</a><br>
+                    Cet email est automatique, merci de ne pas y répondre directement.
+                  </p>
                 </td>
               </tr>
             </table>
@@ -104,6 +111,18 @@ function shell(headerAccent: string, body: string): string {
         </tr>
 
       </table>
+
+      <!-- Mentions sous la carte -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:580px;">
+        <tr>
+          <td style="padding:16px 12px 0;text-align:center;">
+            <p style="margin:0;font-size:10px;color:${C.mute};opacity:0.7;line-height:1.6;font-family:Arial,sans-serif;">
+              © ${year} Kazajob — La plateforme d'emploi de La Réunion.
+            </p>
+          </td>
+        </tr>
+      </table>
+
     </td>
   </tr>
 </table>
@@ -862,6 +881,72 @@ export function joinResponseEmail(data: {
     </table>`
 
   return { subject, html: shell(data.approved ? C.green : '#6B5A4A', body) }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 10 — Invitation à rejoindre une équipe (token)
+// ══════════════════════════════════════════════════════════════════
+
+export function teamInvitationEmail(data: {
+  inviterName: string
+  companyName: string
+  role:        'member' | 'admin'
+  acceptUrl:   string
+}): { subject: string; html: string } {
+  const subject = `${data.inviterName} vous invite à rejoindre ${data.companyName} sur Kazajob`
+  const roleLabel = data.role === 'admin' ? 'Administrateur' : 'Recruteur'
+
+  const body = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:24px 32px 16px;">
+          ${chip('Invitation équipe', C.violetSoft, C.violet)}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 12px;">
+          <h1 style="margin:0;font-size:26px;font-weight:900;color:${C.ink};
+            letter-spacing:-0.03em;line-height:1.15;font-family:Arial,sans-serif;">
+            Rejoignez<br>${data.companyName}.
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 32px 20px;">
+          <p style="margin:0;font-size:14px;color:#2A2018;line-height:1.6;font-family:Arial,sans-serif;">
+            <strong style="color:${C.orange};">${data.inviterName}</strong> vous invite à rejoindre
+            l&apos;espace recruteur de <strong style="color:${C.ink};">${data.companyName}</strong>
+            sur Kazajob, en tant que <strong style="color:${C.ink};">${roleLabel}</strong>.
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="background-color:white;border:2px solid ${C.ink};border-radius:12px;overflow:hidden;">
+            ${detailRow('Entreprise', data.companyName)}
+            ${detailRow('Rôle', roleLabel)}
+            ${detailRow('Invité par', data.inviterName)}
+            <tr><td colspan="2" style="height:1px;"></td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 32px 16px;text-align:center;">
+          ${ctaButton("Accepter l'invitation", data.acceptUrl, C.violet, '#FFFFFF')}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 28px;">
+          <p style="margin:0;font-size:11px;color:${C.mute};text-align:center;line-height:1.6;font-family:Arial,sans-serif;">
+            Ce lien d&apos;invitation expire dans 7 jours. Si vous n&apos;avez pas de compte recruteur,
+            vous pourrez en créer un avant d&apos;accepter.
+          </p>
+        </td>
+      </tr>
+    </table>`
+
+  return { subject, html: shell(C.violet, body) }
 }
 
 export function applicationStatusEmail(data: {

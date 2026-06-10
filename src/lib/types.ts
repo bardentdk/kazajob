@@ -135,6 +135,27 @@ export interface CompanySubscription {
   created_at: string
 }
 
+/** Appartenance d'un recruteur à une entreprise (pour le sélecteur multi-entreprises). */
+export interface Membership {
+  company_id: string
+  company_name: string
+  logo_url: string | null
+  role: CompanyMemberRole
+  is_active: boolean // true si c'est l'entreprise active (profile.company_id)
+}
+
+export interface CompanyInvitation {
+  id: string
+  company_id: string
+  email: string | null
+  token: string
+  role: 'member' | 'admin'
+  status: 'pending' | 'accepted' | 'revoked'
+  expires_at: string | null
+  created_at: string
+  company?: Pick<Company, 'name' | 'logo_url'> | null
+}
+
 export interface Job {
   id: string
   company_id: string

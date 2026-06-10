@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Building2, Users, ArrowRight, Edit3, Check, Globe, Star, Landmark, Target, Briefcase, Search, Rss } from 'lucide-react'
+import { Building2, Users, ArrowRight, Edit3, Globe, Star, Landmark, Target, Briefcase, Search, Rss } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useAuth } from '@/features/auth/useAuth'
@@ -168,24 +168,27 @@ export default function CompanyPage() {
         )}
       </div>
 
-      {/* Partenaires actifs */}
+      {/* Canaux de diffusion inclus au forfait (à venir) */}
       {plan && plan.partners.length > 0 && (
         <div className="kz-card p-5 bg-white">
-          <h3 className="text-sm font-bold text-[#1A1410] mb-3">Diffusion multi-plateformes activée</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-bold text-[#1A1410]">Canaux de diffusion inclus</h3>
+            <Badge color="violet" size="sm">Bientôt</Badge>
+          </div>
           <div className="flex flex-wrap gap-2">
             {plan.partners.map(p => {
               const partner = PARTNERS[p]
               return partner ? (
                 <div key={p} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#1A1410] text-xs font-bold"
-                  style={{ background: KZ.greenSoft }}>
-                  <Check size={11} color={KZ.green} />
+                  style={{ background: KZ.violetSoft }}>
                   <span className="flex items-center gap-1">{PARTNER_ICONS[partner.icon]}{partner.name}</span>
                 </div>
               ) : null
             })}
           </div>
           <p className="text-xs text-[#6B5A4A] mt-2">
-            Vos offres sont automatiquement diffusées sur ces plateformes lors de leur publication.
+            Ces canaux sont inclus dans votre forfait. La diffusion automatique vers ces plateformes
+            sera activée prochainement (voir la roadmap).
           </p>
         </div>
       )}

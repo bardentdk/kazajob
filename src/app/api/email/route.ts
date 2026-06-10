@@ -15,6 +15,7 @@ import {
   newMessageEmail,
   joinRequestEmail,
   joinResponseEmail,
+  teamInvitationEmail,
   type ApplicationStatus,
 } from '@/lib/email/templates'
 
@@ -244,6 +245,29 @@ export async function POST(req: NextRequest) {
         recruiterName: requester.fullName, companyName: company.name, approved: !!approved,
       })
       await resend.emails.send({ from: FROM, to: requester.email, subject, html })
+      return NextResponse.json({ ok: true })
+    }
+
+    // ── Invitation équipe (→ invité par e-mail) ────────────────────
+    if (type === 'team_invitation') {
+      const { token } = body
+      const inv = await db.query.companyInvitations.findFirst({
+        where: (t, { eq: e }) => e(t.token, token),
+        with: { company: { columns: { name: true } } },
+      })
+      if (!inv || !inv.email) return NextResponse.json({ ok: true })
+
+      const [inviter] = inv.invitedBy
+        ? await db.select({ fullName: profiles.fullName }).from(profiles).where(eq(profiles.id, inv.invitedBy)).limit(1)
+        : [undefined]
+
+      const { subject, html } = teamInvitationEmail({
+        inviterName: inviter?.fullName ?? 'Un recruteur',
+        companyName: (inv as { company?: { name: string } }).company?.name ?? 'une entreprise',
+        role: inv.role === 'admin' ? 'admin' : 'member',
+        acceptUrl: `https://kazajob.re/recruiter/join?invite=${token}`,
+      })
+      await resend.emails.send({ from: FROM, to: inv.email, subject, html })
       return NextResponse.json({ ok: true })
     }
 

@@ -12,7 +12,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { approve } = await req.json().catch(() => ({}))
   const result = await respondJoinRequest(userId, id, !!approve)
   if (result.error) {
-    return NextResponse.json({ error: result.error }, { status: result.error === 'Non autorisé' ? 403 : 404 })
+    const status = result.error === 'Non autorisé' ? 403
+      : result.error === 'Demande introuvable' ? 404 : 409
+    return NextResponse.json({ error: result.error }, { status })
   }
   return NextResponse.json({ ok: true })
 }

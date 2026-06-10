@@ -257,6 +257,20 @@ export const companyJoinRequests = pgTable('company_join_requests', {
   createdAt:   now(),
 }, (t) => [unique().on(t.companyId, t.recruiterId)])
 
+// ── company_invitations (Tier 2 : invitations par token) ──────────
+export const companyInvitations = pgTable('company_invitations', {
+  id:          uuid().primaryKey().default(sql`gen_random_uuid()`),
+  companyId:   uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  email:       text(),                                   // optionnel : invitation ciblée
+  token:       text().notNull().unique(),
+  role:        text().notNull().default('member'),       // member | admin
+  invitedBy:   uuid('invited_by').references(() => profiles.id),
+  status:      text().notNull().default('pending'),      // pending | accepted | revoked
+  expiresAt:   timestamp('expires_at', { withTimezone: true }),
+  acceptedBy:  uuid('accepted_by').references(() => profiles.id),
+  createdAt:   now(),
+})
+
 // ── subscription_plans ────────────────────────────────────────────
 export const subscriptionPlans = pgTable('subscription_plans', {
   id:         text().primaryKey(),
@@ -370,6 +384,10 @@ export const companyJoinRequestsRelations = relations(companyJoinRequests, ({ on
 
 export const companySubscriptionsRelations = relations(companySubscriptions, ({ one }) => ({
   company: one(companies, { fields: [companySubscriptions.companyId], references: [companies.id] }),
+}))
+
+export const companyInvitationsRelations = relations(companyInvitations, ({ one }) => ({
+  company: one(companies, { fields: [companyInvitations.companyId], references: [companies.id] }),
 }))
 
 export const eventsRelations = relations(events, ({ one }) => ({

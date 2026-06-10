@@ -65,18 +65,23 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
       is_active: true,
     }
 
-    if (job?.id) {
-      await fetch(`/api/recruiter/jobs/${job.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-    } else {
-      await fetch('/api/recruiter/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...payload, companyId: companyId ?? null }),
-      })
+    const res = job?.id
+      ? await fetch(`/api/recruiter/jobs/${job.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+      : await fetch('/api/recruiter/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, companyId: companyId ?? null }),
+        })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setError(data.error ?? 'Une erreur est survenue. Réessayez.')
+      setSaving(false)
+      return
     }
 
     setSaving(false)

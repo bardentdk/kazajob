@@ -10,6 +10,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params
   const { message } = await req.json().catch(() => ({}))
-  const requestId = await requestToJoin(userId, id, message)
-  return NextResponse.json({ id: requestId })
+  const result = await requestToJoin(userId, id, message)
+  if (result.error) return NextResponse.json({ error: result.error }, { status: 409 })
+  return NextResponse.json({ id: result.id })
 }
