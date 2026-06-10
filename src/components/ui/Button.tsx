@@ -10,7 +10,7 @@ const kindStyles: Record<ButtonKind, string> = {
   violet:  'bg-[#6D3BEB] text-white border-[#1A1410] shadow-[3px_3px_0_#1A1410] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#1A1410]',
   yellow:  'bg-[#FFC93C] text-[#1A1410] border-[#1A1410] shadow-[3px_3px_0_#1A1410] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#1A1410]',
   outline: 'bg-white text-[#1A1410] border-[#1A1410] shadow-[3px_3px_0_#1A1410] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#1A1410]',
-  ghost:   'bg-transparent text-[#1A1410] border-transparent shadow-none hover:bg-[#FBEFE0]',
+  ghost:   'bg-transparent text-[#1A1410] border-transparent shadow-none hover:bg-[#FBEFE0] hover:text-black',
   soft:    'bg-[#FBEFE0] text-[#1A1410] border-[#E8DDC9] shadow-none hover:bg-[#F2E4D0]',
   danger:  'bg-[#E54E4E] text-white border-[#1A1410] shadow-[3px_3px_0_#1A1410] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#1A1410]',
 }

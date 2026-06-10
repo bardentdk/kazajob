@@ -117,7 +117,7 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
                 </Button>
               </Link>
               <a href="#tarifs-pro">
-                <Button kind="outline" size="lg" className="!text-[#FFF7EE] !border-[#FFF7EE]/40">
+                <Button kind="outline" size="lg" className=" !border-[#FFF7EE]/40">
                   Voir les tarifs
                 </Button>
               </a>
@@ -232,7 +232,7 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
             </Button>
           </Link>
           <Link href="/recruiter/company-setup">
-            <Button kind="outline" size="lg" className="!text-[#FFF7EE] !border-[#FFF7EE]/40">
+            <Button kind="outline" size="lg" className=" !border-[#FFF7EE]/40">
               Configurer mon entreprise
             </Button>
           </Link>

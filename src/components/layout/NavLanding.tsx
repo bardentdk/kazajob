@@ -124,7 +124,7 @@ export function NavLanding() {
             </Link>
             <Link href="/auth/register">
               <Button kind="primary" size="sm" className="lg:!text-sm lg:!h-9" iconRight={<ArrowRight size={14} />}>
-                <span className="hidden sm:inline">Anou commencé</span>
+                <span className="hidden sm:inline">Alon comencé</span>
                 <span className="sm:hidden">S&apos;inscrire</span>
               </Button>
             </Link>
