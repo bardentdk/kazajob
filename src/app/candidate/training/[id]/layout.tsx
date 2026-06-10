@@ -51,10 +51,23 @@ export default async function TrainingDetailLayout(
     },
   } : null
 
+  const breadcrumb = t ? {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: BASE },
+      { '@type': 'ListItem', position: 2, name: 'Formations', item: `${BASE}/candidate/training` },
+      { '@type': 'ListItem', position: 3, name: t.title, item: `${BASE}/candidate/training/${id}` },
+    ],
+  } : null
+
   return (
     <>
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      )}
+      {breadcrumb && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       )}
       {children}
     </>

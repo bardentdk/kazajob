@@ -23,7 +23,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Mes données sont-elles sécurisées ?',
-    a: 'Oui. Kazajob utilise Supabase (infrastructure PostgreSQL hébergée en Europe) avec chiffrement des données au repos et en transit. Ton CV est stocké dans un espace privé sécurisé. Nous sommes RGPD conformes et ne revendons jamais tes données. Tu peux demander la suppression de ton compte à tout moment.',
+    a: 'Oui. Kazajob s\'appuie sur une infrastructure PostgreSQL hébergée en Europe, avec chiffrement des données au repos et en transit. Ton CV est stocké dans un espace privé sécurisé. Nous sommes RGPD conformes et ne revendons jamais tes données. Tu peux demander la suppression de ton compte à tout moment.',
   },
   {
     q: 'En tant que recruteur, puis-je tester avant de payer ?',
@@ -39,11 +39,24 @@ const FAQ_ITEMS = [
   },
 ]
 
+// Données structurées FAQPage → éligibilité rich snippets Google
+const FAQ_JSONLD = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQ_ITEMS.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+}
+
 export function FaqSection() {
   const [open, setOpen] = useState<number | null>(null)
 
   return (
-    <section id="faq" className="px-4 sm:px-8 lg:px-16 py-16 lg:py-24" style={{ background: KZ.cream2 }}>
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_JSONLD) }} />
+      <section id="faq" className="px-4 sm:px-8 lg:px-16 py-16 lg:py-24" style={{ background: KZ.cream2 }}>
       <div className="max-w-[800px] mx-auto">
         <div className="text-center mb-12">
           <p className="kz-eyebrow mb-3" style={{ color: KZ.violet }}>FAQ</p>
@@ -90,6 +103,7 @@ export function FaqSection() {
           </a>
         </p>
       </div>
-    </section>
+      </section>
+    </>
   )
 }

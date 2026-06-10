@@ -216,14 +216,14 @@ export async function setActiveCompany(
 /** Limites du forfait courant de l'entreprise (abonnement → plan, repli Starter). */
 export async function getPlanLimits(
   companyId: string,
-): Promise<{ maxJobs: number; maxMembers: number; planName: string }> {
+): Promise<{ maxJobs: number; maxMembers: number; planName: string; status: string | null }> {
   const [sub] = await db
-    .select({ planId: companySubscriptions.planId })
+    .select({ planId: companySubscriptions.planId, status: companySubscriptions.status })
     .from(companySubscriptions)
     .where(eq(companySubscriptions.companyId, companyId))
     .limit(1)
   const plan = SUBSCRIPTION_PLANS.find((p) => p.id === sub?.planId) ?? DEFAULT_PLAN
-  return { maxJobs: plan.maxJobs, maxMembers: plan.maxMembers, planName: plan.name }
+  return { maxJobs: plan.maxJobs, maxMembers: plan.maxMembers, planName: plan.name, status: sub?.status ?? null }
 }
 
 async function countActiveJobs(companyId: string): Promise<number> {
@@ -242,14 +242,18 @@ async function countActiveMembers(companyId: string): Promise<number> {
   return value
 }
 
-/** L'entreprise peut-elle publier/activer une offre de plus selon son forfait ? */
+/** L'entreprise peut-elle publier/activer une offre de plus (forfait + statut d'abonnement) ? */
 export async function canPublishJob(
   companyId: string,
-): Promise<{ ok: boolean; max: number; used: number; planName: string }> {
-  const { maxJobs, planName } = await getPlanLimits(companyId)
+): Promise<{ ok: boolean; max: number; used: number; planName: string; reason?: 'limit' | 'expired' }> {
+  const { maxJobs, planName, status } = await getPlanLimits(companyId)
+  // Essai/abonnement expiré ou annulé → accès coupé.
+  if (status === 'expired' || status === 'cancelled') {
+    return { ok: false, max: maxJobs, used: 0, planName, reason: 'expired' }
+  }
   if (maxJobs === -1) return { ok: true, max: -1, used: 0, planName }
   const used = await countActiveJobs(companyId)
-  return { ok: used < maxJobs, max: maxJobs, used, planName }
+  return { ok: used < maxJobs, max: maxJobs, used, planName, reason: 'limit' }
 }
 
 // ── Équipe ────────────────────────────────────────────────────────

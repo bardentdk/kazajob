@@ -12,7 +12,8 @@ import { ApplicationCard } from '@/components/cards/ApplicationCard'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { useAuth } from '@/features/auth/useAuth'
 import { useApplications } from '@/features/applications/useApplications'
-import { useJobs } from '@/features/jobs/useJobs'
+import { useState, useEffect } from 'react'
+import type { Job } from '@/lib/types'
 import { useFavorites } from '@/features/favorites/useFavorites'
 import { useGamification } from '@/features/gamification/useGamification'
 import { GameDashboard } from '@/components/gamification/GameDashboard'
@@ -38,9 +39,19 @@ function QuizBanner() {
 export default function CandidateDashboard() {
   const { profile } = useAuth()
   const { applications, loading: appsLoading } = useApplications(profile?.id)
-  const { jobs: recommendedJobs, loading: jobsLoading } = useJobs({ limit: 4 })
+  const [recommendedJobs, setRecommendedJobs] = useState<Job[]>([])
+  const [jobsLoading, setJobsLoading] = useState(true)
   const { favorites } = useFavorites(profile?.id)
   const gami = useGamification(profile, applications.length, favorites.length)
+
+  useEffect(() => {
+    if (!profile?.id) return
+    fetch('/api/jobs/recommended?limit=4')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setRecommendedJobs(d as Job[]))
+      .catch(() => {})
+      .finally(() => setJobsLoading(false))
+  }, [profile?.id])
 
   const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 

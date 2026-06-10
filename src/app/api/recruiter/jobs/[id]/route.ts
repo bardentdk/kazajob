@@ -32,10 +32,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (job && !job.is_active && job.company_id) {
       const quota = await canPublishJob(job.company_id)
       if (!quota.ok) {
-        return NextResponse.json(
-          { error: `Limite de ${quota.max} offre(s) active(s) atteinte (forfait ${quota.planName}). Désactivez une autre offre d'abord.` },
-          { status: 403 },
-        )
+        const error = quota.reason === 'expired'
+          ? 'Votre essai ou abonnement a expiré. Activez votre abonnement pour réactiver des offres.'
+          : `Limite de ${quota.max} offre(s) active(s) atteinte (forfait ${quota.planName}). Désactivez une autre offre d'abord.`
+        return NextResponse.json({ error }, { status: 403 })
       }
     }
   }

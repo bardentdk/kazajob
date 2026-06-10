@@ -23,7 +23,13 @@ export function useFavorites(candidateId?: string) {
   }, [favorites])
 
   const toggle = useCallback(async (jobId: string) => {
-    if (!candidateId) return
+    // Visiteur non connecté → invitation à se connecter (au lieu d'un clic sans effet).
+    if (!candidateId) {
+      if (typeof window !== 'undefined') {
+        window.location.href = `/auth/login?next=${encodeURIComponent(window.location.pathname)}`
+      }
+      return
+    }
     await fetch('/api/favorites', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

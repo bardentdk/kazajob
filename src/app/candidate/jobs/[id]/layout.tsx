@@ -110,11 +110,22 @@ export default async function JobDetailLayout(
     } : {}),
   } : null
 
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: BASE },
+      { '@type': 'ListItem', position: 2, name: "Offres d'emploi", item: `${BASE}/candidate/jobs` },
+      { '@type': 'ListItem', position: 3, name: job.title, item: `${BASE}/candidate/jobs/${id}` },
+    ],
+  }
+
   return (
     <>
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       )}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       {children}
     </>
   )

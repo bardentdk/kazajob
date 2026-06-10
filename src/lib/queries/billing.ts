@@ -2,7 +2,7 @@
  * KAZAJOB — Requêtes Drizzle liées à la facturation Stripe.
  * Couche serveur. Le contexte de facturation est réservé à l'owner de l'entreprise.
  */
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull, lt } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { companies, companySubscriptions, profiles } from '@/lib/db/schema'
 
@@ -66,6 +66,24 @@ export async function getCompanyByStripeSubscription(subscriptionId: string): Pr
     .from(companySubscriptions)
     .where(eq(companySubscriptions.stripeSubscriptionId, subscriptionId)).limit(1)
   return row?.companyId ?? null
+}
+
+/**
+ * Expire les essais terminés SANS abonnement Stripe (jamais converti).
+ * Les essais avec abonnement Stripe sont gérés par les webhooks (conversion auto).
+ * Renvoie le nombre d'essais expirés.
+ */
+export async function expireEndedTrials(): Promise<number> {
+  const rows = await db
+    .update(companySubscriptions)
+    .set({ status: 'expired' })
+    .where(and(
+      eq(companySubscriptions.status, 'trial'),
+      lt(companySubscriptions.trialEndsAt, new Date()),
+      isNull(companySubscriptions.stripeSubscriptionId),
+    ))
+    .returning({ id: companySubscriptions.id })
+  return rows.length
 }
 
 /** Mappe un statut d'abonnement Stripe vers notre énumération. */

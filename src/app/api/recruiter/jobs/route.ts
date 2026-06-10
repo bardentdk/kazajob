@@ -37,10 +37,10 @@ export async function POST(req: NextRequest) {
     // Plafond d'offres actives selon le forfait.
     const quota = await canPublishJob(companyId)
     if (!quota.ok) {
-      return NextResponse.json(
-        { error: `Vous avez atteint la limite de ${quota.max} offre(s) active(s) du forfait ${quota.planName}. Désactivez une offre ou passez à un forfait supérieur.` },
-        { status: 403 },
-      )
+      const error = quota.reason === 'expired'
+        ? 'Votre essai ou abonnement a expiré. Activez votre abonnement pour publier de nouvelles offres.'
+        : `Vous avez atteint la limite de ${quota.max} offre(s) active(s) du forfait ${quota.planName}. Désactivez une offre ou passez à un forfait supérieur.`
+      return NextResponse.json({ error }, { status: 403 })
     }
   }
 

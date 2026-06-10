@@ -5,8 +5,9 @@
 import { cache } from 'react'
 import { and, desc, eq, gte, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { jobs } from '@/lib/db/schema'
+import { candidateSkills, jobs, profiles, skills } from '@/lib/db/schema'
 import type { Job, JobFilters } from '@/lib/types'
+import { matchScore } from '@/lib/utils'
 import { serialize } from './_serialize'
 
 /** Données d'une offre pour le SEO (métadonnées + JobPosting). Sans incrément de vues. */
@@ -74,6 +75,46 @@ export async function listJobs(f: JobFilters): Promise<{ data: Job[]; count: num
     .where(where)
 
   return { data: (rows as JobRow[]).map(mapJob), count: value }
+}
+
+/**
+ * Offres recommandées pour un candidat — matching réel.
+ * Score = 60% compétences (part des compétences requises possédées)
+ *       + 25% localisation (même ville) + 15% base. Trié décroissant.
+ */
+export async function getRecommendedJobs(candidateId: string, limit = 4): Promise<Job[]> {
+  // Compétences techniques du candidat
+  const cand = await db
+    .select({ name: skills.name })
+    .from(candidateSkills)
+    .innerJoin(skills, eq(candidateSkills.skillId, skills.id))
+    .where(eq(candidateSkills.candidateId, candidateId))
+  const candidateSkillNames = cand.map((s) => s.name)
+
+  const [prof] = await db
+    .select({ location: profiles.location })
+    .from(profiles).where(eq(profiles.id, candidateId)).limit(1)
+  const candLoc = prof?.location?.toLowerCase().split(',')[0]?.trim() ?? ''
+
+  // Offres actives récentes (boostées d'abord), puis scoring.
+  const rows = await db.query.jobs.findMany({
+    where: eq(jobs.isActive, true),
+    with: { company: true, jobSkills: { with: { skill: true } } },
+    orderBy: (j, { desc: d }) => [d(j.isBoosted), d(j.createdAt)],
+    limit: 60,
+  })
+
+  const scored = (rows as JobRow[]).map(mapJob).map((job) => {
+    const jobSkillNames = (job.skills ?? []).map((s) => s.name)
+    const skillScore = matchScore(candidateSkillNames, jobSkillNames)
+    const jobLoc = job.location?.toLowerCase().split(',')[0]?.trim() ?? ''
+    const locMatch = !!candLoc && !!jobLoc && (jobLoc.includes(candLoc) || candLoc.includes(jobLoc))
+    const match_score = Math.min(100, Math.round(0.6 * skillScore + 0.25 * (locMatch ? 100 : 0) + 15))
+    return { ...job, match_score }
+  })
+
+  scored.sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0))
+  return scored.slice(0, limit)
 }
 
 // ── Côté recruteur ────────────────────────────────────────────────

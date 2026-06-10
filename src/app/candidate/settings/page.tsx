@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Bell, Mail, Sparkles, Shield, CheckCheck, Gamepad2 } from 'lucide-react'
+import { Bell, Mail, Shield, CheckCheck, Gamepad2 } from 'lucide-react'
 import { useGamification } from '@/features/gamification/useGamification'
 import { useApplications } from '@/features/applications/useApplications'
 import { useFavorites } from '@/features/favorites/useFavorites'
@@ -109,14 +109,6 @@ export default function CandidateSettingsPage() {
       description: 'Reçois par email les nouvelles offres qui correspondent à ton profil. Tu contrôles la fréquence ci-dessous.',
       key: 'email_alerts_enabled',
       value: settings.email_alerts_enabled,
-    },
-    {
-      icon: <Sparkles size={18} />,
-      title: 'Emails KazaIA — conseils & astuces',
-      description: 'Suggestions personnalisées pour améliorer ton profil, préparer tes entretiens et optimiser tes candidatures.',
-      key: 'email_tips_enabled',
-      value: true,
-      badge: 'Bientôt',
     },
   ]
 
