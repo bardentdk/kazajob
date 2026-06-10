@@ -1,0 +1,26 @@
+{
+  "name": "Kazajob — Emploi La Réunion 974",
+  "short_name": "Kazajob",
+  "description": "La plateforme d'emploi nouvelle génération pour La Réunion (974). Matching IA, offres locales, 100% gratuit pour les candidats.",
+  "lang": "fr-RE",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FFF7EE",
+  "theme_color": "#FF6B35",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/kazajob.png",
+      "sizes": "2128x2646",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

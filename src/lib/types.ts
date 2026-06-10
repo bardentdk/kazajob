@@ -128,10 +128,12 @@ export interface CompanySubscription {
   id: string
   company_id: string
   plan_id: string
-  status: 'trial' | 'active' | 'cancelled' | 'expired'
+  status: 'trial' | 'active' | 'cancelled' | 'expired' | 'past_due'
   trial_ends_at: string | null
   current_period_end: string | null
   seats_used: number
+  stripe_customer_id?: string | null
+  stripe_subscription_id?: string | null
   created_at: string
 }
 

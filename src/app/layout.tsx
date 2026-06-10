@@ -45,9 +45,9 @@ export const metadata: Metadata = {
       'La plateforme d\'emploi nouvelle génération pour La Réunion. Matching IA, CV Builder, KazaIA. une multitude d\'offres d\'emplois et d\'offres de formations à La Réunion. 100% gratuit pour les candidats.',
     images: [
       {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
+        url: '/kazajob.png',
+        width: 2128,
+        height: 2646,
         alt: 'Kazajob — Le travail péi, nouvelle génération',
       },
     ],
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     creator: '@kazajob_re',
     title: 'Kazajob — Emploi La Réunion 974',
     description: 'La plateforme emploi pour La Réunion. Matching IA, une multitude d\'offres d\'emplois et d\'offres de formations à La Réunion, gratuit pour les candidats.',
-    images: ['/og-image.png'],
+    images: ['/kazajob.png'],
   },
 
   // ── Robots ───────────────────────────────────────────────────
@@ -99,7 +99,7 @@ export const metadata: Metadata = {
   // ── Icons ────────────────────────────────────────────────────
   icons: {
     icon: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
+    apple: '/kazajob.png',
   },
 }
 
@@ -121,7 +121,7 @@ const jsonLd = {
       url: 'https://kazajob.re',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://kazajob.re/og-image.png',
+        url: 'https://kazajob.re/kazajob.png',
       },
       description: 'Plateforme d\'emploi nouvelle génération pour La Réunion (974)',
       address: {

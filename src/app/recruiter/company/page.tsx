@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Building2, Users, ArrowRight, Edit3, Globe, Star, Landmark, Target, Briefcase, Search, Rss } from 'lucide-react'
+import { Building2, Users, ArrowRight, Edit3, Globe, Star, Landmark, Target, Briefcase, Search, Rss, CreditCard, Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useAuth } from '@/features/auth/useAuth'
@@ -24,6 +24,8 @@ export default function CompanyPage() {
   const [memberCount, setMemberCount] = useState(0)
   const [jobCount, setJobCount]     = useState(0)
   const [loading, setLoading]       = useState(true)
+  const [billingLoading, setBillingLoading] = useState(false)
+  const [billingBanner, setBillingBanner]   = useState<'success' | 'cancel' | null>(null)
 
   useEffect(() => {
     if (!profile?.company_id) return
@@ -43,6 +45,11 @@ export default function CompanyPage() {
     load()
   }, [profile?.company_id])
 
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get('billing')
+    if (p === 'success' || p === 'cancel') setBillingBanner(p)
+  }, [])
+
   const plan = SUBSCRIPTION_PLANS.find(p => p.id === sub?.plan_id)
 
   if (!profile?.company_id) {
@@ -60,6 +67,28 @@ export default function CompanyPage() {
 
   if (loading) return <div className="h-64 rounded-2xl bg-[#FBEFE0] animate-pulse" />
 
+  const isOwner = company?.owner_id === profile?.id
+
+  const startCheckout = async () => {
+    setBillingLoading(true)
+    const res = await fetch('/api/billing/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ planId: sub?.plan_id }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok && data.url) window.location.href = data.url as string
+    else { alert(data.error ?? 'Paiement indisponible.'); setBillingLoading(false) }
+  }
+
+  const openPortal = async () => {
+    setBillingLoading(true)
+    const res = await fetch('/api/billing/portal', { method: 'POST' })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok && data.url) window.location.href = data.url as string
+    else { alert(data.error ?? 'Gestion indisponible.'); setBillingLoading(false) }
+  }
+
   const isTrialing = sub?.status === 'trial'
   const trialDaysLeft = sub?.trial_ends_at
     ? Math.max(0, Math.ceil((new Date(sub.trial_ends_at).getTime() - Date.now()) / 86_400_000))
@@ -76,6 +105,21 @@ export default function CompanyPage() {
           <Button kind="outline" size="md" icon={<Users size={14} />}>Gérer l&apos;équipe</Button>
         </Link>
       </div>
+
+      {/* Retour Stripe */}
+      {billingBanner === 'success' && (
+        <div className="kz-card p-4 mb-5 flex items-center gap-3" style={{ background: KZ.greenSoft }}>
+          <Check size={18} color={KZ.green} />
+          <p className="text-sm font-semibold text-[#1A1410]">
+            Moyen de paiement enregistré. Votre abonnement s&apos;activera automatiquement à la fin de l&apos;essai.
+          </p>
+        </div>
+      )}
+      {billingBanner === 'cancel' && (
+        <div className="kz-card p-4 mb-5 text-sm text-[#6B5A4A]" style={{ background: KZ.cream2 }}>
+          Paiement annulé — votre essai continue normalement.
+        </div>
+      )}
 
       {/* Abonnement */}
       {sub && plan && (
@@ -100,9 +144,17 @@ export default function CompanyPage() {
               {plan.maxJobs === -1 ? ' illimitées' : ` ${plan.maxJobs} max`}
             </div>
           </div>
-          <Link href="/admin/subscriptions">
-            <Button kind="outline" size="sm">Changer de forfait</Button>
-          </Link>
+          {isOwner && (
+            sub?.stripe_subscription_id ? (
+              <Button kind="outline" size="sm" loading={billingLoading} onClick={openPortal}>
+                Gérer l&apos;abonnement
+              </Button>
+            ) : (
+              <Button kind="primary" size="sm" loading={billingLoading} onClick={startCheckout} icon={<CreditCard size={14} />}>
+                Activer l&apos;abonnement
+              </Button>
+            )
+          )}
         </div>
       )}
 

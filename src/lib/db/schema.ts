@@ -294,6 +294,8 @@ export const companySubscriptions = pgTable('company_subscriptions', {
   trialEndsAt:      timestamp('trial_ends_at', { withTimezone: true }),
   currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
   seatsUsed:        integer('seats_used').notNull().default(1),
+  stripeCustomerId:     text('stripe_customer_id'),
+  stripeSubscriptionId: text('stripe_subscription_id'),
   createdAt:        now(),
 }, (t) => [unique().on(t.companyId)])
 
