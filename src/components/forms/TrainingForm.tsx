@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
-import { createClient } from '@/lib/supabase/client'
+import { uploadFile } from '@/features/profile/useUpload'
 import {
   REUNION_CITIES, JOB_SECTORS, KZ,
   CERTIFICATION_LEVELS, FINANCING_OPTIONS, DURATION_UNITS, hasMentionHF,
@@ -28,7 +28,6 @@ const UNIT_OPTIONS  = DURATION_UNITS.map(u => ({ value: u.id, label: u.label }))
 
 export function TrainingForm({ training, recruiterId, companyId, onSuccess }: TrainingFormProps) {
   const router = useRouter()
-  const supabase = createClient()
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
   const [imageUploading, setImageUploading] = useState(false)
@@ -78,12 +77,9 @@ export function TrainingForm({ training, recruiterId, companyId, onSuccess }: Tr
     const file = e.target.files?.[0]
     if (!file) return
     setImageUploading(true)
-    const path = `${recruiterId}/${Date.now()}-${file.name}`
-    const { data, error: uploadErr } = await supabase.storage
-      .from('training-images').upload(path, file, { upsert: true })
-    if (!uploadErr && data) {
-      const { data: pub } = supabase.storage.from('training-images').getPublicUrl(path)
-      setImageUrl(pub.publicUrl)
+    const { url } = await uploadFile(file, 'training-images')
+    if (url) {
+      setImageUrl(url)
       setImagePreview(URL.createObjectURL(file))
     }
     setImageUploading(false)

@@ -18,6 +18,8 @@ const EDITABLE: Record<string, keyof ProfileInsert> = {
   bio:                   'bio',
   location:              'location',
   phone:                 'phone',
+  avatar_url:            'avatarUrl',
+  cv_url:                'cvUrl',
   soft_skills:           'softSkills',
   hobbies:               'hobbies',
   avatar_config:         'avatarConfig',

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { useAuth } from '@/features/auth/useAuth'
-import { createClient } from '@/lib/supabase/client'
+import { uploadFile } from '@/features/profile/useUpload'
 import { KZ, SUBSCRIPTION_PLANS, JOB_SECTORS } from '@/lib/constants'
 import type { Company } from '@/lib/types'
 
@@ -53,7 +53,6 @@ function ProgressBar({ step }: { step: number }) {
 export default function CompanySetupPage() {
   const { profile, refetch } = useAuth()
   const router = useRouter()
-  const supabase = createClient()
 
   const [mode, setMode] = useState<Mode>('search')
   const [step, setStep] = useState(1)
@@ -136,14 +135,10 @@ export default function CompanySetupPage() {
     setCreating(true)
     let logoUrl: string | null = null
 
-    // Upload logo
+    // Upload logo (Vercel Blob)
     if (logoFile) {
-      const path = `${profile.id}/${Date.now()}-${logoFile.name}`
-      const { data } = await supabase.storage.from('company-logos').upload(path, logoFile, { upsert: true })
-      if (data) {
-        const { data: pub } = supabase.storage.from('company-logos').getPublicUrl(path)
-        logoUrl = pub.publicUrl
-      }
+      const { url } = await uploadFile(logoFile, 'company-logos')
+      logoUrl = url
     }
 
     // Créer la company (+ owner member + rattachement profil) côté serveur

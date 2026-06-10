@@ -132,21 +132,30 @@ Vérif : `grep "supabase\.(from|auth|storage|rpc|channel)"` → plus aucune requ
 - ⏳ Fin — **NE PAS supprimer `src/lib/supabase/*`** (décision user : rollback Supabase possible).
   Juste retirer les usages restants ; garder les fichiers + deps `@supabase/*`.
 
-## ⏳ Phase 4 — Storage (Vercel Blob) (À FAIRE)
-- Deps : `@vercel/blob`
-- Remplacer `supabase.storage.from(...).upload/getPublicUrl/createSignedUrl`
-- Hooks : `useAvatarUpload`, `useCvUpload`, upload images formation, logos, pitch
-- Route `/api/upload` (put Blob) + variable `BLOB_READ_WRITE_TOKEN`
+## ✅ Phase 4 — Storage (Vercel Blob) (FAIT)
+- `@vercel/blob` + route `/api/upload` (auth, liste blanche dossiers, limite 12 Mo, `addRandomSuffix`).
+- Helper `uploadFile(file, folder)` dans `features/profile/useUpload.ts` ; `useAvatarUpload`/`useCvUpload` réécrits.
+- Migrés : avatar, CV, **video pitch** (candidate/profile), **logo** (company-setup), **image formation** (TrainingForm).
+- `avatar_url`/`cv_url` ajoutés à la liste blanche `updateProfile`.
+- `BLOB_READ_WRITE_TOKEN` à renseigner dans `.env.local` (token du store Vercel Blob).
+- ⚠️ CV en **URL publique non devinable** (avant : signée). Bug corrigé : `video_pitch_url` stockait un
+  chemin non lisible → désormais l'URL Blob (la vidéo se lit côté recruteur).
+- Plus aucun `supabase.storage`/`createClient` hors `lib/supabase/*` + `lib/backup/*` (gardés).
 
 ## ⏳ Phase 5 — Realtime → Polling (À FAIRE)
 - Messagerie : remplacer `.channel(...).on('postgres_changes')` par un polling (ex: refetch toutes les 5 s)
 - Notifications : idem
 
-## ⏳ Phase 6 — Seed + nettoyage (À FAIRE)
-- Seed `subscription_plans` (depuis `SUBSCRIPTION_PLANS`) et `skills`
-- Créer le compte admin
-- Retirer deps Supabase, nettoyer `.env`
-- Build + tests
+## ✅ Phase 6 — Seed + nettoyage (FAIT)
+- Scripts : `src/lib/db/seed.ts` (purge comptes test + plans + skills) et `seed-admin.ts`
+  (admin via env vars). **Données réelles uniquement** (importées de `SUBSCRIPTION_PLANS` +
+  `PROFESSION_CATEGORIES`), aucune donnée fictive.
+- Lancement : `npx tsx --env-file=.env.local src/lib/db/seed.ts`
+  puis `ADMIN_EMAIL=.. ADMIN_PASSWORD=.. ADMIN_NAME=.. npx tsx --env-file=.env.local src/lib/db/seed-admin.ts`
+- Exécuté : 5 comptes de test purgés ; **4 plans** ; **62 compétences** ; **admin créé** (kazajob.re@gmail.com)
+  → connexion vérifiée (role admin, /admin/stats 200).
+- État base : admin + 1 compte réel user (`contact@velt.re`, gardé), 0 offre, 0 entreprise.
+- ⚠️ **Deps Supabase NON retirées** (décision user : rollback possible). `lib/supabase/*` + `lib/backup/*` gardés.
 
 ## ⚠️ Important
 Pendant les phases 2-3, l'app est **en état intermédiaire** (du code Supabase

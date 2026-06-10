@@ -20,8 +20,7 @@ const VideoPitchRecorder = dynamic(
 )
 import { useAuth } from '@/features/auth/useAuth'
 import { useApplications } from '@/features/applications/useApplications'
-import { useAvatarUpload, useCvUpload } from '@/features/profile/useUpload'
-import { createClient } from '@/lib/supabase/client'
+import { useAvatarUpload, useCvUpload, uploadFile } from '@/features/profile/useUpload'
 import { KZ, SOFT_SKILLS, HOBBIES } from '@/lib/constants'
 
 interface SkillRow { id: string; name: string; category: string | null }
@@ -54,7 +53,6 @@ export default function CandidateProfilePage() {
   const [showSkillSearch, setShowSkillSearch] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [cvFileName, setCvFileName] = useState<string | null>(null)
-  const supabase = createClient()
 
   useEffect(() => {
     if (profile) {
@@ -123,22 +121,16 @@ export default function CandidateProfilePage() {
   // ── Video Pitch ───────────────────────────────────────────────
   const handleVideoPitchUpload = async (blob: Blob, mimeType: string) => {
     if (!profile?.id) return { url: null, error: 'Non authentifié' }
-    const path = `${profile.id}/pitch.webm`
-    const { error: storageError } = await supabase.storage
-      .from('video-pitches')
-      .upload(path, blob, { upsert: true, contentType: mimeType })
-    if (storageError) return { url: null, error: storageError.message }
-    const signedResult = await supabase.storage
-      .from('video-pitches').createSignedUrl(path, 60 * 60 * 24 * 365)
-    const signedUrl = signedResult.data?.signedUrl ?? null
-    await patchProfile({ video_pitch_url: `video-pitches/${path}` })
+    const file = new File([blob], 'pitch.webm', { type: mimeType })
+    const { url, error } = await uploadFile(file, 'video-pitches')
+    if (error || !url) return { url: null, error: error ?? 'Échec de l’upload' }
+    await patchProfile({ video_pitch_url: url })
     await refetch?.()
-    return { url: signedUrl, error: null }
+    return { url, error: null }
   }
 
   const handleVideoPitchDelete = async () => {
     if (!profile?.id) return
-    await supabase.storage.from('video-pitches').remove([`${profile.id}/pitch.webm`])
     await patchProfile({ video_pitch_url: null })
     await refetch?.()
   }
