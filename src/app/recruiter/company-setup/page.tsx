@@ -88,6 +88,12 @@ export default function CompanySetupPage() {
     if (profile?.company_id) router.replace('/recruiter/dashboard')
   }, [profile])
 
+  // Présélection du forfait depuis ?plan= (clic depuis la page tarifs)
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get('plan')
+    if (p && SUBSCRIPTION_PLANS.some((pl) => pl.id === p)) setPlanId(p)
+  }, [])
+
   // Live search
   const handleSearch = useCallback(async (q: string) => {
     setQuery(q)
@@ -162,12 +168,25 @@ export default function CompanySetupPage() {
     if (!company) { setStep(4); setMode('done'); return }
     setPlanSaving(true)
 
+    // 1. Démarre l'essai 30 j en base
     await fetch(`/api/companies/${company.id}/subscription`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ planId }),
     })
 
+    // 2. Dirige vers le paiement (Stripe collecte la carte, 1er débit après l'essai de 30 j)
+    try {
+      const co = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId }),
+      })
+      const data = await co.json().catch(() => ({}))
+      if (co.ok && data.url) { window.location.href = data.url as string; return }
+    } catch { /* Stripe indisponible → on garde l'essai sans carte */ }
+
+    // 3. Repli : Stripe non configuré → écran de fin (essai actif sans carte)
     setPlanSaving(false)
     setStep(4)
     setMode('done')

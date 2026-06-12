@@ -22,17 +22,19 @@ const FOOTER_LINKS = [
   {
     title: 'Entreprise',
     links: [
-      { label: 'A propos', href: '#' },
-      { label: 'Blog',     href: '#' },
-      { label: 'Contact',  href: '#' },
+      { label: 'À propos', href: '/a-propos' },
+      { label: 'Blog',     href: '/blog' },
+      { label: 'Contact',  href: '/contact' },
     ],
   },
   {
-    title: 'Legal',
+    title: 'Légal',
     links: [
-      { label: 'CGU',             href: '#' },
-      { label: 'Confidentialite', href: '#' },
-      { label: 'Cookies',         href: '#' },
+      { label: 'Mentions légales',  href: '/legal/mentions-legales' },
+      { label: 'CGU',               href: '/legal/cgu' },
+      { label: 'CGV',               href: '/legal/cgv' },
+      { label: 'Confidentialité',   href: '/legal/confidentialite' },
+      { label: 'Cookies',           href: '/legal/cookies' },
     ],
   },
 ]
@@ -72,7 +74,7 @@ export function Footer() {
       </div>
 
       <div className="pt-5 border-t border-white/10 flex flex-col sm:flex-row justify-between gap-2 text-xs opacity-50">
-        <span>© 2026 Kazajob SAS · La Reunion 974</span>
+        <span>© 2026 Kazajob · La Réunion 974</span>
         <span>Fait avec passion dans le 974</span>
       </div>
     </footer>
