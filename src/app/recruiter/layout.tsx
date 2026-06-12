@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LayoutDashboard, Briefcase, Users, MessageCircle, Plus, Calendar, Star, Building2, GraduationCap, BarChart2 } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, MessageCircle, Plus, Calendar, Star, Building2, GraduationCap, BarChart2, User } from 'lucide-react'
 import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { CompanySwitcher } from '@/components/layout/CompanySwitcher'
@@ -20,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/recruiter/events',       label: 'KazaEvents',       icon: <Star size={16} /> },
   { href: '/recruiter/company',      label: 'Mon entreprise',   icon: <Building2 size={16} /> },
   { href: '/recruiter/messages',     label: 'Messages',         icon: <MessageCircle size={16} /> },
+  { href: '/recruiter/profile',      label: 'Mon profil',       icon: <User size={16} /> },
 ]
 
 export default function RecruiterLayout({ children }: { children: React.ReactNode }) {

@@ -72,6 +72,7 @@ export function NavLanding({ view = 'candidat' }: { view?: View }) {
     : profile?.role === 'admin'
       ? '/admin/dashboard'
       : '/candidate/dashboard'
+  const profilePath = profile?.role === 'recruiter' ? '/recruiter/profile' : '/candidate/profile'
 
   return (
     <header className="h-[64px] lg:h-[72px] px-4 md:px-8 lg:px-10 border-b border-[#1A1410] bg-[#FFF7EE] flex items-center gap-4 sticky top-0 z-50">
@@ -121,7 +122,7 @@ export function NavLanding({ view = 'candidat' }: { view?: View }) {
                       <LayoutDashboard size={15} className="text-[#6B5A4A]" />
                       Mon espace
                     </Link>
-                    <Link href="/candidate/profile" onClick={() => setProfileOpen(false)}
+                    <Link href={profilePath} onClick={() => setProfileOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-[#1A1410] hover:bg-[#FBEFE0] transition-colors">
                       <User size={15} className="text-[#6B5A4A]" />
                       Mon profil

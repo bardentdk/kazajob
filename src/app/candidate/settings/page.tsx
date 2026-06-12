@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Bell, Mail, Shield, CheckCheck, Gamepad2 } from 'lucide-react'
+import { AccountActions } from '@/components/account/AccountActions'
 import { useGamification } from '@/features/gamification/useGamification'
 import { useApplications } from '@/features/applications/useApplications'
 import { useFavorites } from '@/features/favorites/useFavorites'
@@ -280,6 +281,8 @@ export default function CandidateSettingsPage() {
           </div>
         </div>
       </div>
+
+      <AccountActions />
     </div>
   )
 }

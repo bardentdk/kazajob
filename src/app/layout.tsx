@@ -3,6 +3,8 @@ import { Sora } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import { CookieConsent } from '@/components/layout/CookieConsent'
+import { PageViewTracker } from '@/components/layout/PageViewTracker'
+import { Analytics } from '@vercel/analytics/next'
 
 const sora = Sora({
   subsets: ['latin'],
@@ -168,6 +170,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-[#FFF7EE] text-[#1A1410] antialiased min-h-screen">
         <Providers>{children}</Providers>
         <CookieConsent />
+        <PageViewTracker />
+        <Analytics />
       </body>
     </html>
   )

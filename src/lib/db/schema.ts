@@ -339,6 +339,13 @@ export const trainingApplications = pgTable('training_applications', {
   updatedAt:       now(),
 }, (t) => [unique().on(t.trainingOfferId, t.candidateId)])
 
+// ── page_views (analytics trafic — anonyme, sans IP ni cookie) ────
+export const pageViews = pgTable('page_views', {
+  id:        uuid().primaryKey().default(sql`gen_random_uuid()`),
+  path:      text().notNull(),
+  createdAt: now(),
+})
+
 // ── Relations (Drizzle relational queries) ────────────────────────
 // Ajoutées de façon incrémentale, lot par lot (phase 3).
 export const jobsRelations = relations(jobs, ({ one, many }) => ({
