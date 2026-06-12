@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Sora } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
+import { CookieConsent } from '@/components/layout/CookieConsent'
 
 const sora = Sora({
   subsets: ['latin'],
@@ -166,6 +167,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-[#FFF7EE] text-[#1A1410] antialiased min-h-screen">
         <Providers>{children}</Providers>
+        <CookieConsent />
       </body>
     </html>
   )
