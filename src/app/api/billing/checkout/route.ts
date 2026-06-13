@@ -52,6 +52,8 @@ export async function POST(req: NextRequest) {
   const checkout = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
+    // Collecte du moyen de paiement dès l'inscription (même pendant l'essai) → débit auto en fin d'essai.
+    payment_method_collection: 'always',
     line_items: [{
       quantity: 1,
       price_data: {

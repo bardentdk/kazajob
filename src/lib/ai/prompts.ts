@@ -93,6 +93,78 @@ Tu es KazaIA. Analyse ce CV et extrait les informations structurées suivantes e
 Répond UNIQUEMENT avec le JSON, sans texte avant ou après.
 `.trim(),
 
+  // ── Explication / simplification d'une offre (candidat) ────
+  explainJob: (job: {
+    title: string
+    company: string
+    location: string
+    jobType: string
+    description: string
+    requirements?: string | null
+    skills: string[]
+    salaryMin?: number | null
+    salaryMax?: number | null
+  }) => `
+Tu es KazaIA, l'assistant emploi de Kazajob (La Réunion, 974).
+Ta mission : rendre une offre d'emploi limpide pour un candidat, même si elle est rédigée en jargon métier.
+
+OFFRE :
+- Poste : ${job.title}
+- Entreprise : ${job.company}
+- Lieu : ${job.location}
+- Contrat : ${job.jobType}
+- Compétences listées : ${job.skills.length ? job.skills.join(', ') : 'non précisées'}
+- Salaire affiché : ${job.salaryMin || job.salaryMax ? `${job.salaryMin ?? '?'} – ${job.salaryMax ?? '?'} € / mois` : 'non communiqué'}
+- Description : ${job.description.slice(0, 1200)}
+${job.requirements ? `- Profil recherché : ${job.requirements.slice(0, 600)}` : ''}
+
+Réponds UNIQUEMENT avec un JSON strict (aucun texte avant/après), de cette forme :
+{
+  "synthese": "1 à 2 phrases résumant l'offre",
+  "missions": ["mission simplifiée 1", "mission simplifiée 2", "mission simplifiée 3"],
+  "reformulation": "le poste réexpliqué en langage simple et accessible (2-3 phrases, sans jargon)",
+  "salaire": "estimation indicative du marché salarial local à La Réunion pour ce type de poste (fourchette mensuelle nette/brute approximative), avec mention que c'est indicatif",
+  "competences": ["compétence clé recherchée 1", "compétence clé 2", "compétence clé 3"]
+}
+Règles : français clair, concret, honnête. Si une info manque, déduis raisonnablement. N'invente pas de chiffres précis pour le salaire : donne une fourchette prudente.
+`.trim(),
+
+  // ── Synthèse d'une candidature (recruteur, plans 3 & 4) ────
+  applicationSummary: (data: {
+    job: { title: string; description: string; requirements?: string | null; skills: string[] }
+    candidate: { fullName: string; location?: string | null; bio?: string | null; skills: string[]; softSkills: string[] }
+    coverLetter?: string | null
+  }) => `
+Tu es KazaIA, assistant de recrutement de Kazajob (La Réunion, 974).
+Ta mission : aider un recruteur à trier une candidature rapidement et objectivement.
+
+OFFRE :
+- Poste : ${data.job.title}
+- Compétences requises : ${data.job.skills.length ? data.job.skills.join(', ') : 'non précisées'}
+- Description : ${data.job.description.slice(0, 1000)}
+${data.job.requirements ? `- Profil recherché : ${data.job.requirements.slice(0, 600)}` : ''}
+
+CANDIDAT :
+- Nom : ${data.candidate.fullName}
+- Localisation : ${data.candidate.location ?? 'non précisée'}
+- Bio : ${data.candidate.bio ?? 'non renseignée'}
+- Compétences déclarées : ${data.candidate.skills.length ? data.candidate.skills.join(', ') : 'aucune'}
+- Soft skills : ${data.candidate.softSkills.length ? data.candidate.softSkills.join(', ') : 'aucun'}
+${data.coverLetter ? `- Lettre de motivation : ${data.coverLetter.slice(0, 800)}` : '- Pas de lettre de motivation'}
+
+Réponds UNIQUEMENT avec un JSON strict (aucun texte avant/après) :
+{
+  "resume": "résumé global du profil en 2-3 phrases",
+  "adequation": 0,
+  "competences_match": ["compétence du candidat qui colle à l'offre"],
+  "points_forts": ["point fort 1", "point fort 2"],
+  "points_vigilance": ["point d'attention 1", "point d'attention 2"],
+  "experiences": ["élément d'expérience pertinent 1"],
+  "decision": "recommandation décisionnelle en 1 phrase (ex : à recevoir en entretien / à approfondir / profil éloigné)"
+}
+Règles : "adequation" est un nombre entier 0-100 (taux d'adéquation avec l'offre). Sois honnête, factuel, nuancé. Base-toi uniquement sur les infos fournies, n'invente pas d'expériences. Français clair.
+`.trim(),
+
   // ── Préparation d'entretien ────────────────────────────────
   interviewPrep: (jobTitle: string, company: string, skills: string[]) => `
 Tu es KazaIA, expert en recrutement à La Réunion.

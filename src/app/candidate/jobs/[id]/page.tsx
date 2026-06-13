@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, MapPin, Clock, Heart, Briefcase, Sparkles, Building2, Check, Brain, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowLeft, MapPin, Clock, Heart, Briefcase, Sparkles, Building2, Check, Brain, ChevronDown, ChevronUp, Lightbulb, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Tag } from '@/components/ui/Tag'
@@ -190,6 +190,9 @@ export default function JobDetailPage() {
             </div>
           </div>
 
+          {/* KazaIA — Comprendre l'offre en clair */}
+          <ExplainJobSection jobId={id} />
+
           {/* CTA mobile — visible uniquement sur mobile */}
           <div className="lg:hidden kz-card p-4 bg-white">
             <div className="text-xl font-extrabold text-[#1A1410] mb-1">{formatSalary(job.salary_min, job.salary_max)}</div>
@@ -335,9 +338,92 @@ export default function JobDetailPage() {
   )
 }
 
-// ── Modal préparation entretien ────────────────────────────────
-import { useInterviewPrepAI } from '@/features/ai/useKazaIA'
+// ── Section « Comprendre l'offre en clair » ───────────────────
+import { useInterviewPrepAI, useExplainJobAI } from '@/features/ai/useKazaIA'
 import { Modal as ModalBase } from '@/components/ui/Modal'
+
+function ExplainJobSection({ jobId }: { jobId: string }) {
+  const { generating, explain, raw, error, generate } = useExplainJobAI()
+  const [open, setOpen] = useState(false)
+  const started = generating || explain || raw || error
+
+  const handleClick = () => {
+    setOpen(v => !v)
+    if (!started) generate(jobId)
+  }
+
+  return (
+    <div className="kz-card p-4 bg-white" style={{ borderColor: KZ.green }}>
+      <button onClick={handleClick} className="flex items-center gap-2 w-full text-left">
+        <div className="w-7 h-7 rounded-lg border border-[#1A1410] flex items-center justify-center shrink-0" style={{ background: KZ.green }}>
+          <Lightbulb size={13} color="white" />
+        </div>
+        <span className="text-sm font-bold text-[#1A1410]">Comprendre l&apos;offre en clair</span>
+        <Badge color="green" size="sm">KazaIA</Badge>
+        <span className="ml-auto">{open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</span>
+      </button>
+
+      {open && (
+        <div className="mt-4">
+          {generating && (
+            <div className="flex flex-col items-center gap-3 py-6">
+              <InlineLoader size={40} />
+              <p className="text-sm text-[#6B5A4A]">KazaIA décrypte l&apos;offre pour toi…</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>
+          )}
+
+          {!generating && explain && (
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-[#6B5A4A] mb-1">Synthèse</p>
+                <p className="text-sm text-[#2A2018] leading-relaxed">{explain.synthese}</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-[#6B5A4A] mb-1.5">Les missions, simplement</p>
+                <ul className="flex flex-col gap-1.5">
+                  {explain.missions?.map((m, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-[#2A2018]">
+                      <Check size={14} className="mt-0.5 shrink-0" color={KZ.green} />{m}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-[#6B5A4A] mb-1">En langage accessible</p>
+                <p className="text-sm text-[#2A2018] leading-relaxed">{explain.reformulation}</p>
+              </div>
+              <div className="p-3 rounded-xl border border-[#1A1410]" style={{ background: KZ.greenSoft }}>
+                <p className="text-xs font-bold uppercase tracking-wide text-[#1A1410] mb-1 flex items-center gap-1.5">
+                  <Wallet size={13} /> Marché salarial local (indicatif)
+                </p>
+                <p className="text-sm text-[#2A2018] leading-relaxed">{explain.salaire}</p>
+              </div>
+              {explain.competences?.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#6B5A4A] mb-1.5">Compétences principales recherchées</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {explain.competences.map((c, i) => <Tag key={i}>{c}</Tag>)}
+                  </div>
+                </div>
+              )}
+              <p className="text-[11px] text-[#6B5A4A] italic">Généré par KazaIA — à titre indicatif, vérifie toujours l&apos;offre originale.</p>
+            </div>
+          )}
+
+          {!generating && !explain && raw && (
+            <div className="p-4 rounded-xl border border-[#1A1410] text-sm text-[#2A2018] leading-relaxed whitespace-pre-wrap" style={{ background: KZ.paper }}>
+              {raw}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function InterviewPrepModal({ open, onClose, jobId, jobTitle }: {
   open: boolean; onClose: () => void; jobId: string; jobTitle: string

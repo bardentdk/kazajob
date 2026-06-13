@@ -142,6 +142,95 @@ export function useCoverLetterAI() {
   return { generating, letter, error, generate, reset }
 }
 
+// ── Hook explication / simplification d'une offre ──────────────
+
+export interface JobExplain {
+  synthese: string
+  missions: string[]
+  reformulation: string
+  salaire: string
+  competences: string[]
+}
+
+export function useExplainJobAI() {
+  const [generating, setGenerating] = useState(false)
+  const [explain, setExplain] = useState<JobExplain | null>(null)
+  const [raw, setRaw] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const generate = useCallback(async (jobId: string) => {
+    setGenerating(true)
+    setError(null)
+
+    try {
+      const res = await fetch('/api/kaza-ia/explain-job', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ jobId }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Erreur API')
+      setExplain(data.explain ?? null)
+      setRaw(data.raw ?? null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur inconnue')
+    } finally {
+      setGenerating(false)
+    }
+  }, [])
+
+  return { generating, explain, raw, error, generate }
+}
+
+// ── Hook synthèse de candidature (recruteur, plans 3 & 4) ──────
+
+export interface ApplicationSummary {
+  resume: string
+  adequation: number
+  competences_match: string[]
+  points_forts: string[]
+  points_vigilance: string[]
+  experiences: string[]
+  decision: string
+}
+
+export function useApplicationSummaryAI() {
+  const [generating, setGenerating] = useState(false)
+  const [summary, setSummary] = useState<ApplicationSummary | null>(null)
+  const [raw, setRaw] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [locked, setLocked] = useState<string | null>(null)
+
+  const generate = useCallback(async (applicationId: string) => {
+    setGenerating(true)
+    setError(null)
+    setLocked(null)
+
+    try {
+      const res = await fetch('/api/kaza-ia/application-summary', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ applicationId }),
+      })
+
+      const data = await res.json()
+      if (res.status === 402) { setLocked(data.message ?? 'Fonctionnalité réservée aux plans supérieurs.'); return }
+      if (!res.ok) throw new Error(data.error ?? 'Erreur API')
+      setSummary(data.summary ?? null)
+      setRaw(data.raw ?? null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur inconnue')
+    } finally {
+      setGenerating(false)
+    }
+  }, [])
+
+  const reset = useCallback(() => { setSummary(null); setRaw(null); setError(null); setLocked(null) }, [])
+
+  return { generating, summary, raw, error, locked, generate, reset }
+}
+
 // ── Hook préparation entretien ─────────────────────────────────
 
 export function useInterviewPrepAI() {

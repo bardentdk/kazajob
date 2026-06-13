@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Users, Calendar, Video, Phone, MapPin, MessageCircle } from 'lucide-react'
+import { Users, Calendar, Video, Phone, MapPin, MessageCircle, Sparkles, Lock, Check, AlertTriangle } from 'lucide-react'
+import { InlineLoader } from '@/components/ui/LogoLoader'
+import { Tag } from '@/components/ui/Tag'
+import { Progress } from '@/components/ui/Progress'
+import { useApplicationSummaryAI } from '@/features/ai/useKazaIA'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
@@ -31,6 +35,7 @@ export default function RecruiterApplicationsPage() {
   })
   const [scheduling, setScheduling] = useState(false)
   const [messagingId, setMessagingId] = useState<string | null>(null)
+  const [summaryFor, setSummaryFor] = useState<Application | null>(null)
   const { create: createInterview } = useInterviews()
   const startConversation = useStartConversation()
   const router = useRouter()
@@ -147,6 +152,10 @@ export default function RecruiterApplicationsPage() {
                       <option key={k} value={k}>{v.label}</option>
                     ))}
                   </select>
+                  <Button kind="violet" size="sm" icon={<Sparkles size={13} />}
+                    onClick={() => setSummaryFor(app)}>
+                    Synthèse IA
+                  </Button>
                   {candidate && (
                     <Button kind="soft" size="sm" icon={<MessageCircle size={13} />}
                       loading={messagingId === candidate.id}
@@ -234,6 +243,127 @@ export default function RecruiterApplicationsPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Modal synthèse IA candidature */}
+      <ApplicationSummaryModal app={summaryFor} onClose={() => setSummaryFor(null)} />
     </div>
+  )
+}
+
+// ── Modal synthèse IA d'une candidature ────────────────────────
+function ApplicationSummaryModal({ app, onClose }: { app: Application | null; onClose: () => void }) {
+  const { generating, summary, raw, error, locked, generate, reset } = useApplicationSummaryAI()
+  const candidate = app?.candidate as { full_name?: string } | undefined
+
+  // Génère dès l'ouverture
+  if (app && !summary && !raw && !generating && !error && !locked) {
+    generate(app.id)
+  }
+
+  const handleClose = () => { reset(); onClose() }
+
+  return (
+    <Modal open={!!app} onClose={handleClose} title="Synthèse IA de la candidature" size="lg">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2.5 p-3 rounded-xl border border-[#1A1410]" style={{ background: KZ.violetSoft }}>
+          <Sparkles size={18} color={KZ.violet} />
+          <p className="text-sm font-semibold text-[#1A1410]">
+            {candidate?.full_name ? `Analyse de ${candidate.full_name}` : 'KazaIA analyse cette candidature'} — {app?.job?.title}
+          </p>
+        </div>
+
+        {generating && (
+          <div className="flex flex-col items-center gap-3 py-8">
+            <InlineLoader size={48} />
+            <p className="text-sm text-[#6B5A4A]">Lecture du profil et croisement avec l&apos;offre…</p>
+          </div>
+        )}
+
+        {locked && (
+          <div className="p-5 rounded-xl border border-[#1A1410] flex flex-col items-center gap-3 text-center" style={{ background: KZ.orangeSoft }}>
+            <div className="w-12 h-12 rounded-full border border-[#1A1410] flex items-center justify-center" style={{ background: 'white' }}>
+              <Lock size={20} color={KZ.orange} />
+            </div>
+            <p className="text-sm font-bold text-[#1A1410]">{locked}</p>
+            <Link href="/recruiter/company"><Button kind="primary" size="md">Passer à un plan supérieur</Button></Link>
+          </div>
+        )}
+
+        {error && (
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>
+        )}
+
+        {summary && !generating && (
+          <div className="flex flex-col gap-4">
+            {/* Adéquation */}
+            <div className="p-4 rounded-xl border border-[#1A1410]" style={{ background: KZ.violetSoft }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-bold text-[#1A1410]">Taux d&apos;adéquation</span>
+                <span className="text-2xl font-extrabold" style={{ color: KZ.violet }}>{summary.adequation}%</span>
+              </div>
+              <Progress value={summary.adequation} color={KZ.violet} />
+            </div>
+
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#6B5A4A] mb-1">Résumé du profil</p>
+              <p className="text-sm text-[#2A2018] leading-relaxed">{summary.resume}</p>
+            </div>
+
+            {summary.competences_match?.length > 0 && (
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-[#6B5A4A] mb-1.5">Compétences correspondantes</p>
+                <div className="flex gap-2 flex-wrap">{summary.competences_match.map((c, i) => <Tag key={i}>{c}</Tag>)}</div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {summary.points_forts?.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#6B5A4A] mb-1.5">Points forts</p>
+                  <ul className="flex flex-col gap-1.5">
+                    {summary.points_forts.map((p, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-[#2A2018]"><Check size={14} className="mt-0.5 shrink-0" color={KZ.green} />{p}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {summary.points_vigilance?.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#6B5A4A] mb-1.5">Points de vigilance</p>
+                  <ul className="flex flex-col gap-1.5">
+                    {summary.points_vigilance.map((p, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-[#2A2018]"><AlertTriangle size={14} className="mt-0.5 shrink-0" color={KZ.orange} />{p}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {summary.experiences?.length > 0 && (
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-[#6B5A4A] mb-1.5">Expériences pertinentes</p>
+                <ul className="flex flex-col gap-1.5">
+                  {summary.experiences.map((e, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-[#2A2018]">• {e}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="p-3 rounded-xl border border-[#1A1410]" style={{ background: KZ.greenSoft }}>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#1A1410] mb-1">Recommandation</p>
+              <p className="text-sm font-semibold text-[#2A2018]">{summary.decision}</p>
+            </div>
+            <p className="text-[11px] text-[#6B5A4A] italic">Généré par KazaIA — aide à la décision, ne remplace pas votre jugement.</p>
+          </div>
+        )}
+
+        {raw && !summary && !generating && (
+          <div className="p-4 rounded-xl border border-[#1A1410] text-sm text-[#2A2018] leading-relaxed whitespace-pre-wrap" style={{ background: KZ.paper }}>{raw}</div>
+        )}
+
+        <Button kind="outline" size="md" onClick={handleClose}>Fermer</Button>
+      </div>
+    </Modal>
   )
 }

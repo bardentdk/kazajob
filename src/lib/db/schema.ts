@@ -296,6 +296,7 @@ export const companySubscriptions = pgTable('company_subscriptions', {
   seatsUsed:        integer('seats_used').notNull().default(1),
   stripeCustomerId:     text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
+  lastTrialReminder:    integer('last_trial_reminder'),  // dernier palier de relance envoyé (15/7/3/0)
   createdAt:        now(),
 }, (t) => [unique().on(t.companyId)])
 

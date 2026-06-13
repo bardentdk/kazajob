@@ -202,10 +202,11 @@ export async function deleteRecruiterJob(recruiterId: string, id: string): Promi
 export async function getJobAIContext(id: string): Promise<{
   title: string; description: string; location: string; job_type: string
   company_name: string; skills: string[]
+  salary_min: number | null; salary_max: number | null; requirements: string | null
 } | null> {
   const row = await db.query.jobs.findFirst({
     where: eq(jobs.id, id),
-    columns: { title: true, description: true, location: true, jobType: true },
+    columns: { title: true, description: true, location: true, jobType: true, salaryMin: true, salaryMax: true, requirements: true },
     with: {
       company: { columns: { name: true } },
       jobSkills: { with: { skill: { columns: { name: true } } } },
@@ -223,6 +224,9 @@ export async function getJobAIContext(id: string): Promise<{
     job_type: r.jobType,
     company_name: r.company?.name ?? "l'entreprise",
     skills: (r.jobSkills ?? []).map((js) => js.skill?.name).filter(Boolean) as string[],
+    salary_min: r.salaryMin ?? null,
+    salary_max: r.salaryMax ?? null,
+    requirements: r.requirements ?? null,
   }
 }
 

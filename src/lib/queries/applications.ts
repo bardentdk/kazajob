@@ -4,7 +4,7 @@
  */
 import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { applications, jobs } from '@/lib/db/schema'
+import { applications, jobs, candidateSkills, skills, companySubscriptions } from '@/lib/db/schema'
 import type { Application } from '@/lib/types'
 import { serialize } from './_serialize'
 
@@ -35,6 +35,85 @@ export async function listRecruiterApplications(recruiterId: string): Promise<Ap
     orderBy: (a, { desc: d }) => [d(a.createdAt)],
   })
   return serialize<Application[]>(rows)
+}
+
+/**
+ * Contexte d'une candidature pour la synthèse IA (recruteur).
+ * Renvoie l'offre, le candidat (avec ses compétences) et l'état d'abonnement
+ * de l'entreprise (pour le contrôle de plan côté API).
+ */
+export async function getApplicationAIContext(applicationId: string): Promise<{
+  recruiter_id: string
+  company_id: string | null
+  plan_id: string | null
+  sub_status: string | null
+  cover_letter: string | null
+  job: { title: string; description: string; requirements: string | null; skills: string[] }
+  candidate: { full_name: string; location: string | null; bio: string | null; skills: string[]; soft_skills: string[] }
+} | null> {
+  const row = await db.query.applications.findFirst({
+    where: eq(applications.id, applicationId),
+    columns: { coverLetter: true, candidateId: true },
+    with: {
+      job: {
+        columns: { title: true, description: true, requirements: true, recruiterId: true, companyId: true },
+        with: { jobSkills: { with: { skill: { columns: { name: true } } } } },
+      },
+      candidate: { columns: { fullName: true, location: true, bio: true, softSkills: true } },
+    },
+  })
+  if (!row) return null
+  const r = row as typeof row & {
+    candidateId: string
+    job?: {
+      title: string; description: string; requirements: string | null
+      recruiterId: string; companyId: string | null
+      jobSkills?: Array<{ skill?: { name: string } | null }>
+    } | null
+    candidate?: { fullName: string; location: string | null; bio: string | null; softSkills: string[] | null } | null
+  }
+  if (!r.job) return null
+
+  // Compétences déclarées du candidat
+  const cs = await db
+    .select({ name: skills.name })
+    .from(candidateSkills)
+    .innerJoin(skills, eq(candidateSkills.skillId, skills.id))
+    .where(eq(candidateSkills.candidateId, r.candidateId))
+
+  // Abonnement de l'entreprise (pour le gating de plan)
+  let planId: string | null = null
+  let subStatus: string | null = null
+  if (r.job.companyId) {
+    const [sub] = await db
+      .select({ planId: companySubscriptions.planId, status: companySubscriptions.status })
+      .from(companySubscriptions)
+      .where(eq(companySubscriptions.companyId, r.job.companyId))
+      .limit(1)
+    planId = sub?.planId ?? null
+    subStatus = sub?.status ?? null
+  }
+
+  return {
+    recruiter_id: r.job.recruiterId,
+    company_id: r.job.companyId,
+    plan_id: planId,
+    sub_status: subStatus,
+    cover_letter: r.coverLetter ?? null,
+    job: {
+      title: r.job.title,
+      description: r.job.description,
+      requirements: r.job.requirements,
+      skills: (r.job.jobSkills ?? []).map((js) => js.skill?.name).filter(Boolean) as string[],
+    },
+    candidate: {
+      full_name: r.candidate?.fullName ?? 'Candidat',
+      location: r.candidate?.location ?? null,
+      bio: r.candidate?.bio ?? null,
+      skills: cs.map((s) => s.name),
+      soft_skills: r.candidate?.softSkills ?? [],
+    },
+  }
 }
 
 /** Postuler à une offre. Renvoie l'id créé ou une erreur métier. */

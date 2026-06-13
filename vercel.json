@@ -9,6 +9,10 @@
       "schedule": "0 3 * * *"
     },
     {
+      "path": "/api/cron/trial-reminders",
+      "schedule": "0 5 * * *"
+    },
+    {
       "path": "/api/admin/backup",
       "schedule": "0 2 * * 0"
     }

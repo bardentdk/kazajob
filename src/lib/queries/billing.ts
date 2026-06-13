@@ -2,7 +2,7 @@
  * KAZAJOB — Requêtes Drizzle liées à la facturation Stripe.
  * Couche serveur. Le contexte de facturation est réservé à l'owner de l'entreprise.
  */
-import { and, eq, isNull, lt } from 'drizzle-orm'
+import { and, eq, isNull, isNotNull, lt } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { companies, companySubscriptions, profiles } from '@/lib/db/schema'
 
@@ -84,6 +84,49 @@ export async function expireEndedTrials(): Promise<number> {
     ))
     .returning({ id: companySubscriptions.id })
   return rows.length
+}
+
+/**
+ * Essais en cours (avec owner + entreprise) pour les relances email.
+ * Renvoie tout ce dont le cron a besoin pour décider du palier à envoyer.
+ */
+export async function listTrialsForReminder(): Promise<Array<{
+  subId: string
+  companyName: string
+  ownerEmail: string
+  ownerName: string
+  planId: string
+  trialEndsAt: Date
+  lastTrialReminder: number | null
+}>> {
+  const rows = await db
+    .select({
+      subId: companySubscriptions.id,
+      companyName: companies.name,
+      ownerEmail: profiles.email,
+      ownerName: profiles.fullName,
+      planId: companySubscriptions.planId,
+      trialEndsAt: companySubscriptions.trialEndsAt,
+      lastTrialReminder: companySubscriptions.lastTrialReminder,
+    })
+    .from(companySubscriptions)
+    .innerJoin(companies, eq(companies.id, companySubscriptions.companyId))
+    .innerJoin(profiles, eq(profiles.id, companies.ownerId))
+    .where(and(
+      eq(companySubscriptions.status, 'trial'),
+      isNotNull(companySubscriptions.trialEndsAt),
+    ))
+  return rows
+    .filter((r) => r.trialEndsAt && r.ownerEmail)
+    .map((r) => ({ ...r, trialEndsAt: r.trialEndsAt as Date }))
+}
+
+/** Mémorise le dernier palier de relance d'essai envoyé (idempotence). */
+export async function setTrialReminder(subId: string, threshold: number): Promise<void> {
+  await db
+    .update(companySubscriptions)
+    .set({ lastTrialReminder: threshold })
+    .where(eq(companySubscriptions.id, subId))
 }
 
 /** Mappe un statut d'abonnement Stripe vers notre énumération. */

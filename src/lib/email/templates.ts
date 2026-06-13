@@ -949,6 +949,91 @@ export function teamInvitationEmail(data: {
   return { subject, html: shell(C.violet, body) }
 }
 
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 11 — Relance fin d'essai (J-15 / J-7 / J-3 / J0)
+// ══════════════════════════════════════════════════════════════════
+
+export function trialReminderEmail(data: {
+  companyName: string
+  ownerName:   string
+  planName:    string
+  priceEur:    string      // ex "179 €"
+  daysLeft:    number      // palier : 15 | 7 | 3 | 0
+  trialEndsAt: Date
+}): { subject: string; html: string } {
+  const isToday = data.daysLeft <= 0
+  const accent  = isToday ? C.orange : data.daysLeft <= 3 ? C.yellow : C.violet
+  const chipBg  = isToday ? C.orangeSoft : data.daysLeft <= 3 ? C.yellowSoft : C.violetSoft
+
+  const chipLabel = isToday
+    ? "Dernier jour d'essai"
+    : `Essai — plus que ${data.daysLeft} jour${data.daysLeft > 1 ? 's' : ''}`
+
+  const subject = isToday
+    ? `Votre essai Kazajob se termine aujourd'hui — facturation à venir`
+    : `Plus que ${data.daysLeft} jours d'essai Kazajob — préparez la suite`
+
+  const headline = isToday
+    ? `Votre essai<br>se termine aujourd&rsquo;hui.`
+    : `Il vous reste<br>${data.daysLeft} jour${data.daysLeft > 1 ? 's' : ''} d&rsquo;essai.`
+
+  const intro = isToday
+    ? `Votre période d&apos;essai du forfait <strong style="color:${C.ink};">${data.planName}</strong> prend fin aujourd&apos;hui. Sauf annulation, votre moyen de paiement sera débité de <strong style="color:${C.orange};">${data.priceEur}/mois</strong> et votre abonnement continuera sans interruption.`
+    : `Votre essai gratuit du forfait <strong style="color:${C.ink};">${data.planName}</strong> se termine bientôt. À la fin de l&apos;essai, votre abonnement passera automatiquement à <strong style="color:${C.orange};">${data.priceEur}/mois</strong>. Aucune action n&apos;est requise pour continuer.`
+
+  const body = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:24px 32px 16px;">
+          ${chip(chipLabel, chipBg, isToday ? C.ink : C.violet)}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 12px;">
+          <h1 style="margin:0;font-size:26px;font-weight:900;color:${C.ink};
+            letter-spacing:-0.03em;line-height:1.15;font-family:Arial,sans-serif;">
+            ${headline}
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 32px 20px;">
+          <p style="margin:0;font-size:14px;color:#2A2018;line-height:1.6;font-family:Arial,sans-serif;">
+            Bonjour <strong style="color:${C.ink};">${data.ownerName}</strong>,<br><br>
+            ${intro}
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="background-color:white;border:2px solid ${C.ink};border-radius:12px;overflow:hidden;">
+            ${detailRow('Entreprise', data.companyName)}
+            ${detailRow('Forfait', data.planName)}
+            ${detailRow('Tarif', `${data.priceEur} / mois`)}
+            ${detailRow("Fin d'essai", formatDate(data.trialEndsAt))}
+            <tr><td colspan="2" style="height:1px;"></td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 32px 16px;text-align:center;">
+          ${ctaButton('Gérer mon abonnement', 'https://kazajob.re/recruiter/company', accent, isToday ? C.ink : '#FFFFFF')}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 28px;">
+          <p style="margin:0;font-size:11px;color:${C.mute};text-align:center;line-height:1.6;font-family:Arial,sans-serif;">
+            Vous pouvez modifier votre forfait ou résilier à tout moment depuis votre espace entreprise,
+            sans frais avant la fin de l&apos;essai.
+          </p>
+        </td>
+      </tr>
+    </table>`
+
+  return { subject, html: shell(accent, body) }
+}
+
 export function applicationStatusEmail(data: {
   candidateName: string
   jobTitle:      string
