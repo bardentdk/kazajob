@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Building2, Users, ArrowRight, Edit3, Globe, Star, Landmark, Target, Briefcase, Search, Rss, CreditCard, Check } from 'lucide-react'
+import { Building2, Users, ArrowRight, Edit3, Globe, Star, Landmark, Target, Briefcase, Search, Rss, CreditCard, Check, RefreshCw, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { Modal } from '@/components/ui/Modal'
 import { useAuth } from '@/features/auth/useAuth'
 import { KZ, SUBSCRIPTION_PLANS, PARTNERS } from '@/lib/constants'
 
@@ -26,6 +27,10 @@ export default function CompanyPage() {
   const [loading, setLoading]       = useState(true)
   const [billingLoading, setBillingLoading] = useState(false)
   const [billingBanner, setBillingBanner]   = useState<'success' | 'cancel' | null>(null)
+  const [planModal, setPlanModal]   = useState(false)
+  const [cancelModal, setCancelModal] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
+  const [actionError, setActionError]     = useState('')
 
   useEffect(() => {
     if (!profile?.company_id) return
@@ -89,6 +94,25 @@ export default function CompanyPage() {
     else { alert(data.error ?? 'Gestion indisponible.'); setBillingLoading(false) }
   }
 
+  const changePlan = async (planId: string) => {
+    setActionLoading(true); setActionError('')
+    const res = await fetch('/api/billing/change-plan', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ planId }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok) { window.location.reload() }
+    else { setActionError(data.error ?? 'Échec du changement de forfait.'); setActionLoading(false) }
+  }
+
+  const cancelSubscription = async () => {
+    setActionLoading(true); setActionError('')
+    const res = await fetch('/api/billing/cancel', { method: 'POST' })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok) { window.location.reload() }
+    else { setActionError(data.error ?? 'Échec de la résiliation.'); setActionLoading(false) }
+  }
+
   const isTrialing = sub?.status === 'trial'
   const trialDaysLeft = sub?.trial_ends_at
     ? Math.max(0, Math.ceil((new Date(sub.trial_ends_at).getTime() - Date.now()) / 86_400_000))
@@ -145,15 +169,26 @@ export default function CompanyPage() {
             </div>
           </div>
           {isOwner && (
-            sub?.stripe_subscription_id ? (
-              <Button kind="outline" size="sm" loading={billingLoading} onClick={openPortal}>
-                Gérer l&apos;abonnement
+            <div className="flex flex-col gap-2 shrink-0 w-full sm:w-auto">
+              <Button kind="outline" size="sm" icon={<RefreshCw size={14} />} onClick={() => { setActionError(''); setPlanModal(true) }}>
+                Changer de forfait
               </Button>
-            ) : (
-              <Button kind="primary" size="sm" loading={billingLoading} onClick={startCheckout} icon={<CreditCard size={14} />}>
-                Activer l&apos;abonnement
-              </Button>
-            )
+              {sub?.stripe_subscription_id ? (
+                <Button kind="soft" size="sm" loading={billingLoading} onClick={openPortal}>
+                  Gérer le paiement
+                </Button>
+              ) : (
+                <Button kind="primary" size="sm" loading={billingLoading} onClick={startCheckout} icon={<CreditCard size={14} />}>
+                  Activer l&apos;abonnement
+                </Button>
+              )}
+              {sub?.status !== 'cancelled' && (
+                <button onClick={() => { setActionError(''); setCancelModal(true) }}
+                  className="text-xs font-semibold text-[#6B5A4A] hover:text-red-600 flex items-center gap-1 justify-center">
+                  <XCircle size={12} />Résilier
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -244,6 +279,56 @@ export default function CompanyPage() {
           </p>
         </div>
       )}
+
+      {/* Modal — Changer de forfait */}
+      <Modal open={planModal} onClose={() => !actionLoading && setPlanModal(false)} title="Changer de forfait" size="md">
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-[#6B5A4A]">
+            Choisissez votre nouveau forfait. Le changement est immédiat
+            {sub?.stripe_subscription_id ? ' et ajusté au prorata sur votre prochaine facture.' : ' (votre essai se poursuit).'}
+          </p>
+          {SUBSCRIPTION_PLANS.map((p) => {
+            const isCurrent = p.id === sub?.plan_id
+            return (
+              <div key={p.id}
+                className="flex items-center gap-3 p-3 rounded-xl border-2"
+                style={{ borderColor: isCurrent ? KZ.violet : KZ.line, background: isCurrent ? KZ.violetSoft : 'white' }}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-[#1A1410]">{p.name}</span>
+                    {isCurrent && <Badge color="violet" size="sm">Actuel</Badge>}
+                  </div>
+                  <div className="text-xs text-[#6B5A4A]">
+                    {p.maxMembers} recruteur{p.maxMembers > 1 ? 's' : ''} · {p.maxJobs === -1 ? 'offres illimitées' : `${p.maxJobs} offres`}
+                  </div>
+                </div>
+                <span className="text-base font-extrabold text-[#1A1410]">{Math.floor(p.priceCts / 100)}€</span>
+                <Button kind={isCurrent ? 'soft' : 'primary'} size="sm" disabled={isCurrent || actionLoading}
+                  loading={actionLoading} onClick={() => changePlan(p.id)}>
+                  {isCurrent ? 'Actuel' : 'Choisir'}
+                </Button>
+              </div>
+            )
+          })}
+          {actionError && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{actionError}</div>}
+        </div>
+      </Modal>
+
+      {/* Modal — Résilier */}
+      <Modal open={cancelModal} onClose={() => !actionLoading && setCancelModal(false)} title="Résilier l'abonnement" size="sm">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-[#2A2018] leading-relaxed">
+            {sub?.stripe_subscription_id
+              ? 'Votre abonnement sera résilié à la fin de la période en cours. Vous gardez l\'accès jusqu\'à cette date, sans nouveau prélèvement.'
+              : 'Votre essai sera arrêté immédiatement et l\'accès recruteur sera suspendu. Vous pourrez réactiver un forfait à tout moment.'}
+          </p>
+          {actionError && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{actionError}</div>}
+          <div className="flex gap-2.5">
+            <Button kind="soft" size="lg" full disabled={actionLoading} onClick={() => setCancelModal(false)}>Garder mon forfait</Button>
+            <Button kind="danger" size="lg" full loading={actionLoading} onClick={cancelSubscription}>Confirmer la résiliation</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

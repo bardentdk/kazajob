@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Building2, Users, Check, ArrowRight, Upload, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -51,8 +51,9 @@ function ProgressBar({ step }: { step: number }) {
 }
 
 export default function CompanySetupPage() {
-  const { profile, refetch } = useAuth()
+  const { profile, refetch, loading: authLoading } = useAuth()
   const router = useRouter()
+  const initialGuardRef = useRef(false)
 
   const [mode, setMode] = useState<Mode>('search')
   const [step, setStep] = useState(1)
@@ -84,10 +85,13 @@ export default function CompanySetupPage() {
   const [planSaving, setPlanSaving]     = useState(false)
   const [planError, setPlanError]       = useState('')
 
-  // Redirect si déjà setup
+  // Redirige UNIQUEMENT au chargement initial si l'utilisateur a déjà une entreprise.
+  // (Ne pas rediriger pendant la création en cours, sinon on saute l'étape Forfait + paiement.)
   useEffect(() => {
+    if (initialGuardRef.current || authLoading) return
+    initialGuardRef.current = true
     if (profile?.company_id) router.replace('/recruiter/dashboard')
-  }, [profile])
+  }, [authLoading, profile, router])
 
   // Présélection du forfait depuis ?plan= (clic depuis la page tarifs)
   useEffect(() => {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, Eye, Users, Edit, Trash2, ToggleLeft, ToggleRight, EyeOff, User, Rocket } from 'lucide-react'
+import { Plus, Eye, Users, Edit, Trash2, ToggleLeft, ToggleRight, EyeOff, User, Rocket, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
@@ -18,12 +18,18 @@ export default function RecruiterJobsPage() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
   const [boostFor, setBoostFor] = useState<Job | null>(null)
+  const [quota, setQuota] = useState<{ ok: boolean; max: number; used: number; planName: string; reason?: string } | null>(null)
+  const [quotaModal, setQuotaModal] = useState(false)
 
   const fetchJobs = async () => {
     if (!profile) return
     try {
-      const res = await fetch('/api/recruiter/jobs')
+      const [res, q] = await Promise.all([
+        fetch('/api/recruiter/jobs'),
+        fetch('/api/recruiter/quota'),
+      ])
       if (res.ok) setJobs((await res.json()) as Job[])
+      if (q.ok) setQuota(await q.json())
     } catch { /* noop */ }
     setLoading(false)
   }
@@ -50,11 +56,19 @@ export default function RecruiterJobsPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="kz-h2 text-[#1A1410] mb-1">Mes offres</h1>
-          <p className="text-sm text-[#6B5A4A]">{jobs.length} offre(s)</p>
+          <p className="text-sm text-[#6B5A4A]">
+            {jobs.length} offre(s)
+            {quota && quota.max !== -1 && ` · ${quota.used}/${quota.max} active(s) — forfait ${quota.planName}`}
+            {quota && quota.max === -1 && ` · illimité (${quota.planName})`}
+          </p>
         </div>
-        <Link href="/recruiter/jobs/new">
-          <Button kind="primary" size="md" icon={<Plus size={16} />}>Nouvelle offre</Button>
-        </Link>
+        {quota && !quota.ok ? (
+          <Button kind="primary" size="md" icon={<Plus size={16} />} onClick={() => setQuotaModal(true)}>Nouvelle offre</Button>
+        ) : (
+          <Link href="/recruiter/jobs/new">
+            <Button kind="primary" size="md" icon={<Plus size={16} />}>Nouvelle offre</Button>
+          </Link>
+        )}
       </div>
 
       {loading ? <PageLoader /> : jobs.length === 0 ? (
@@ -155,6 +169,35 @@ export default function RecruiterJobsPage() {
 
       {/* Modal boost */}
       <BoostModal job={boostFor} onClose={() => setBoostFor(null)} />
+
+      {/* Modal quota atteint */}
+      <Modal open={quotaModal} onClose={() => setQuotaModal(false)}
+        title={quota?.reason === 'expired' ? 'Abonnement à activer' : 'Limite d\'offres atteinte'} size="sm">
+        <div className="flex flex-col gap-4">
+          {quota?.reason === 'expired' ? (
+            <p className="text-sm text-[#2A2018] leading-relaxed">
+              Votre essai ou abonnement a expiré. Activez un forfait pour publier de nouvelles offres.
+            </p>
+          ) : (
+            <p className="text-sm text-[#2A2018] leading-relaxed">
+              Vous utilisez <strong>{quota?.used}/{quota?.max}</strong> offre(s) active(s) du forfait <strong>{quota?.planName}</strong>.
+              Pour en publier une nouvelle, deux options :
+            </p>
+          )}
+          {quota?.reason !== 'expired' && (
+            <ul className="flex flex-col gap-2 text-sm text-[#2A2018]">
+              <li className="flex items-start gap-2"><ToggleLeft size={16} className="mt-0.5 shrink-0" />Désactivez ou supprimez une offre que vous n&apos;utilisez plus (ci-dessous).</li>
+              <li className="flex items-start gap-2"><Plus size={16} className="mt-0.5 shrink-0" />Passez à un forfait supérieur pour plus d&apos;offres simultanées.</li>
+            </ul>
+          )}
+          <div className="flex flex-col sm:flex-row gap-2.5">
+            <Button kind="soft" size="lg" full onClick={() => setQuotaModal(false)}>Gérer mes offres</Button>
+            <Link href="/recruiter/company" className="flex-1">
+              <Button kind="primary" size="lg" full icon={<ArrowRight size={15} />}>Changer de forfait</Button>
+            </Link>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
