@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -18,7 +17,6 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { signIn } = useAuth()
-  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,15 +30,16 @@ export default function LoginPage() {
     }
     // Redirection selon le rôle réel du compte
     let role: string | undefined
+    let companyId: string | null | undefined
     try {
       const res = await fetch('/api/me')
-      if (res.ok) role = (await res.json())?.role
+      if (res.ok) { const me = await res.json(); role = me?.role; companyId = me?.company_id }
     } catch { /* fallback ci-dessous */ }
-    router.push(
-      role === 'admin'     ? '/admin/dashboard'
-      : role === 'recruiter' ? '/recruiter/dashboard'
+    // Recruteur sans entreprise → tunnel de configuration + paiement (jamais le dashboard).
+    window.location.href =
+      role === 'admin'      ? '/admin/dashboard'
+      : role === 'recruiter' ? (companyId ? '/recruiter/dashboard' : '/recruiter/company-setup')
       : '/candidate/dashboard'
-    )
   }
 
   return (

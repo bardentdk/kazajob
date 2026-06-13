@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/Progress'
 import { FileUpload } from '@/components/ui/FileUpload'
 import dynamic from 'next/dynamic'
 import { KazaBoostButton } from '@/components/ui/KazaBoostButton'
+import { ProfileBoostPaid } from '@/components/ui/ProfileBoostPaid'
 
 // Import dynamique ssr:false pour éviter les erreurs MediaRecorder en prod
 const VideoPitchRecorder = dynamic(
@@ -339,6 +340,14 @@ export default function CandidateProfilePage() {
                 onBoost={refetch}
               />
             )}
+
+            {/* Boost premium payant (durée longue) */}
+            <div className="mt-3 pt-3 border-t border-[#E8DDC9]">
+              <p className="text-[11px] text-[#6B5A4A] mb-2 leading-relaxed">
+                Pas assez d&apos;XP ou besoin de plus longtemps ? Optez pour le boost premium (7 à 30 jours).
+              </p>
+              {profile && <ProfileBoostPaid boostedUntil={profile.boosted_until ?? null} />}
+            </div>
           </div>
         </div>
 

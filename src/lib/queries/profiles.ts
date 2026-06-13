@@ -103,6 +103,20 @@ export async function boostProfile(userId: string): Promise<{ error: string | nu
   return { error: null }
 }
 
+/** Active (ou prolonge) un boost de profil payant pour `days` jours. */
+export async function activateProfileBoost(userId: string, days: number): Promise<void> {
+  if (!days || days <= 0) return
+  const [me] = await db
+    .select({ boostedUntil: profiles.boostedUntil })
+    .from(profiles).where(eq(profiles.id, userId)).limit(1)
+  // Prolonge depuis l'échéance en cours si déjà boosté, sinon depuis maintenant.
+  const base = me?.boostedUntil && me.boostedUntil > new Date() ? me.boostedUntil : new Date()
+  const expiry = new Date(base.getTime() + days * 86_400_000)
+  await db.update(profiles)
+    .set({ boostedUntil: expiry })
+    .where(eq(profiles.id, userId))
+}
+
 /** Calcule (serveur, anti-triche) et enregistre le résultat du quiz candidat. */
 export async function saveQuizResult(
   userId: string,

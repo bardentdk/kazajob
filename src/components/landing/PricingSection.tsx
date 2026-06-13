@@ -28,7 +28,7 @@ export function PricingSection() {
           </h2>
           <p className="text-base text-[#6B5A4A] max-w-[520px] mx-auto">
             Les candidats accèdent à <strong className="text-[#1A1410]">100% des fonctionnalités gratuitement</strong>, pour toujours.
-            Les recruteurs choisissent leur forfait selon leurs besoins. Essai 30 jours sans carte bancaire.
+            Les recruteurs choisissent leur forfait selon leurs besoins. Essai 30 jours, carte requise à l&apos;activation.
           </p>
         </div>
 
@@ -54,7 +54,7 @@ export function PricingSection() {
                 <div className="text-[42px] font-extrabold tracking-tight leading-none mb-1">
                   {euros}€<span className="text-base font-semibold opacity-60">/mois</span>
                 </div>
-                <div className="text-xs opacity-60 mb-4">30 jours gratuits · sans CB</div>
+                <div className="text-xs opacity-60 mb-4">30 jours d&apos;essai · 1er débit après l&apos;essai</div>
                 <div className="flex flex-col gap-2 mb-6 flex-1">
                   {plan.features.map((f) => (
                     <div key={f} className="flex items-start gap-2 text-sm">
@@ -111,7 +111,7 @@ export function PricingSection() {
           {[
             { label: 'Sans engagement', desc: 'Annulation à tout moment' },
             { label: 'Données en Europe', desc: 'RGPD conforme · Hébergement EU' },
-            { label: 'Essai 30 jours', desc: 'Carte bancaire non requise' },
+            { label: 'Essai 30 jours', desc: 'Carte requise · débit après 30j' },
             { label: 'Support 974', desc: 'Équipe locale' },
           ].map((g) => (
             <div key={g.label} className="text-center p-4 rounded-xl border border-[#E8DDC9]" style={{ background: KZ.cream2 }}>

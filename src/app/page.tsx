@@ -329,7 +329,7 @@ export default async function LandingPage({
           </Link>
         </div>
         <p className="text-xs text-[#6B5A4A]">
-          Candidats : 100% gratuit · Recruteurs : essai 30 jours sans CB · Données hébergées en Europe
+          Candidats : 100% gratuit · Recruteurs : essai 30 jours, carte requise · Données hébergées en Europe
         </p>
       </section>
 

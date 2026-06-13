@@ -5,6 +5,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { expireEndedTrials } from '@/lib/queries/billing'
+import { expireJobBoosts } from '@/lib/queries/jobs'
 
 export async function GET(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
@@ -15,7 +16,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const expired = await expireEndedTrials()
-    return NextResponse.json({ ok: true, expired })
+    const boostsExpired = await expireJobBoosts()
+    return NextResponse.json({ ok: true, expired, boostsExpired })
   } catch (err) {
     console.error('[Cron expire-trials]', err)
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })

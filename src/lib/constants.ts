@@ -149,6 +149,21 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
 export const KAZA_BOOST_COST_XP = 100   // coût en XP pour booster son profil 48h
 export const KAZA_BOOST_HOURS   = 48    // durée du boost en heures
 
+// ── Boost payant d'une offre (recruteur) ──────────────────────────
+export interface JobBoostOption { days: number; priceCts: number; label: string; tag?: string }
+export const JOB_BOOST_OPTIONS: JobBoostOption[] = [
+  { days: 7,  priceCts: 1900, label: '7 jours'  },
+  { days: 15, priceCts: 2900, label: '15 jours', tag: 'Populaire' },
+  { days: 30, priceCts: 4900, label: '30 jours', tag: 'Meilleur prix' },
+]
+
+// ── Boost payant d'un profil candidat (en plus du KazaBoost XP gratuit 48h) ──
+export const PROFILE_BOOST_OPTIONS: JobBoostOption[] = [
+  { days: 7,  priceCts: 900,  label: '7 jours'  },
+  { days: 15, priceCts: 1500, label: '15 jours', tag: 'Populaire' },
+  { days: 30, priceCts: 2500, label: '30 jours', tag: 'Meilleur prix' },
+]
+
 export const EVENT_TYPES: Record<string, { label: string; color: string; bg: string }> = {
   job_dating:      { label: 'Job Dating',          color: '#6D3BEB', bg: '#E5DCFF' },
   webinar:         { label: 'Webinar',              color: '#1B4FB8', bg: '#DCE7FB' },

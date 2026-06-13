@@ -3,7 +3,7 @@
  * Couche serveur uniquement. Renvoie des objets conformes à `Job` (snake_case).
  */
 import { cache } from 'react'
-import { and, desc, eq, gte, ilike, or, sql, type SQL } from 'drizzle-orm'
+import { and, desc, eq, gte, ilike, lt, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { candidateSkills, jobs, profiles, skills } from '@/lib/db/schema'
 import type { Job, JobFilters } from '@/lib/types'
@@ -115,6 +115,41 @@ export async function getRecommendedJobs(candidateId: string, limit = 4): Promis
 
   scored.sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0))
   return scored.slice(0, limit)
+}
+
+// ── Boost payant d'une offre ──────────────────────────────────────
+
+/** Propriétaire + titre d'une offre (pour le contrôle d'accès au boost). */
+export async function getJobOwner(jobId: string): Promise<{ recruiterId: string; title: string } | null> {
+  const [row] = await db
+    .select({ recruiterId: jobs.recruiterId, title: jobs.title })
+    .from(jobs)
+    .where(eq(jobs.id, jobId))
+    .limit(1)
+  return row ?? null
+}
+
+/** Active (ou prolonge) le boost d'une offre pour `days` jours. */
+export async function activateJobBoost(jobId: string, days: number): Promise<void> {
+  if (!days || days <= 0) return
+  // Prolonge à partir de l'échéance actuelle si déjà boostée, sinon à partir de maintenant.
+  const [cur] = await db
+    .select({ expiresAt: jobs.boostExpiresAt, boosted: jobs.isBoosted })
+    .from(jobs).where(eq(jobs.id, jobId)).limit(1)
+  const base = cur?.boosted && cur.expiresAt && cur.expiresAt > new Date() ? cur.expiresAt : new Date()
+  const expires = new Date(base.getTime() + days * 86_400_000)
+  await db.update(jobs)
+    .set({ isBoosted: true, boostExpiresAt: expires })
+    .where(eq(jobs.id, jobId))
+}
+
+/** Désactive les boosts échus. Renvoie le nombre d'offres concernées. */
+export async function expireJobBoosts(): Promise<number> {
+  const rows = await db.update(jobs)
+    .set({ isBoosted: false })
+    .where(and(eq(jobs.isBoosted, true), lt(jobs.boostExpiresAt, new Date())))
+    .returning({ id: jobs.id })
+  return rows.length
 }
 
 // ── Côté recruteur ────────────────────────────────────────────────

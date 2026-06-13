@@ -27,7 +27,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'En tant que recruteur, puis-je tester avant de payer ?',
-    a: 'Oui. Tous les plans recruteur incluent un essai gratuit de 30 jours, sans carte bancaire requise. Tu ne passes au paiement que si tu décides de continuer après l\'essai.',
+    a: 'Oui. Tous les plans recruteur incluent un essai de 30 jours gratuit. Tu enregistres ta carte à l\'activation (paiement sécurisé Stripe), mais aucun débit n\'a lieu pendant l\'essai : le 1er prélèvement intervient à la fin des 30 jours, sauf si tu résilies avant — c\'est sans engagement et annulable à tout moment.',
   },
   {
     q: 'Quelle est la différence avec les autres sites d\'emploi ?',

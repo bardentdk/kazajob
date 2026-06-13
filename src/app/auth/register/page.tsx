@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -23,7 +23,6 @@ function RegisterForm() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { signUp } = useAuth()
-  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,8 +48,10 @@ function RegisterForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'welcome', email, fullName, role }),
       }).catch(() => {})
-      // Candidats → onboarding | Recruteurs → configuration entreprise (obligatoire)
-      router.push(role === 'recruiter' ? '/recruiter/company-setup' : '/onboarding')
+      // Candidats → onboarding | Recruteurs → configuration entreprise + paiement (obligatoire)
+      // Navigation par rechargement complet : garantit que la session est lue par le proxy
+      // (évite le rebond vers /auth/login juste après l'inscription).
+      window.location.href = role === 'recruiter' ? '/recruiter/company-setup' : '/onboarding'
     }
   }
 
@@ -147,8 +148,13 @@ function RegisterForm() {
             <span className="font-semibold" style={{ color: KZ.orange }}>politique de confidentialite</span>.
           </p>
           <Button kind="primary" size="lg" full iconRight={<ArrowRight size={16} />} loading={loading} type="submit">
-            Creer mon compte — gratuit
+            {role === 'recruiter' ? 'Créer mon espace recruteur' : 'Creer mon compte — gratuit'}
           </Button>
+          {role === 'recruiter' && (
+            <p className="text-xs text-center text-[#6B5A4A] -mt-1">
+              Essai 30 jours · carte requise à l&apos;activation · 1er débit après l&apos;essai.
+            </p>
+          )}
         </form>
 
         <p className="text-center text-xs text-[#6B5A4A] mt-6">

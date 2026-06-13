@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Users, Calendar, Video, Phone, MapPin, MessageCircle, Sparkles, Lock, Check, AlertTriangle } from 'lucide-react'
+import { Users, Calendar, Video, Phone, MapPin, MessageCircle, Sparkles, Lock, Check, AlertTriangle, Rocket } from 'lucide-react'
 import { InlineLoader } from '@/components/ui/LogoLoader'
 import { Tag } from '@/components/ui/Tag'
 import { Progress } from '@/components/ui/Progress'
@@ -132,7 +132,15 @@ export default function RecruiterApplicationsPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="text-base font-bold text-[#1A1410]">{candidate?.full_name}</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-base font-bold text-[#1A1410]">{candidate?.full_name}</span>
+                    {(() => {
+                      const bu = (candidate as unknown as { boosted_until?: string | null })?.boosted_until
+                      return bu && new Date(bu) > new Date() ? (
+                        <Badge color="orange" size="sm"><span className="flex items-center gap-1"><Rocket size={10} />Mis en avant</span></Badge>
+                      ) : null
+                    })()}
+                  </div>
                   <div className="text-sm text-[#6B5A4A]">
                     {app.job?.title} · {app.job?.company?.name} · {timeAgo(app.created_at)}
                   </div>

@@ -82,6 +82,7 @@ export default function CompanySetupPage() {
   // Étape 3 — Plan
   const [planId, setPlanId]             = useState('pro')
   const [planSaving, setPlanSaving]     = useState(false)
+  const [planError, setPlanError]       = useState('')
 
   // Redirect si déjà setup
   useEffect(() => {
@@ -167,15 +168,16 @@ export default function CompanySetupPage() {
     const company = newCompany
     if (!company) { setStep(4); setMode('done'); return }
     setPlanSaving(true)
+    setPlanError('')
 
-    // 1. Démarre l'essai 30 j en base
+    // 1. Démarre l'essai 30 j en base (nécessaire pour reporter les jours restants sur Stripe)
     await fetch(`/api/companies/${company.id}/subscription`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ planId }),
     })
 
-    // 2. Dirige vers le paiement (Stripe collecte la carte, 1er débit après l'essai de 30 j)
+    // 2. Paiement obligatoire : Stripe collecte la carte maintenant, 1er débit après l'essai de 30 j.
     try {
       const co = await fetch('/api/billing/checkout', {
         method: 'POST',
@@ -184,12 +186,17 @@ export default function CompanySetupPage() {
       })
       const data = await co.json().catch(() => ({}))
       if (co.ok && data.url) { window.location.href = data.url as string; return }
-    } catch { /* Stripe indisponible → on garde l'essai sans carte */ }
+      setPlanError(
+        co.status === 503
+          ? 'Le paiement est momentanément indisponible. Réessaie dans un instant.'
+          : (data.error as string) || 'Impossible d\'ouvrir le paiement. Réessaie dans un instant.',
+      )
+    } catch {
+      setPlanError('Connexion au paiement impossible. Vérifie ta connexion et réessaie.')
+    }
 
-    // 3. Repli : Stripe non configuré → écran de fin (essai actif sans carte)
+    // Aucun accès sans carte : on reste sur l'étape forfait pour réessayer.
     setPlanSaving(false)
-    setStep(4)
-    setMode('done')
   }
 
   // ── Rendu ─────────────────────────────────────────────────────
@@ -404,7 +411,7 @@ export default function CompanySetupPage() {
           {mode === 'plan' && (
             <div>
               <h2 className="text-lg font-bold text-[#1A1410] mb-1">Choisissez votre forfait</h2>
-              <p className="text-sm text-[#6B5A4A] mb-5">30 jours gratuits · Sans carte bancaire · Annulable à tout moment.</p>
+              <p className="text-sm text-[#6B5A4A] mb-5">30 jours d&apos;essai · Carte bancaire requise · 1er débit à la fin de l&apos;essai · Annulable avant la fin.</p>
 
               <div className="flex flex-col gap-3 mb-5">
                 {SUBSCRIPTION_PLANS.map(plan => {
@@ -445,10 +452,16 @@ export default function CompanySetupPage() {
                 })}
               </div>
 
+              {planError && (
+                <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{planError}</div>
+              )}
               <Button kind="primary" size="lg" full loading={planSaving} onClick={handleSelectPlan}
                 icon={<ArrowRight size={15} />}>
-                Démarrer l&apos;essai gratuit
+                Continuer vers le paiement sécurisé
               </Button>
+              <p className="text-xs text-center text-[#6B5A4A] mt-3">
+                Paiement sécurisé par Stripe. Aucun débit pendant les 30 jours d&apos;essai.
+              </p>
             </div>
           )}
 

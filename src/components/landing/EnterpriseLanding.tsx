@@ -39,7 +39,7 @@ function PriceCard({ plan, isHighlight }: { plan: typeof SUBSCRIPTION_PLANS[0]; 
         {euros}€
         <span className="text-base font-semibold opacity-60">/mois</span>
       </div>
-      <div className="text-xs opacity-60 mb-4">30 jours gratuits · sans CB</div>
+      <div className="text-xs opacity-60 mb-4">30 jours d&apos;essai · 1er débit après l&apos;essai</div>
 
       <div className="flex flex-col gap-2 mb-6 flex-1">
         {plan.features.map(f => (
@@ -123,7 +123,7 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
               </a>
             </div>
             <p className="text-xs mt-4" style={{ color: 'rgba(255,247,238,0.4)' }}>
-              Sans CB · Annulable à tout moment · RGPD conforme
+              Carte requise · Annulable à tout moment · RGPD conforme
             </p>
           </div>
 
@@ -201,7 +201,7 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
             <h2 className="text-2xl lg:text-[36px] font-extrabold tracking-tight text-[#1A1410]">
               Un forfait pour chaque taille d&apos;entreprise.
             </h2>
-            <p className="text-sm text-[#6B5A4A] mt-2">30 jours gratuits sur tous les plans · Sans carte bancaire</p>
+            <p className="text-sm text-[#6B5A4A] mt-2">30 jours d&apos;essai sur tous les plans · Carte requise · 1er débit après l&apos;essai</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-end">
             {SUBSCRIPTION_PLANS.map(plan => (

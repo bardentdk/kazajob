@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { getStripe } from '@/lib/stripe'
 import { saveStripeState, mapStripeStatus, getCompanyByStripeSubscription } from '@/lib/queries/billing'
+import { activateJobBoost } from '@/lib/queries/jobs'
+import { activateProfileBoost } from '@/lib/queries/profiles'
 
 // POST /api/billing/webhook — événements Stripe (signature vérifiée, pas d'auth session).
 export async function POST(req: NextRequest) {
@@ -24,6 +26,16 @@ export async function POST(req: NextRequest) {
       // Paiement initié : on lie le customer + l'abonnement à l'entreprise.
       case 'checkout.session.completed': {
         const s = event.data.object as Stripe.Checkout.Session
+        // Paiement unique de boost d'offre (mode payment).
+        if (s.metadata?.kind === 'job_boost' && s.metadata.jobId) {
+          await activateJobBoost(s.metadata.jobId, parseInt(s.metadata.days ?? '0', 10))
+          break
+        }
+        // Paiement unique de boost de profil candidat (mode payment).
+        if (s.metadata?.kind === 'profile_boost' && s.metadata.userId) {
+          await activateProfileBoost(s.metadata.userId, parseInt(s.metadata.days ?? '0', 10))
+          break
+        }
         const companyId = s.metadata?.companyId
         if (companyId) {
           await saveStripeState(companyId, {

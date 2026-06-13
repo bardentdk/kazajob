@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { MapPin, Heart, Sparkles } from 'lucide-react'
+import { MapPin, Heart, Sparkles, Rocket } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { Tag } from '@/components/ui/Tag'
 import type { Job } from '@/lib/types'
@@ -24,10 +24,19 @@ export function JobCard({ job, isFavorite, onToggleFavorite, showMatch = true, c
   const color = COMPANY_COLORS[(job.company?.name?.charCodeAt(0) ?? 0) % COMPANY_COLORS.length]
   const companyInitials = (job.company?.name ?? 'CO').slice(0, 2).toUpperCase()
   const isNew = Date.now() - new Date(job.created_at).getTime() < 86400000 * 3
+  const isBoosted = !!job.is_boosted
 
   return (
-    <div className="kz-card p-5 bg-white flex flex-col gap-3.5 relative group hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0_#1A1410] transition-all duration-100">
-      {isNew && (
+    <div
+      className="kz-card p-5 bg-white flex flex-col gap-3.5 relative group hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0_#1A1410] transition-all duration-100"
+      style={isBoosted ? { borderColor: KZ.orange, boxShadow: '4px 4px 0 ' + KZ.orange } : undefined}
+    >
+      {isBoosted && (
+        <div className="absolute -top-3 left-4" style={{ transform: 'rotate(-5deg)' }}>
+          <Badge color="orange" size="sm"><span className="flex items-center gap-1"><Rocket size={10} />À la une</span></Badge>
+        </div>
+      )}
+      {isNew && !isBoosted && (
         <div className="absolute -top-3 right-4" style={{ transform: 'rotate(6deg)' }}>
           <Badge color="orange" size="sm">Nouveau</Badge>
         </div>

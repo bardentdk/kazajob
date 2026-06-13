@@ -2,20 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, Eye, Users, Edit, Trash2, ToggleLeft, ToggleRight, EyeOff, User } from 'lucide-react'
+import { Plus, Eye, Users, Edit, Trash2, ToggleLeft, ToggleRight, EyeOff, User, Rocket } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
 import { useAuth } from '@/features/auth/useAuth'
 import type { Job } from '@/lib/types'
 import { timeAgo, formatSalary } from '@/lib/utils'
-import { KZ } from '@/lib/constants'
+import { KZ, JOB_BOOST_OPTIONS } from '@/lib/constants'
 
 export default function RecruiterJobsPage() {
   const { profile } = useAuth()
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
+  const [boostFor, setBoostFor] = useState<Job | null>(null)
 
   const fetchJobs = async () => {
     if (!profile) return
@@ -120,6 +122,14 @@ export default function RecruiterJobsPage() {
 
               <div className="flex items-center gap-2 shrink-0">
                 <button
+                  onClick={() => setBoostFor(job)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#FFE0CF]"
+                  style={{ color: job.is_boosted ? KZ.orange : KZ.mute }}
+                  title={job.is_boosted ? 'Prolonger la mise en avant' : 'Booster cette offre'}
+                >
+                  <Rocket size={16} fill={job.is_boosted ? KZ.orange : 'none'} />
+                </button>
+                <button
                   onClick={() => toggleActive(job)}
                   className="text-[#6B5A4A] hover:text-[#1A1410]"
                   title={job.is_active ? 'Desactiver' : 'Activer'}
@@ -142,6 +152,86 @@ export default function RecruiterJobsPage() {
           ))}
         </div>
       )}
+
+      {/* Modal boost */}
+      <BoostModal job={boostFor} onClose={() => setBoostFor(null)} />
     </div>
+  )
+}
+
+// ── Modal de mise en avant payante d'une offre ─────────────────
+function BoostModal({ job, onClose }: { job: Job | null; onClose: () => void }) {
+  const [days, setDays] = useState(15)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const boostedUntil = (job as unknown as { boost_expires_at?: string | null })?.boost_expires_at
+
+  const handleBoost = async () => {
+    if (!job) return
+    setLoading(true); setError('')
+    try {
+      const res = await fetch('/api/billing/boost-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId: job.id, days }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.url) { window.location.href = data.url as string; return }
+      setError(res.status === 503
+        ? 'Le paiement est momentanément indisponible. Réessaie dans un instant.'
+        : (data.error as string) || 'Impossible d\'ouvrir le paiement.')
+    } catch {
+      setError('Connexion au paiement impossible. Réessaie.')
+    }
+    setLoading(false)
+  }
+
+  return (
+    <Modal open={!!job} onClose={onClose} title="Booster cette offre" size="md">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2.5 p-3 rounded-xl border border-[#1A1410]" style={{ background: KZ.orangeSoft }}>
+          <Rocket size={18} color={KZ.orange} />
+          <div>
+            <p className="text-sm font-bold text-[#1A1410]">{job?.title}</p>
+            <p className="text-xs text-[#6B5A4A]">Mise en avant en tête des résultats + badge « À la une ».</p>
+          </div>
+        </div>
+
+        {job?.is_boosted && boostedUntil && (
+          <p className="text-xs text-[#6B5A4A]">
+            Déjà boostée jusqu&apos;au <strong className="text-[#1A1410]">{new Date(boostedUntil).toLocaleDateString('fr-FR')}</strong> — un nouvel achat prolonge la durée.
+          </p>
+        )}
+
+        <div className="flex flex-col gap-2">
+          {JOB_BOOST_OPTIONS.map((opt) => {
+            const selected = days === opt.days
+            return (
+              <button key={opt.days} onClick={() => setDays(opt.days)}
+                className="flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all"
+                style={{ borderColor: selected ? KZ.orange : KZ.line, background: selected ? KZ.orangeSoft : 'white' }}>
+                <div className="w-7 h-7 rounded-full border-2 border-[#1A1410] flex items-center justify-center shrink-0"
+                  style={{ background: selected ? KZ.orange : 'white' }}>
+                  {selected && <Rocket size={12} color="white" />}
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-bold text-[#1A1410]">{opt.label}</span>
+                  {opt.tag && <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-[#1A1410]" style={{ background: KZ.yellowSoft }}>{opt.tag}</span>}
+                </div>
+                <span className="text-lg font-extrabold text-[#1A1410]">{Math.floor(opt.priceCts / 100)}€</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {error && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
+
+        <Button kind="primary" size="lg" full loading={loading} icon={<Rocket size={15} />} onClick={handleBoost}>
+          Payer et activer le boost
+        </Button>
+        <p className="text-[11px] text-center text-[#6B5A4A]">Paiement unique sécurisé par Stripe. Sans abonnement.</p>
+      </div>
+    </Modal>
   )
 }
