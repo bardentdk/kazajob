@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { signIn } = useAuth()
+  const { signIn, signInWithProvider } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -129,8 +129,8 @@ export default function LoginPage() {
           <div className="flex-1 h-px bg-[#E8DDC9]" />ou<div className="flex-1 h-px bg-[#E8DDC9]" />
         </div>
         <div className="grid grid-cols-2 gap-2.5">
-          <Button kind="outline" size="md">Google</Button>
-          <Button kind="outline" size="md">LinkedIn</Button>
+          <Button kind="outline" size="md" onClick={() => signInWithProvider('google')}>Google</Button>
+          <Button kind="outline" size="md" onClick={() => signInWithProvider('linkedin')}>LinkedIn</Button>
         </div>
 
         <p className="text-center text-xs text-[#6B5A4A] mt-6">

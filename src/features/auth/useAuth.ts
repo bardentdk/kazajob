@@ -47,6 +47,18 @@ export function useAuth() {
     return { error: res?.error ? 'Email ou mot de passe incorrect.' : null }
   }, [])
 
+  // Connexion OAuth (Google / LinkedIn). Le rôle voulu est transmis via cookie
+  // pour les inscriptions recruteur, puis lu côté serveur à la création du profil.
+  const signInWithProvider = useCallback((
+    provider: 'google' | 'linkedin',
+    role?: 'candidate' | 'recruiter',
+  ) => {
+    if (role === 'recruiter') {
+      document.cookie = 'kazajob_signup_role=recruiter; path=/; max-age=600; samesite=lax'
+    }
+    nextSignIn(provider, { callbackUrl: '/auth/post-oauth' })
+  }, [])
+
   const signUp = useCallback(async (
     email: string,
     password: string,
@@ -82,5 +94,5 @@ export function useAuth() {
     setAuthChecked(true)
   }, [])
 
-  return { profile, loading, authChecked, signIn, signUp, signOut, refetch: fetchProfile }
+  return { profile, loading, authChecked, signIn, signInWithProvider, signUp, signOut, refetch: fetchProfile }
 }
