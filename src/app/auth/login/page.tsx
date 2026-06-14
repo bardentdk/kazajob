@@ -6,6 +6,7 @@ import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Logo } from '@/components/layout/Logo'
+import { OAuthButtons } from '@/components/auth/OAuthButtons'
 import { Soleil, Palme, Nuage, Hibiscus, Vague } from '@/components/illustrations/Tropical'
 import { useAuth } from '@/features/auth/useAuth'
 import { KZ } from '@/lib/constants'
@@ -16,7 +17,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { signIn, signInWithProvider } = useAuth()
+  const { signIn } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -128,10 +129,7 @@ export default function LoginPage() {
         <div className="flex items-center gap-3 my-5 text-xs text-[#6B5A4A]">
           <div className="flex-1 h-px bg-[#E8DDC9]" />ou<div className="flex-1 h-px bg-[#E8DDC9]" />
         </div>
-        <div className="grid grid-cols-2 gap-2.5">
-          <Button kind="outline" size="md" onClick={() => signInWithProvider('google')}>Google</Button>
-          <Button kind="outline" size="md" onClick={() => signInWithProvider('linkedin')}>LinkedIn</Button>
-        </div>
+        <OAuthButtons />
 
         <p className="text-center text-xs text-[#6B5A4A] mt-6">
           <Link href="/" className="hover:text-[#FF6B35] font-semibold">← Retour a l&apos;accueil</Link>
