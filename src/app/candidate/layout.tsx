@@ -10,6 +10,7 @@ import { Footer } from '@/components/layout/Footer'
 import { useAuth } from '@/features/auth/useAuth'
 import { FullPageLoader } from '@/components/ui/LogoLoader'
 import { ChatAssistantDrawer } from '@/components/ui/ChatAssistantDrawer'
+import { BugReportWidget } from '@/components/feedback/BugReportWidget'
 import { useGamification, getLevel } from '@/features/gamification/useGamification'
 import { KZ } from '@/lib/constants'
 
@@ -148,6 +149,8 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
       </div>
       {/* KazaIA flottant */}
       <ChatAssistantDrawer />
+      {/* Signalement de bug (empilé au-dessus du chat) */}
+      <BugReportWidget stacked />
     </div>
   )
 }

@@ -1034,6 +1034,82 @@ export function trialReminderEmail(data: {
   return { subject, html: shell(accent, body) }
 }
 
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 12 — Signalement de bug (vers l'admin)
+// ══════════════════════════════════════════════════════════════════
+
+export function bugReportEmail(data: {
+  reporterName:  string
+  reporterEmail: string
+  reporterRole:  string
+  page:          string
+  message:       string
+  severity:      'normal' | 'critical'
+  attachmentUrl?: string | null
+}): { subject: string; html: string } {
+  const critical = data.severity === 'critical'
+  const accent = critical ? C.orange : C.violet
+  const roleLabel = data.reporterRole === 'recruiter' ? 'Recruteur' : data.reporterRole === 'admin' ? 'Admin' : 'Candidat'
+
+  const subject = `${critical ? '🔴 [BLOQUANT] ' : ''}Bug signalé — ${data.page}`
+
+  const body = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:24px 32px 16px;">
+          ${chip(critical ? 'Défaut bloquant' : 'Signalement de bug', critical ? C.orangeSoft : C.violetSoft, critical ? C.ink : C.violet)}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 12px;">
+          <h1 style="margin:0;font-size:24px;font-weight:900;color:${C.ink};
+            letter-spacing:-0.03em;line-height:1.15;font-family:Arial,sans-serif;">
+            Un bug vient<br>d&rsquo;être signalé.
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="background-color:white;border:2px solid ${C.ink};border-radius:12px;overflow:hidden;">
+            ${detailRow('Page', data.page)}
+            ${detailRow('Gravité', critical ? 'Bloquant' : 'Normal')}
+            ${detailRow('Par', `${data.reporterName} (${roleLabel})`)}
+            ${detailRow('Email', data.reporterEmail)}
+            <tr><td colspan="2" style="height:1px;"></td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="background-color:${C.cream2};border:1.5px dashed ${C.line};border-radius:10px;">
+            <tr>
+              <td style="padding:16px;">
+                <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:${C.mute};
+                  text-transform:uppercase;letter-spacing:0.06em;font-family:Arial,sans-serif;">Message</p>
+                <p style="margin:0;font-size:14px;color:${C.ink};line-height:1.6;white-space:pre-wrap;font-family:Arial,sans-serif;">${data.message}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      ${data.attachmentUrl ? `
+      <tr>
+        <td style="padding:0 32px 24px;text-align:center;">
+          ${ctaButton('Voir la pièce jointe', data.attachmentUrl, accent, '#FFFFFF')}
+        </td>
+      </tr>` : ''}
+      <tr>
+        <td style="padding:0 32px 28px;text-align:center;">
+          ${ctaButton('Ouvrir le suivi des bugs', 'https://kazajob.re/admin/bug-reports')}
+        </td>
+      </tr>
+    </table>`
+
+  return { subject, html: shell(accent, body) }
+}
+
 export function applicationStatusEmail(data: {
   candidateName: string
   jobTitle:      string

@@ -285,6 +285,21 @@ export const subscriptionPlans = pgTable('subscription_plans', {
   isActive:   boolean('is_active').notNull().default(true),
 })
 
+// ── bug_reports (signalements de bug candidat/recruteur) ──────────
+export const bugReports = pgTable('bug_reports', {
+  id:            uuid().primaryKey().default(sql`gen_random_uuid()`),
+  reporterId:    uuid('reporter_id').references(() => profiles.id, { onDelete: 'set null' }),
+  reporterName:  text('reporter_name'),
+  reporterEmail: text('reporter_email'),
+  reporterRole:  text('reporter_role'),          // candidate | recruiter | admin
+  page:          text().notNull(),                // chemin de la page en défaut
+  message:       text().notNull(),
+  attachmentUrl: text('attachment_url'),
+  severity:      text().notNull().default('normal'),  // normal | critical
+  status:        text().notNull().default('open'),    // open | in_progress | resolved
+  createdAt:     now(),
+})
+
 // ── company_subscriptions ─────────────────────────────────────────
 export const companySubscriptions = pgTable('company_subscriptions', {
   id:               uuid().primaryKey().default(sql`gen_random_uuid()`),

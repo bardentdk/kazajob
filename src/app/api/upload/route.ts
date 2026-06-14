@@ -3,7 +3,7 @@ import { put } from '@vercel/blob'
 import { auth } from '@/lib/auth'
 
 // Dossiers autorisés (un par type d'asset).
-const FOLDERS = ['avatars', 'cvs', 'video-pitches', 'company-logos', 'training-images']
+const FOLDERS = ['avatars', 'cvs', 'video-pitches', 'company-logos', 'training-images', 'bug-reports']
 const MAX_BYTES = 12 * 1024 * 1024 // 12 Mo
 
 // POST /api/upload (multipart) { file, folder } → { url }

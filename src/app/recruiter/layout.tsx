@@ -8,6 +8,7 @@ import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { CompanySwitcher } from '@/components/layout/CompanySwitcher'
 import { useAuth } from '@/features/auth/useAuth'
 import { FullPageLoader } from '@/components/ui/LogoLoader'
+import { BugReportWidget } from '@/components/feedback/BugReportWidget'
 import { KZ } from '@/lib/constants'
 
 const NAV_ITEMS: NavItem[] = [
@@ -88,6 +89,8 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+      {/* Signalement de bug */}
+      <BugReportWidget />
     </div>
   )
 }
