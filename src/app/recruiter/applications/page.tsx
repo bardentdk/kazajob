@@ -147,6 +147,18 @@ export default function RecruiterApplicationsPage() {
                   {app.cover_letter && (
                     <p className="text-xs text-[#6B5A4A] mt-1 line-clamp-1">{app.cover_letter}</p>
                   )}
+                  {(() => {
+                    const ans = (app as unknown as { prequal_answers?: { label: string; value: string }[] }).prequal_answers
+                    return ans && ans.some((a) => a.value) ? (
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {ans.filter((a) => a.value).map((a, i) => (
+                          <span key={i} className="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-[#E8DDC9]" style={{ background: KZ.cream2 }}>
+                            {a.label} : <strong className="text-[#1A1410]">{a.value}</strong>
+                          </span>
+                        ))}
+                      </div>
+                    ) : null
+                  })()}
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
@@ -258,6 +270,14 @@ export default function RecruiterApplicationsPage() {
   )
 }
 
+// Recommandation rapide dérivée du taux d'adéquation (déterministe, sans appel IA).
+function recoFromScore(score: number): { label: string; bg: string; color: string } {
+  if (score >= 80) return { label: 'À contacter',       bg: KZ.greenSoft,  color: KZ.green }
+  if (score >= 60) return { label: 'Profil intéressant', bg: KZ.violetSoft, color: KZ.violet }
+  if (score >= 40) return { label: 'À étudier',          bg: KZ.yellowSoft, color: '#B7791F' }
+  return                  { label: 'Peu prioritaire',    bg: KZ.cream2,     color: KZ.mute }
+}
+
 // ── Modal synthèse IA d'une candidature ────────────────────────
 function ApplicationSummaryModal({ app, onClose }: { app: Application | null; onClose: () => void }) {
   const { generating, summary, raw, error, locked, generate, reset } = useApplicationSummaryAI()
@@ -303,6 +323,21 @@ function ApplicationSummaryModal({ app, onClose }: { app: Application | null; on
 
         {summary && !generating && (
           <div className="flex flex-col gap-4">
+            {/* Recommandation rapide (premium) */}
+            {(() => {
+              const r = recoFromScore(summary.adequation)
+              return (
+                <div className="p-4 rounded-xl border-2 border-[#1A1410] flex items-center gap-3"
+                  style={{ background: r.bg, boxShadow: '3px 3px 0 #1A1410' }}>
+                  <Sparkles size={20} color={r.color} />
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#6B5A4A]">Recommandation KazaIA</p>
+                    <p className="text-lg font-extrabold text-[#1A1410]">{r.label}</p>
+                  </div>
+                  <span className="ml-auto text-2xl font-extrabold" style={{ color: r.color }}>{summary.adequation}%</span>
+                </div>
+              )
+            })()}
             {/* Adéquation */}
             <div className="p-4 rounded-xl border border-[#1A1410]" style={{ background: KZ.violetSoft }}>
               <div className="flex items-center justify-between mb-2">

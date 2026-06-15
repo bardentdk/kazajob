@@ -490,7 +490,7 @@ export function welcomeEmail(data: {
 
   const stepsRecruiter = `
     ${stepBlock('1', 'Configurez votre entreprise', 'Logo, raison sociale, équipe — 3 minutes chrono.', C.violetSoft)}
-    ${stepBlock('2', 'Publiez votre première offre', 'Multi-diffusion automatique sur France Travail et plus.', C.orangeSoft)}
+    ${stepBlock('2', 'Publiez votre première offre', 'Diffusion sur Kazajob et accès au vivier de talents 974.', C.orangeSoft)}
     ${stepBlock('3', 'Gérez votre pipeline', 'KazaScore, entretiens, analytics — tout en un.', C.greenSoft)}`
 
   const body = `

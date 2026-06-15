@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { useAuth } from '@/features/auth/useAuth'
-import { KZ, SUBSCRIPTION_PLANS, PARTNERS } from '@/lib/constants'
+import { KZ, SUBSCRIPTION_PLANS, PARTNERS, MULTIDIFFUSION_ENABLED } from '@/lib/constants'
 
 const PARTNER_ICONS: Record<string, React.ReactNode> = {
   Landmark:  <Landmark  size={12} />,
@@ -198,7 +198,9 @@ export default function CompanyPage() {
         {[
           { v: memberCount, l: 'Recruteurs', color: KZ.violetSoft },
           { v: jobCount,    l: 'Offres actives', color: KZ.orangeSoft },
-          { v: plan?.partners.length ?? 0, l: 'Partenaires', color: KZ.blueSoft },
+          MULTIDIFFUSION_ENABLED
+            ? { v: plan?.partners.length ?? 0, l: 'Partenaires', color: KZ.blueSoft }
+            : { v: plan?.maxJobs === -1 ? '∞' : (plan?.maxJobs ?? 0), l: 'Offres max', color: KZ.blueSoft },
         ].map(s => (
           <div key={s.l} className="kz-card p-4 text-center bg-white" style={{ background: s.color }}>
             <div className="text-2xl font-extrabold text-[#1A1410]">{s.v}</div>
@@ -255,8 +257,8 @@ export default function CompanyPage() {
         )}
       </div>
 
-      {/* Canaux de diffusion inclus au forfait (à venir) */}
-      {plan && plan.partners.length > 0 && (
+      {/* Canaux de diffusion inclus au forfait (multidiffusion — masqué tant que OFF) */}
+      {MULTIDIFFUSION_ENABLED && plan && plan.partners.length > 0 && (
         <div className="kz-card p-5 bg-white">
           <div className="flex items-center gap-2 mb-3">
             <h3 className="text-sm font-bold text-[#1A1410]">Canaux de diffusion inclus</h3>

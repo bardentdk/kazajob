@@ -35,7 +35,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'À quoi ressemble la roadmap de Kazajob ?',
-    a: 'Dans les 3 prochains mois : paiement & abonnement en ligne, analytics recruteur avancés, multi-diffusion France Travail et alertes push. D\'ici 6 mois : annonces boostées, accompagnement recrutement & partenariats locaux, baromètre des salaires 974, intégration ATS et application mobile native.',
+    a: 'Dans les 3 prochains mois : analytics recruteur avancés, CVthèque et alertes push. D\'ici 6 mois : accompagnement recrutement & partenariats locaux, baromètre des salaires 974, intégration ATS et application mobile native.',
   },
 ]
 

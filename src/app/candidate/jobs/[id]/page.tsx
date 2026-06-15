@@ -19,6 +19,7 @@ import { useFavorites } from '@/features/favorites/useFavorites'
 import { useAuth } from '@/features/auth/useAuth'
 import { formatSalary, timeAgo } from '@/lib/utils'
 import { KZ, getSalaryLabel } from '@/lib/constants'
+import { type PrequalQuestion } from '@/lib/prequal'
 
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -31,6 +32,7 @@ export default function JobDetailPage() {
   const [interviewModal, setInterviewModal] = useState(false)
   const [showMatchDetail, setShowMatchDetail] = useState(false)
   const [coverLetter, setCoverLetter] = useState('')
+  const [prequalAnswers, setPrequalAnswers] = useState<Record<string, string>>({})
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
   const [error, setError] = useState('')
@@ -46,9 +48,14 @@ export default function JobDetailPage() {
 
   const alreadyApplied = applied || hasApplied(id)
 
+  const prequalQuestions = (((job as unknown as { prequal_questions?: PrequalQuestion[] })?.prequal_questions) ?? []) as PrequalQuestion[]
+
   const handleApply = async () => {
     setApplying(true); setError('')
-    const { error: err } = await apply(id, coverLetter)
+    const answers = prequalQuestions.map((q) => ({ questionId: q.id, label: q.label, value: prequalAnswers[q.id] ?? '' }))
+    const missing = prequalQuestions.find((q) => q.required && !answers.find((a) => a.questionId === q.id)?.value)
+    if (missing) { setError('Merci de répondre à : ' + missing.label); setApplying(false); return }
+    const { error: err } = await apply(id, coverLetter, answers.length ? answers : undefined)
     if (err) { setError(err) } else { setApplied(true); setApplyModal(false) }
     setApplying(false)
   }
@@ -284,6 +291,39 @@ export default function JobDetailPage() {
             <p className="text-sm text-[#6B5A4A]">{job.company?.name} · {job.location}</p>
           </div>
           {error && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
+
+          {prequalQuestions.length > 0 && (
+            <div className="flex flex-col gap-3 p-3 rounded-xl border border-[#1A1410]" style={{ background: KZ.violetSoft }}>
+              <p className="text-sm font-bold text-[#1A1410]">Questions du recruteur</p>
+              {prequalQuestions.map((q) => (
+                <div key={q.id}>
+                  <label className="block text-sm font-semibold text-[#2A2018] mb-1.5">{q.label}{q.required && ' *'}</label>
+                  {q.type === 'oui_non' ? (
+                    <div className="flex gap-2">
+                      {['Oui', 'Non'].map((opt) => (
+                        <button key={opt} type="button" onClick={() => setPrequalAnswers((a) => ({ ...a, [q.id]: opt }))}
+                          className="flex-1 py-2 rounded-lg border-[1.5px] text-sm font-semibold"
+                          style={prequalAnswers[q.id] === opt
+                            ? { background: KZ.ink, color: KZ.cream, borderColor: KZ.ink }
+                            : { background: 'white', color: KZ.ink, borderColor: KZ.ink }}>
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  ) : q.type === 'choix' ? (
+                    <select value={prequalAnswers[q.id] ?? ''} onChange={(e) => setPrequalAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
+                      className="w-full px-3 py-2.5 rounded-xl border-2 border-[#1A1410] text-sm bg-white">
+                      <option value="">Choisir…</option>
+                      {(q.options ?? []).map((o) => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  ) : (
+                    <input value={prequalAnswers[q.id] ?? ''} onChange={(e) => setPrequalAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
+                      className="w-full px-3 py-2.5 rounded-xl border-2 border-[#1A1410] text-sm" placeholder="Votre réponse" />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
           <Textarea
             label="Lettre de motivation (optionnel)"

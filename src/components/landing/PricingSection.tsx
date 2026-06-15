@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Check, Building2, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { KZ, SUBSCRIPTION_PLANS } from '@/lib/constants'
+import { KZ, SUBSCRIPTION_PLANS, planFeatures } from '@/lib/constants'
 
 const CANDIDATE_FEATURES = [
   'Accès à toutes les offres La Réunion',
@@ -56,7 +56,7 @@ export function PricingSection() {
                 </div>
                 <div className="text-xs opacity-60 mb-4">30 jours d&apos;essai · 1er débit après l&apos;essai</div>
                 <div className="flex flex-col gap-2 mb-6 flex-1">
-                  {plan.features.map((f) => (
+                  {planFeatures(plan).map((f) => (
                     <div key={f} className="flex items-start gap-2 text-sm">
                       <Check size={14} className="mt-0.5 shrink-0" style={{ color: hl ? KZ.orange : KZ.green }} />
                       <span style={{ opacity: hl ? 0.9 : 0.85 }}>{f}</span>

@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { EyeOff } from 'lucide-react'
+import { EyeOff, Plus, Trash2, ListChecks } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
 import { REUNION_CITIES, JOB_TYPES, JOB_SECTORS, KZ, hasMentionHF } from '@/lib/constants'
+import { PREQUAL_TYPES, PREQUAL_SUGGESTIONS, MAX_PREQUAL_QUESTIONS, type PrequalQuestion } from '@/lib/prequal'
 import type { Job } from '@/lib/types'
 
 const CITY_OPTIONS = REUNION_CITIES.map((c) => ({ value: c, label: c }))
@@ -36,6 +37,17 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
   const [salaryMin, setSalaryMin] = useState(job?.salary_min?.toString() ?? '')
   const [salaryMax, setSalaryMax] = useState(job?.salary_max?.toString() ?? '')
   const [isAnonymous, setIsAnonymous] = useState((job as Record<string, unknown>)?.is_anonymous as boolean ?? false)
+  const [prequal, setPrequal] = useState<PrequalQuestion[]>(
+    ((job as Record<string, unknown>)?.prequal_questions as PrequalQuestion[] | undefined) ?? [],
+  )
+
+  const addQuestion = (label = '') => {
+    if (prequal.length >= MAX_PREQUAL_QUESTIONS) return
+    setPrequal((q) => [...q, { id: crypto.randomUUID(), label, type: 'oui_non', required: false }])
+  }
+  const updateQuestion = (id: string, patch: Partial<PrequalQuestion>) =>
+    setPrequal((q) => q.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+  const removeQuestion = (id: string) => setPrequal((q) => q.filter((x) => x.id !== id))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -63,6 +75,9 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
       salary_currency: '€',
       is_anonymous: isAnonymous,
       is_active: true,
+      prequal_questions: prequal
+        .filter((q) => q.label.trim())
+        .map((q) => ({ ...q, options: q.type === 'choix' ? (q.options ?? []).filter(Boolean) : undefined })),
     }
 
     const res = job?.id
@@ -213,6 +228,54 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
             style={{ left: isAnonymous ? 'calc(100% - 22px)' : '2px' }} />
         </div>
       </button>
+
+      {/* Préqualification candidat */}
+      <div className="rounded-xl border-2 p-4" style={{ borderColor: KZ.line, background: KZ.cream2 }}>
+        <div className="flex items-center gap-2 mb-1">
+          <ListChecks size={16} color={KZ.violet} />
+          <h3 className="text-sm font-bold text-[#1A1410]">Questions de préqualification</h3>
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-[#1A1410]" style={{ background: KZ.violetSoft, color: KZ.violet }}>Optionnel</span>
+        </div>
+        <p className="text-xs text-[#6B5A4A] mb-3">
+          Posez des questions rapides aux candidats pour faciliter le tri ({MAX_PREQUAL_QUESTIONS} max).
+        </p>
+
+        <div className="flex flex-col gap-2.5">
+          {prequal.map((q) => (
+            <div key={q.id} className="flex flex-col sm:flex-row gap-2 p-2.5 rounded-lg border border-[#E8DDC9] bg-white">
+              <Input className="flex-1" value={q.label} placeholder="Ex : Avez-vous le permis B ?"
+                onChange={(e) => updateQuestion(q.id, { label: e.target.value })} />
+              <Select className="sm:w-40" options={PREQUAL_TYPES.map((t) => ({ value: t.id, label: t.label }))}
+                value={q.type} onChange={(e) => updateQuestion(q.id, { type: e.target.value as PrequalQuestion['type'] })} />
+              {q.type === 'choix' && (
+                <Input className="sm:w-48" value={(q.options ?? []).join(', ')} placeholder="Options, séparées par virgule"
+                  onChange={(e) => updateQuestion(q.id, { options: e.target.value.split(',').map((s) => s.trim()) })} />
+              )}
+              <button type="button" onClick={() => removeQuestion(q.id)}
+                className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-red-50 text-[#6B5A4A] hover:text-red-600 shrink-0 self-center">
+                <Trash2 size={15} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {prequal.length < MAX_PREQUAL_QUESTIONS && (
+          <>
+            <Button type="button" kind="outline" size="sm" icon={<Plus size={14} />} className="mt-3" onClick={() => addQuestion()}>
+              Ajouter une question
+            </Button>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {PREQUAL_SUGGESTIONS.filter((s) => !prequal.some((q) => q.label === s)).map((s) => (
+                <button key={s} type="button" onClick={() => addQuestion(s)}
+                  className="text-[11px] font-semibold px-2 py-1 rounded-full border border-[#1A1410] hover:shadow-[2px_2px_0_#1A1410] transition-all"
+                  style={{ background: 'white', color: KZ.ink }}>
+                  + {s}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
 
       <div className="flex gap-3 pt-2">
         <Button type="button" kind="soft" size="lg" onClick={() => router.back()}>

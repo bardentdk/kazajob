@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { useAuth } from '@/features/auth/useAuth'
 import { uploadFile } from '@/features/profile/useUpload'
-import { KZ, SUBSCRIPTION_PLANS, JOB_SECTORS } from '@/lib/constants'
+import { KZ, SUBSCRIPTION_PLANS, JOB_SECTORS, MULTIDIFFUSION_ENABLED } from '@/lib/constants'
 import type { Company } from '@/lib/types'
 
 type Mode = 'search' | 'join' | 'create' | 'plan' | 'done'
@@ -443,8 +443,8 @@ export default function CompanySetupPage() {
                         </div>
                         <div className="text-xs text-[#6B5A4A]">
                           {plan.maxMembers} recruteur{plan.maxMembers > 1 ? 's' : ''} ·
-                          {plan.maxJobs === -1 ? ' offres illimitées' : ` ${plan.maxJobs} offres`} ·
-                          {plan.partners.length > 0 ? ` ${plan.partners.length} plateforme(s)` : ' Kazajob uniquement'}
+                          {plan.maxJobs === -1 ? ' offres illimitées' : ` ${plan.maxJobs} offres`}
+                          {MULTIDIFFUSION_ENABLED && ` · ${plan.partners.length > 0 ? `${plan.partners.length} plateforme(s)` : 'Kazajob uniquement'}`}
                         </div>
                       </div>
                       <div className="text-right shrink-0">

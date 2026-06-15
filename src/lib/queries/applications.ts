@@ -6,6 +6,7 @@ import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { applications, jobs, candidateSkills, skills, companySubscriptions } from '@/lib/db/schema'
 import type { Application } from '@/lib/types'
+import type { PrequalAnswer } from '@/lib/prequal'
 import { serialize } from './_serialize'
 
 const withJob = { job: { with: { company: true } } } as const
@@ -121,6 +122,7 @@ export async function applyToJob(
   candidateId: string,
   jobId: string,
   coverLetter?: string,
+  prequalAnswers?: PrequalAnswer[],
 ): Promise<{ error: string | null; id?: string }> {
   // Valide que l'offre existe et est toujours active avant toute candidature.
   const [job] = await db
@@ -141,7 +143,7 @@ export async function applyToJob(
 
   const [inserted] = await db
     .insert(applications)
-    .values({ jobId, candidateId, coverLetter })
+    .values({ jobId, candidateId, coverLetter, prequalAnswers: prequalAnswers ?? null })
     .returning({ id: applications.id })
 
   await db

@@ -30,10 +30,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Réservé aux candidats' }, { status: 403 })
   }
 
-  const { jobId, coverLetter } = await req.json().catch(() => ({}))
+  const { jobId, coverLetter, prequalAnswers } = await req.json().catch(() => ({}))
   if (!jobId) return NextResponse.json({ error: 'jobId requis' }, { status: 400 })
 
-  const result = await applyToJob(userId, jobId, coverLetter)
+  const result = await applyToJob(userId, jobId, coverLetter, prequalAnswers)
   if (result.error) {
     const status = result.error === 'Offre introuvable' ? 404 : 409
     return NextResponse.json({ error: result.error }, { status })

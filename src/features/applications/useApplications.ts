@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { Application } from '@/lib/types'
+import type { PrequalAnswer } from '@/lib/prequal'
 
 export function useApplications(candidateId?: string) {
   const [applications, setApplications] = useState<Application[]>([])
@@ -21,13 +22,13 @@ export function useApplications(candidateId?: string) {
     fetchApplications()
   }, [fetchApplications])
 
-  const apply = useCallback(async (jobId: string, coverLetter?: string) => {
+  const apply = useCallback(async (jobId: string, coverLetter?: string, prequalAnswers?: PrequalAnswer[]) => {
     if (!candidateId) return { error: 'Not authenticated' }
 
     const res = await fetch('/api/applications', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jobId, coverLetter }),
+      body: JSON.stringify({ jobId, coverLetter, prequalAnswers }),
     })
     const body = await res.json().catch(() => ({}))
 

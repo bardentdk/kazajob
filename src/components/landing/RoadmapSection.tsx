@@ -23,7 +23,6 @@ const ROADMAP = [
     quarter: 'Q3 2026 — Dans 3 mois',
     status: 'soon',
     items: [
-      'Multi-diffusion France Travail',
       'Alertes emploi push (application installable / PWA)',
       'KazaReviews — avis employeurs vérifiés',
       'Matching détaillé & conseils d\'amélioration',
@@ -36,11 +35,17 @@ const ROADMAP = [
     status: 'planned',
     items: [
       'Annonces boostées (mise en avant payante)',
-      'Multi-diffusion APEC, Indeed & flux XML',
       'Accompagnement recrutement & partenariats locaux',
       'Baromètre des salaires 974',
       'API recruteur & intégration ATS',
       'Application mobile native (iOS & Android)',
+    ],
+  },
+  {
+    quarter: 'Évolutions stratégiques futures',
+    status: 'planned',
+    items: [
+      'Diffusion automatisée des offres vers les partenaires emploi et plateformes externes. Prévue après validation du marché et montée en charge des recruteurs.',
     ],
   },
 ]
@@ -67,7 +72,7 @@ export function RoadmapSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {ROADMAP.map((phase) => {
             const style = STATUS_STYLES[phase.status as keyof typeof STATUS_STYLES]
             return (

@@ -108,6 +108,7 @@ export const jobs = pgTable('jobs', {
   perks:        text().array(),
   languages:    text().array(),
   requiredLevel: text('required_level'),
+  prequalQuestions: jsonb('prequal_questions'),   // questions de préqualification [{id,label,type,options?,required?}]
   startDate:    text('start_date'),
   views:        integer().notNull().default(0),
   applicationsCount: integer('applications_count').notNull().default(0),
@@ -135,6 +136,7 @@ export const applications = pgTable('applications', {
   jobId:        uuid('job_id').notNull().references(() => jobs.id, { onDelete: 'cascade' }),
   candidateId:  uuid('candidate_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
   coverLetter:  text('cover_letter'),
+  prequalAnswers: jsonb('prequal_answers'),   // réponses [{questionId,label,value}]
   status:       text().notNull().default('pending'),
   recruiterNotes: text('recruiter_notes'),
   createdAt:    now(),

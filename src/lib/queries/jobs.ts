@@ -180,6 +180,7 @@ const JOB_FIELDS: Record<string, keyof typeof jobs.$inferInsert> = {
   location: 'location', job_type: 'jobType', sector: 'sector', remote: 'remote',
   salary_min: 'salaryMin', salary_max: 'salaryMax', salary_currency: 'salaryCurrency',
   is_anonymous: 'isAnonymous', is_active: 'isActive',
+  prequal_questions: 'prequalQuestions',
 }
 
 function mapJobPayload(payload: Record<string, unknown>): Record<string, unknown> {

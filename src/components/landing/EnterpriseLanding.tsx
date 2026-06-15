@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ArrowRight, Check, Users, BarChart2, Zap, Shield, Globe, Landmark, Target, Briefcase, Search, Rss } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { KZ, SUBSCRIPTION_PLANS, PARTNERS } from '@/lib/constants'
+import { KZ, SUBSCRIPTION_PLANS, PARTNERS, MULTIDIFFUSION_ENABLED, planFeatures } from '@/lib/constants'
 import { PartnerCarousel } from './PartnerCarousel'
 
 const PARTNER_ICON_MAP: Record<string, React.ReactNode> = {
@@ -42,14 +42,14 @@ function PriceCard({ plan, isHighlight }: { plan: typeof SUBSCRIPTION_PLANS[0]; 
       <div className="text-xs opacity-60 mb-4">30 jours d&apos;essai · 1er débit après l&apos;essai</div>
 
       <div className="flex flex-col gap-2 mb-6 flex-1">
-        {plan.features.map(f => (
+        {planFeatures(plan).map(f => (
           <div key={f} className="flex items-start gap-2 text-sm">
             <Check size={14} className="mt-0.5 shrink-0" style={{ color: isHighlight ? KZ.orange : KZ.green }} />
             <span style={{ opacity: isHighlight ? 0.9 : 0.85 }}>{f}</span>
           </div>
         ))}
-        {/* Partenaires */}
-        {plan.partners.length > 0 && (
+        {/* Partenaires (multidiffusion — masqué tant que OFF) */}
+        {MULTIDIFFUSION_ENABLED && plan.partners.length > 0 && (
           <div className="mt-2 pt-2 border-t border-white/20">
             <div className="text-xs font-bold mb-1.5 opacity-70">Diffusion incluse :</div>
             {plan.partners.map(p => {
@@ -88,7 +88,7 @@ function PriceCard({ plan, isHighlight }: { plan: typeof SUBSCRIPTION_PLANS[0]; 
 export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
   const VALUE_PROPS = [
     { icon: <Users size={24} />, color: KZ.violetSoft, title: 'Gestion d\'équipe', desc: 'Plusieurs recruteurs sur un même compte. Rôles, permissions, KazaScore collectif.' },
-    { icon: <Globe size={24} />, color: KZ.blueSoft, title: 'Multi-diffusion', desc: 'Publiez une fois, diffusez partout : France Travail, Mission Locale, APEC, Indeed et plus.' },
+    ...(MULTIDIFFUSION_ENABLED ? [{ icon: <Globe size={24} />, color: KZ.blueSoft, title: 'Multi-diffusion', desc: 'Publiez une fois, diffusez partout : France Travail, Mission Locale, APEC, Indeed et plus.' }] : []),
     { icon: <Zap size={24} />, color: KZ.yellowSoft, title: 'IA de tri', desc: 'KazaIA analyse chaque candidature. Matching automatique. Zéro CV non pertinent.' },
     { icon: <BarChart2 size={24} />, color: KZ.greenSoft, title: 'Analytics RH', desc: 'Pipeline Kanban, taux de conversion, temps de réponse, KazaScore recruteur.' },
     { icon: <Shield size={24} />, color: KZ.orangeSoft, title: 'Conformité RGPD', desc: 'Données hébergées en France. Chiffrement E2E. Droit à l\'oubli automatisé.' },
@@ -108,7 +108,7 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
               de La Réunion.
             </h1>
             <p className="text-lg leading-relaxed mb-8 max-w-[500px]" style={{ color: 'rgba(255,247,238,0.75)' }}>
-              La plateforme RH faite pour les entreprises réunionnaises. Multi-diffusion sur toutes les plateformes, IA de tri, équipe multi-recruteurs.
+              La plateforme RH faite pour les entreprises réunionnaises. IA de tri des candidatures, équipe multi-recruteurs, analytics RH complet.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/auth/register?role=recruiter">
@@ -145,15 +145,17 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
         </div>
       </section>
 
-      {/* PARTENAIRES ─────────────────────────────────────────── */}
-      <section className="px-4 sm:px-8 lg:px-16 py-10 border-b border-[#1A1410]" style={{ background: KZ.cream2 }}>
-        <p className="text-center text-xs font-bold text-[#6B5A4A] uppercase tracking-widest mb-6">
-          Multi-diffusion automatique vers
-        </p>
-        <div className="max-w-[1100px] mx-auto">
-          <PartnerCarousel />
-        </div>
-      </section>
+      {/* PARTENAIRES (multidiffusion — masqué tant que OFF) ───── */}
+      {MULTIDIFFUSION_ENABLED && (
+        <section className="px-4 sm:px-8 lg:px-16 py-10 border-b border-[#1A1410]" style={{ background: KZ.cream2 }}>
+          <p className="text-center text-xs font-bold text-[#6B5A4A] uppercase tracking-widest mb-6">
+            Multi-diffusion automatique vers
+          </p>
+          <div className="max-w-[1100px] mx-auto">
+            <PartnerCarousel />
+          </div>
+        </section>
+      )}
 
       {/* VALEUR AJOUTÉE ─────────────────────────────────────── */}
       <section className="px-4 sm:px-8 lg:px-16 py-16 lg:py-20" style={{ background: KZ.cream }}>

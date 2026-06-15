@@ -146,6 +146,17 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   },
 ]
 
+// ── Multidiffusion (désactivée visuellement — réactivation = passer à true) ──
+// Le code de diffusion (lib/partners/*) reste en place ; seul l'affichage est masqué.
+export const MULTIDIFFUSION_ENABLED = false
+
+const DIFFUSION_FEATURE_RE = /diffusion|france travail|mission locale|apec|indeed|plateforme|flux xml/i
+
+/** Features d'un forfait, en masquant les lignes de multidiffusion tant qu'elle est OFF. */
+export function planFeatures(plan: SubscriptionPlan): string[] {
+  return MULTIDIFFUSION_ENABLED ? plan.features : plan.features.filter((f) => !DIFFUSION_FEATURE_RE.test(f))
+}
+
 export const KAZA_BOOST_COST_XP = 100   // coût en XP pour booster son profil 48h
 export const KAZA_BOOST_HOURS   = 48    // durée du boost en heures
 
