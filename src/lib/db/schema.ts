@@ -39,6 +39,12 @@ export const profiles = pgTable('profiles', {
   emailAlertsEnabled:  boolean('email_alerts_enabled').notNull().default(true),
   emailAlertFrequency: text('email_alert_frequency').notNull().default('daily'),
   videoPitchUrl: text('video_pitch_url'),
+  // ── KazaPortfolio ──
+  linkedinUrl:   text('linkedin_url'),
+  githubUrl:     text('github_url'),
+  portfolioUrl:  text('portfolio_url'),
+  portfolioPdfUrl: text('portfolio_pdf_url'),
+  realisations:  jsonb('realisations'),   // [{title, description?, url?}]
   boostedUntil:  timestamp('boosted_until', { withTimezone: true }),
   referralCode:  text('referral_code').unique(),
   companyId:     uuid('company_id'),
@@ -142,6 +148,16 @@ export const applications = pgTable('applications', {
   createdAt:    now(),
   updatedAt:    now(),
 }, (t) => [unique().on(t.jobId, t.candidateId)])
+
+// ── talent_pool (vivier de talents recruteur) ─────────────────────
+export const talentPool = pgTable('talent_pool', {
+  id:          uuid().primaryKey().default(sql`gen_random_uuid()`),
+  recruiterId: uuid('recruiter_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+  candidateId: uuid('candidate_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+  category:    text().notNull().default('a_contacter'),  // a_contacter | plus_tard | profil_rare | metier_tension
+  note:        text(),
+  createdAt:   now(),
+}, (t) => [unique().on(t.recruiterId, t.candidateId)])
 
 // ── favorites ─────────────────────────────────────────────────────
 export const favorites = pgTable('favorites', {

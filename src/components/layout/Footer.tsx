@@ -6,6 +6,7 @@ const FOOTER_LINKS = [
     title: 'Candidats',
     links: [
       { label: "Offres d'emploi", href: '/candidate/jobs' },
+      { label: 'Radar Emploi 974/976', href: '/radar-emploi' },
       { label: 'Mon profil',      href: '/candidate/profile' },
       { label: 'Candidatures',   href: '/candidate/applications' },
       { label: 'Favoris',        href: '/candidate/favorites' },

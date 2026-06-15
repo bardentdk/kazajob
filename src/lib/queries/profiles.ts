@@ -35,6 +35,11 @@ const EDITABLE: Record<string, keyof ProfileInsert> = {
   cv_template:           'cvTemplate',
   cv_color:              'cvColor',
   video_pitch_url:       'videoPitchUrl',
+  linkedin_url:          'linkedinUrl',
+  github_url:            'githubUrl',
+  portfolio_url:         'portfolioUrl',
+  portfolio_pdf_url:     'portfolioPdfUrl',
+  realisations:          'realisations',
 }
 
 /** Met à jour le profil de l'utilisateur (champs en liste blanche uniquement). */

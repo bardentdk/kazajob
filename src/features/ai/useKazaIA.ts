@@ -231,6 +231,45 @@ export function useApplicationSummaryAI() {
   return { generating, summary, raw, error, locked, generate, reset }
 }
 
+// ── Hook KazaCoach (assistant candidat) ────────────────────────
+
+export interface KazaCoachResult {
+  compatibilite: number
+  competences_manquantes: string[]
+  experience_recommandee: string
+  conseils: string[]
+  ameliorations: string[]
+}
+
+export function useKazaCoach() {
+  const [generating, setGenerating] = useState(false)
+  const [coach, setCoach] = useState<KazaCoachResult | null>(null)
+  const [raw, setRaw] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const generate = useCallback(async (targetRole?: string) => {
+    setGenerating(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/kaza-ia/coach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetRole }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Erreur API')
+      setCoach(data.coach ?? null)
+      setRaw(data.raw ?? null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur inconnue')
+    } finally {
+      setGenerating(false)
+    }
+  }, [])
+
+  return { generating, coach, raw, error, generate }
+}
+
 // ── Hook préparation entretien ─────────────────────────────────
 
 export function useInterviewPrepAI() {

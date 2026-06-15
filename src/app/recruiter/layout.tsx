@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LayoutDashboard, Briefcase, Users, MessageCircle, Plus, Calendar, Star, Building2, GraduationCap, BarChart2, User } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, MessageCircle, Plus, Calendar, Star, Building2, GraduationCap, BarChart2, User, Bookmark } from 'lucide-react'
 import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { CompanySwitcher } from '@/components/layout/CompanySwitcher'
@@ -16,6 +16,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/recruiter/jobs',         label: 'Mes offres',       icon: <Briefcase size={16} /> },
   { href: '/recruiter/training',     label: 'Formations',       icon: <GraduationCap size={16} /> },
   { href: '/recruiter/applications', label: 'Candidatures',     icon: <Users size={16} /> },
+  { href: '/recruiter/talent-pool',  label: 'Vivier de talents', icon: <Bookmark size={16} /> },
   { href: '/recruiter/analytics',    label: 'Analytics',        icon: <BarChart2 size={16} /> },
   { href: '/recruiter/agenda',       label: 'Agenda',           icon: <Calendar size={16} /> },
   { href: '/recruiter/events',       label: 'KazaEvents',       icon: <Star size={16} /> },

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Users, Calendar, Video, Phone, MapPin, MessageCircle, Sparkles, Lock, Check, AlertTriangle, Rocket } from 'lucide-react'
+import { Users, Calendar, Video, Phone, MapPin, MessageCircle, Sparkles, Lock, Check, AlertTriangle, Rocket, Bookmark } from 'lucide-react'
 import { InlineLoader } from '@/components/ui/LogoLoader'
 import { Tag } from '@/components/ui/Tag'
 import { Progress } from '@/components/ui/Progress'
@@ -20,7 +20,7 @@ import { useAuth } from '@/features/auth/useAuth'
 import { useInterviews } from '@/features/interviews/useInterviews'
 import { useStartConversation } from '@/features/messages/useMessages'
 import type { Application, BadgeColor } from '@/lib/types'
-import { APPLICATION_STATUSES, KZ } from '@/lib/constants'
+import { APPLICATION_STATUSES, KZ, TALENT_POOL_CATEGORIES } from '@/lib/constants'
 import { timeAgo } from '@/lib/utils'
 
 export default function RecruiterApplicationsPage() {
@@ -36,6 +36,7 @@ export default function RecruiterApplicationsPage() {
   const [scheduling, setScheduling] = useState(false)
   const [messagingId, setMessagingId] = useState<string | null>(null)
   const [summaryFor, setSummaryFor] = useState<Application | null>(null)
+  const [poolFor, setPoolFor] = useState<Application | null>(null)
   const { create: createInterview } = useInterviews()
   const startConversation = useStartConversation()
   const router = useRouter()
@@ -189,6 +190,11 @@ export default function RecruiterApplicationsPage() {
                     </Button>
                   )}
                   {candidate && (
+                    <Button kind="soft" size="sm" icon={<Bookmark size={13} />} onClick={() => setPoolFor(app)}>
+                      Vivier
+                    </Button>
+                  )}
+                  {candidate && (
                     <Link href={`/recruiter/candidates/${candidate.id}`}>
                       <Button kind="soft" size="sm">Profil</Button>
                     </Link>
@@ -266,7 +272,63 @@ export default function RecruiterApplicationsPage() {
 
       {/* Modal synthèse IA candidature */}
       <ApplicationSummaryModal app={summaryFor} onClose={() => setSummaryFor(null)} />
+
+      {/* Modal sauvegarde dans le vivier */}
+      <SaveToPoolModal app={poolFor} onClose={() => setPoolFor(null)} />
     </div>
+  )
+}
+
+// ── Modal "Sauvegarder dans le vivier" ─────────────────────────
+function SaveToPoolModal({ app, onClose }: { app: Application | null; onClose: () => void }) {
+  const [category, setCategory] = useState<string>('a_contacter')
+  const [note, setNote] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
+  const candidate = app?.candidate as { id?: string; full_name?: string } | undefined
+
+  const save = async () => {
+    if (!candidate?.id) return
+    setLoading(true)
+    await fetch('/api/recruiter/talent-pool', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ candidateId: candidate.id, category, note: note || null }),
+    })
+    setLoading(false); setDone(true)
+  }
+
+  const handleClose = () => { setDone(false); setNote(''); setCategory('a_contacter'); onClose() }
+
+  return (
+    <Modal open={!!app} onClose={handleClose} title="Sauvegarder dans le vivier" size="sm">
+      {done ? (
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <div className="w-14 h-14 rounded-full border-2 border-[#1A1410] flex items-center justify-center" style={{ background: KZ.greenSoft }}>
+            <Check size={24} color={KZ.green} />
+          </div>
+          <p className="text-sm font-bold text-[#1A1410]">{candidate?.full_name} ajouté au vivier.</p>
+          <Button kind="primary" size="md" onClick={handleClose}>Fermer</Button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-[#6B5A4A]">Classez <strong className="text-[#1A1410]">{candidate?.full_name}</strong> pour le retrouver facilement.</p>
+          <div className="grid grid-cols-2 gap-2">
+            {TALENT_POOL_CATEGORIES.map((c) => (
+              <button key={c.id} onClick={() => setCategory(c.id)}
+                className="p-2.5 rounded-xl border-2 text-sm font-semibold text-left transition-all"
+                style={{ borderColor: category === c.id ? KZ.violet : KZ.line, background: category === c.id ? KZ.violetSoft : 'white' }}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+          <Textarea label="Note (optionnel)" value={note} onChange={(e) => setNote(e.target.value)} rows={2}
+            placeholder="Ex : à rappeler en septembre, profil rare en soudure…" />
+          <Button kind="primary" size="lg" full loading={loading} icon={<Bookmark size={15} />} onClick={save}>
+            Ajouter au vivier
+          </Button>
+        </div>
+      )}
+    </Modal>
   )
 }
 

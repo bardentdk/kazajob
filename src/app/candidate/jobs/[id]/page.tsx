@@ -20,6 +20,8 @@ import { useAuth } from '@/features/auth/useAuth'
 import { formatSalary, timeAgo } from '@/lib/utils'
 import { KZ, getSalaryLabel } from '@/lib/constants'
 import { type PrequalQuestion } from '@/lib/prequal'
+import { SalaryInsightsCard } from '@/components/jobs/SalaryInsightsCard'
+import { TrainingRecoCard } from '@/components/jobs/TrainingRecoCard'
 
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -234,6 +236,14 @@ export default function JobDetailPage() {
               <div className="text-sm leading-relaxed text-[#2A2018] whitespace-pre-line">{job.requirements}</div>
             </div>
           )}
+
+          {/* Pour améliorer vos chances — si pas totalement compatible */}
+          {job.match_score !== undefined && job.match_score < 80 && (
+            <TrainingRecoCard sector={job.sector} />
+          )}
+
+          {/* Estimations salariales (données réelles du secteur) */}
+          <SalaryInsightsCard sector={job.sector} salaryMin={job.salary_min} salaryMax={job.salary_max} />
         </div>
 
         {/* Sidebar desktop */}

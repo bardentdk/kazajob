@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { LayoutDashboard, Search, Heart, Briefcase, MessageCircle, User, Sparkles, Calendar, Settings, Star, Users, Flame, Gamepad2, GraduationCap } from 'lucide-react'
+import { LayoutDashboard, Search, Heart, Briefcase, MessageCircle, User, Sparkles, Calendar, Settings, Star, Users, Flame, Gamepad2, GraduationCap, Compass } from 'lucide-react'
 import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { NavLanding } from '@/components/layout/NavLanding'
@@ -24,6 +24,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/candidate/agenda',       label: 'Entretiens',      icon: <Calendar size={16} /> },
   { href: '/candidate/events',       label: 'KazaEvents',      icon: <Star size={16} /> },
   { href: '/candidate/ia',           label: 'KazaIA',          icon: <Sparkles size={16} /> },
+  { href: '/candidate/coach',        label: 'KazaCoach',       icon: <Compass size={16} /> },
   { href: '/candidate/profile',      label: 'Mon profil',      icon: <User size={16} /> },
   { href: '/candidate/referral',     label: 'Parrainage',      icon: <Users size={16} /> },
   { href: '/candidate/settings',     label: 'Paramètres',      icon: <Settings size={16} /> },

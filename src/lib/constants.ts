@@ -157,6 +157,14 @@ export function planFeatures(plan: SubscriptionPlan): string[] {
   return MULTIDIFFUSION_ENABLED ? plan.features : plan.features.filter((f) => !DIFFUSION_FEATURE_RE.test(f))
 }
 
+// ── Vivier de talents (catégories) ────────────────────────────────
+export const TALENT_POOL_CATEGORIES = [
+  { id: 'a_contacter',    label: 'À contacter',           color: 'green'  },
+  { id: 'plus_tard',      label: 'Intéressant plus tard', color: 'violet' },
+  { id: 'profil_rare',    label: 'Profil rare',           color: 'orange' },
+  { id: 'metier_tension', label: 'Métier en tension',     color: 'yellow' },
+] as const
+
 export const KAZA_BOOST_COST_XP = 100   // coût en XP pour booster son profil 48h
 export const KAZA_BOOST_HOURS   = 48    // durée du boost en heures
 

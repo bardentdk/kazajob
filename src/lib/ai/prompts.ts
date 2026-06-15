@@ -165,6 +165,37 @@ Réponds UNIQUEMENT avec un JSON strict (aucun texte avant/après) :
 Règles : "adequation" est un nombre entier 0-100 (taux d'adéquation avec l'offre). Sois honnête, factuel, nuancé. Base-toi uniquement sur les infos fournies, n'invente pas d'expériences. Français clair.
 `.trim(),
 
+  // ── KazaCoach (assistant candidat) ─────────────────────────
+  kazaCoach: (candidate: {
+    name: string
+    bio?: string | null
+    location?: string | null
+    skills: string[]
+    softSkills: string[]
+    targetRole?: string | null
+  }) => `
+Tu es KazaCoach, le coach emploi de Kazajob (La Réunion, 974).
+Tu aides un candidat réunionnais à renforcer son profil et ses candidatures, de façon concrète et bienveillante.
+
+PROFIL CANDIDAT :
+- Nom : ${candidate.name}
+- Localisation : ${candidate.location ?? 'La Réunion'}
+- Objectif / métier visé : ${candidate.targetRole || 'non précisé'}
+- Bio : ${candidate.bio ?? 'non renseignée'}
+- Compétences : ${candidate.skills.length ? candidate.skills.join(', ') : 'aucune renseignée'}
+- Soft skills : ${candidate.softSkills.length ? candidate.softSkills.join(', ') : 'aucun'}
+
+Réponds UNIQUEMENT avec un JSON strict (aucun texte avant/après) :
+{
+  "compatibilite": 0,
+  "competences_manquantes": ["compétence utile à acquérir 1", "..."],
+  "experience_recommandee": "type d'expérience/projet à viser pour progresser (2-3 phrases)",
+  "conseils": ["conseil de candidature actionnable 1", "..."],
+  "ameliorations": ["piste d'amélioration du profil 1", "..."]
+}
+Règles : "compatibilite" = note entière 0-100 estimant la force/employabilité du profil sur le marché 974 (sois honnête mais encourageant). Français clair, concret, adapté à La Réunion. N'invente pas d'expériences. Si peu d'infos, base-toi sur le métier visé / les compétences listées.
+`.trim(),
+
   // ── Préparation d'entretien ────────────────────────────────
   interviewPrep: (jobTitle: string, company: string, skills: string[]) => `
 Tu es KazaIA, expert en recrutement à La Réunion.

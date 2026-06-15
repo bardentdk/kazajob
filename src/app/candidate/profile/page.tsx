@@ -13,6 +13,7 @@ import { FileUpload } from '@/components/ui/FileUpload'
 import dynamic from 'next/dynamic'
 import { KazaBoostButton } from '@/components/ui/KazaBoostButton'
 import { ProfileBoostPaid } from '@/components/ui/ProfileBoostPaid'
+import { KazaPortfolioSection } from '@/components/profile/KazaPortfolioSection'
 
 // Import dynamique ssr:false pour éviter les erreurs MediaRecorder en prod
 const VideoPitchRecorder = dynamic(
@@ -319,6 +320,9 @@ export default function CandidateProfilePage() {
               onDelete={handleVideoPitchDelete}
             />
           </div>
+
+          {/* KazaPortfolio */}
+          <KazaPortfolioSection profile={profile} onSaved={refetch} />
 
           {/* KazaBoost */}
           <div className="kz-card p-5 bg-white">
