@@ -22,6 +22,7 @@ import { KZ, getSalaryLabel } from '@/lib/constants'
 import { type PrequalQuestion } from '@/lib/prequal'
 import { SalaryInsightsCard } from '@/components/jobs/SalaryInsightsCard'
 import { TrainingRecoCard } from '@/components/jobs/TrainingRecoCard'
+import { EmployerReputation } from '@/components/jobs/EmployerReputation'
 
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -286,6 +287,9 @@ export default function JobDetailPage() {
               )}
             </div>
           </div>
+          {/* Réputation employeur (indicateurs réels) */}
+          <EmployerReputation companyId={job.company?.id} />
+
           <div className="kz-card p-4 bg-white grid grid-cols-2 gap-3">
             <div className="text-center"><div className="text-2xl font-extrabold text-[#1A1410]">{job.views}</div><div className="text-xs text-[#6B5A4A]">vues</div></div>
             <div className="text-center"><div className="text-2xl font-extrabold text-[#1A1410]">{job.applications_count}</div><div className="text-xs text-[#6B5A4A]">candidatures</div></div>

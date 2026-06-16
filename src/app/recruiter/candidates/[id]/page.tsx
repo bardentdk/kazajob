@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, MapPin, Mail, Phone, Download, MessageCircle } from 'lucide-react'
+import { ArrowLeft, MapPin, Mail, Phone, Download, MessageCircle, Briefcase, FolderGit2, Globe, FileText, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Tag } from '@/components/ui/Tag'
@@ -150,6 +150,51 @@ export default function CandidateDetailPage() {
               <p className="text-sm leading-relaxed text-[#2A2018]">{candidate.bio}</p>
             </div>
           )}
+
+          {/* KazaPortfolio */}
+          {(() => {
+            const c = candidate as unknown as {
+              linkedin_url?: string | null; github_url?: string | null; portfolio_url?: string | null
+              portfolio_pdf_url?: string | null; realisations?: { title: string; description?: string; url?: string }[] | null
+            }
+            const links = [
+              c.linkedin_url && { label: 'LinkedIn', href: c.linkedin_url, icon: <Briefcase size={13} /> },
+              c.github_url && { label: 'GitHub', href: c.github_url, icon: <FolderGit2 size={13} /> },
+              c.portfolio_url && { label: 'Portfolio', href: c.portfolio_url, icon: <Globe size={13} /> },
+              c.portfolio_pdf_url && { label: 'Portfolio PDF', href: c.portfolio_pdf_url, icon: <FileText size={13} /> },
+            ].filter(Boolean) as { label: string; href: string; icon: React.ReactNode }[]
+            const reals = c.realisations ?? []
+            if (!links.length && !reals.length) return null
+            return (
+              <div className="kz-card p-5 bg-white">
+                <h3 className="kz-h3 text-[#1A1410] mb-3">KazaPortfolio</h3>
+                {links.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {links.map((l) => (
+                      <a key={l.label} href={l.href} target="_blank" rel="noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#1A1410] text-xs font-semibold hover:shadow-[2px_2px_0_#1A1410] transition-all"
+                        style={{ background: KZ.violetSoft, color: KZ.violet }}>
+                        {l.icon}{l.label}<ExternalLink size={10} />
+                      </a>
+                    ))}
+                  </div>
+                )}
+                {reals.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    {reals.map((r, i) => (
+                      <div key={i} className="p-3 rounded-lg border border-[#E8DDC9]" style={{ background: KZ.cream2 }}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-[#1A1410]">{r.title}</span>
+                          {r.url && <a href={r.url} target="_blank" rel="noreferrer" className="text-xs font-semibold flex items-center gap-1" style={{ color: KZ.violet }}>Voir <ExternalLink size={10} /></a>}
+                        </div>
+                        {r.description && <p className="text-xs text-[#6B5A4A] mt-0.5">{r.description}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           <div className="kz-card p-5 bg-white">
             <h3 className="kz-h3 text-[#1A1410] mb-3">Stats</h3>

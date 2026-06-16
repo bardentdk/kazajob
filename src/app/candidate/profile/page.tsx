@@ -322,7 +322,7 @@ export default function CandidateProfilePage() {
           </div>
 
           {/* KazaPortfolio */}
-          <KazaPortfolioSection profile={profile} onSaved={refetch} />
+          <KazaPortfolioSection profile={profile as unknown as Record<string, unknown> | null} onSaved={refetch} />
 
           {/* KazaBoost */}
           <div className="kz-card p-5 bg-white">

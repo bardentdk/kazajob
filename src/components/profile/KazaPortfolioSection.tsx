@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Linkedin, Github, Globe, FileText, Plus, Trash2, Check, FolderGit2 } from 'lucide-react'
+import { Briefcase, Globe, FileText, Plus, Trash2, Check, FolderGit2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
@@ -19,12 +19,13 @@ interface ProfileLike {
 }
 
 /** KazaPortfolio — liens pro, PDF et réalisations du candidat. Sauvegarde via /api/profile. */
-export function KazaPortfolioSection({ profile, onSaved }: { profile: ProfileLike | null; onSaved?: () => void | Promise<void> }) {
-  const [linkedin, setLinkedin] = useState(profile?.linkedin_url ?? '')
-  const [github, setGithub] = useState(profile?.github_url ?? '')
-  const [portfolio, setPortfolio] = useState(profile?.portfolio_url ?? '')
-  const [pdfUrl, setPdfUrl] = useState<string | null>(profile?.portfolio_pdf_url ?? null)
-  const [realisations, setRealisations] = useState<Realisation[]>(profile?.realisations ?? [])
+export function KazaPortfolioSection({ profile, onSaved }: { profile: Record<string, unknown> | null; onSaved?: () => void | Promise<void> }) {
+  const p = (profile ?? {}) as ProfileLike
+  const [linkedin, setLinkedin] = useState(p.linkedin_url ?? '')
+  const [github, setGithub] = useState(p.github_url ?? '')
+  const [portfolio, setPortfolio] = useState(p.portfolio_url ?? '')
+  const [pdfUrl, setPdfUrl] = useState<string | null>(p.portfolio_pdf_url ?? null)
+  const [realisations, setRealisations] = useState<Realisation[]>(p.realisations ?? [])
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -70,8 +71,8 @@ export function KazaPortfolioSection({ profile, onSaved }: { profile: ProfileLik
       <p className="text-xs text-[#6B5A4A] mb-4">Mets en avant tes liens, ton portfolio et tes réalisations auprès des recruteurs.</p>
 
       <div className="flex flex-col gap-3">
-        <Input label="LinkedIn" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} placeholder="https://linkedin.com/in/..." icon={<Linkedin size={15} />} />
-        <Input label="GitHub" value={github} onChange={(e) => setGithub(e.target.value)} placeholder="https://github.com/..." icon={<Github size={15} />} />
+        <Input label="LinkedIn" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} placeholder="https://linkedin.com/in/..." icon={<Briefcase size={15} />} />
+        <Input label="GitHub" value={github} onChange={(e) => setGithub(e.target.value)} placeholder="https://github.com/..." icon={<FolderGit2 size={15} />} />
         <Input label="Site / Portfolio" value={portfolio} onChange={(e) => setPortfolio(e.target.value)} placeholder="https://mon-portfolio.re" icon={<Globe size={15} />} />
 
         {/* PDF portfolio */}
