@@ -168,6 +168,7 @@ export const promoCodes = pgTable('promo_codes', {
   discountValue:  integer('discount_value').notNull(),                  // % (1-100) ou centimes
   durationType:   text('duration_type').notNull().default('once'),      // once | repeating | forever
   durationMonths: integer('duration_months'),                           // si repeating
+  startDate:      timestamp('start_date', { withTimezone: true }),      // début de validité (défaut: immédiat)
   endDate:        timestamp('end_date', { withTimezone: true }),        // fin de validité (prolongeable)
   maxRedemptions: integer('max_redemptions'),
   usedCount:      integer('used_count').notNull().default(0),

@@ -14,7 +14,7 @@ interface Promo {
   id: string; code: string; description: string | null
   discountType: 'percent' | 'amount'; discountValue: number
   durationType: 'once' | 'repeating' | 'forever'; durationMonths: number | null
-  endDate: string | null; maxRedemptions: number | null; usedCount: number
+  startDate: string | null; endDate: string | null; maxRedemptions: number | null; usedCount: number
   active: boolean; stripeCouponId: string | null; createdAt: string
 }
 
@@ -27,7 +27,8 @@ export default function AdminPromosPage() {
   const [error, setError] = useState('')
   const [form, setForm] = useState({
     code: '', description: '', discountType: 'percent', discountValue: '',
-    durationType: 'once', durationMonths: '3', endDate: '', maxRedemptions: '',
+    durationType: 'once', durationMonths: '3', durationDays: '30', customDates: false,
+    startDate: '', endDate: '', maxRedemptions: '',
   })
 
   const load = async () => {
@@ -39,6 +40,16 @@ export default function AdminPromosPage() {
   const create = async () => {
     setError('')
     if (!form.code.trim() || !form.discountValue) { setError('Code et valeur requis.'); return }
+    // Validité : par défaut durée en jours depuis aujourd'hui → date de fin calculée.
+    let startDate: string | null = null
+    let endDate: string | null = null
+    if (form.customDates) {
+      startDate = form.startDate ? new Date(form.startDate + 'T00:00:00').toISOString() : null
+      endDate = form.endDate ? new Date(form.endDate + 'T23:59:59').toISOString() : null
+    } else if (form.durationDays && parseInt(form.durationDays) > 0) {
+      const d = new Date(); d.setDate(d.getDate() + parseInt(form.durationDays)); d.setHours(23, 59, 59, 0)
+      endDate = d.toISOString()
+    }
     setCreating(true)
     const res = await fetch('/api/admin/promos', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -48,14 +59,14 @@ export default function AdminPromosPage() {
         discountValue: form.discountType === 'amount' ? Math.round(parseFloat(form.discountValue) * 100) : parseInt(form.discountValue),
         durationType: form.durationType,
         durationMonths: form.durationType === 'repeating' ? parseInt(form.durationMonths) : null,
-        endDate: form.endDate || null,
+        startDate, endDate,
         maxRedemptions: form.maxRedemptions ? parseInt(form.maxRedemptions) : null,
       }),
     })
     const data = await res.json().catch(() => ({}))
     setCreating(false)
     if (!res.ok) { setError(data.error ?? 'Erreur'); return }
-    setForm({ code: '', description: '', discountType: 'percent', discountValue: '', durationType: 'once', durationMonths: '3', endDate: '', maxRedemptions: '' })
+    setForm({ code: '', description: '', discountType: 'percent', discountValue: '', durationType: 'once', durationMonths: '3', durationDays: '30', customDates: false, startDate: '', endDate: '', maxRedemptions: '' })
     load()
   }
 
@@ -105,7 +116,19 @@ export default function AdminPromosPage() {
           {form.durationType === 'repeating' && (
             <Input label="Nombre de mois" type="number" value={form.durationMonths} onChange={(e) => setForm(f => ({ ...f, durationMonths: e.target.value }))} />
           )}
-          <Input label="Date de fin (validité)" type="date" value={form.endDate} onChange={(e) => setForm(f => ({ ...f, endDate: e.target.value }))} />
+          {!form.customDates ? (
+            <Input label="Validité (jours à partir d'aujourd'hui)" type="number" value={form.durationDays}
+              onChange={(e) => setForm(f => ({ ...f, durationDays: e.target.value }))} placeholder="30" />
+          ) : (
+            <>
+              <Input label="Début" type="date" value={form.startDate} onChange={(e) => setForm(f => ({ ...f, startDate: e.target.value }))} />
+              <Input label="Fin" type="date" value={form.endDate} onChange={(e) => setForm(f => ({ ...f, endDate: e.target.value }))} />
+            </>
+          )}
+          <label className="flex items-center gap-2 self-end pb-2.5 cursor-pointer text-sm font-semibold text-[#1A1410]">
+            <input type="checkbox" checked={form.customDates} onChange={(e) => setForm(f => ({ ...f, customDates: e.target.checked }))} className="w-4 h-4 accent-[#6D3BEB]" />
+            Définir des dates précises
+          </label>
           <Input label="Max utilisations" type="number" value={form.maxRedemptions} onChange={(e) => setForm(f => ({ ...f, maxRedemptions: e.target.value }))} placeholder="illimité" />
           <Input label="Description" value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Promo de rentrée" />
         </div>
@@ -131,7 +154,9 @@ export default function AdminPromosPage() {
                   </div>
                   <div className="text-xs text-[#6B5A4A]">
                     {DUR[p.durationType]}{p.durationType === 'repeating' ? ` (${p.durationMonths})` : ''} ·
-                    {p.endDate ? ` jusqu'au ${new Date(p.endDate).toLocaleDateString('fr-FR')}` : ' sans date de fin'} ·
+                    {p.startDate
+                      ? ` du ${new Date(p.startDate).toLocaleDateString('fr-FR')}${p.endDate ? ` au ${new Date(p.endDate).toLocaleDateString('fr-FR')}` : ''}`
+                      : p.endDate ? ` jusqu'au ${new Date(p.endDate).toLocaleDateString('fr-FR')}` : ' sans date de fin'} ·
                     {` ${p.usedCount}${p.maxRedemptions !== null ? `/${p.maxRedemptions}` : ''} utilisé(s)`}
                     {p.description ? ` · ${p.description}` : ''}
                   </div>

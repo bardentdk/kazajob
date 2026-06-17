@@ -15,6 +15,7 @@ export interface PromoInput {
   discountValue: number
   durationType: 'once' | 'repeating' | 'forever'
   durationMonths?: number | null
+  startDate?: string | null
   endDate?: string | null
   maxRedemptions?: number | null
 }
@@ -56,6 +57,7 @@ export async function createPromo(input: PromoInput): Promise<{ error?: string; 
     discountValue: input.discountValue,
     durationType: input.durationType,
     durationMonths: input.durationMonths ?? null,
+    startDate: input.startDate ? new Date(input.startDate) : null,
     endDate: input.endDate ? new Date(input.endDate) : null,
     maxRedemptions: input.maxRedemptions ?? null,
     stripeCouponId,
@@ -85,6 +87,7 @@ export async function validatePromo(code: string): Promise<PromoValidation> {
   if (!code?.trim()) return { valid: false }
   const [p] = await db.select().from(promoCodes).where(eq(promoCodes.code, code.trim().toUpperCase())).limit(1)
   if (!p || !p.active) return { valid: false, reason: 'Code invalide' }
+  if (p.startDate && new Date(p.startDate) > new Date()) return { valid: false, reason: 'Code pas encore actif' }
   if (p.endDate && new Date(p.endDate) < new Date()) return { valid: false, reason: 'Code expiré' }
   if (p.maxRedemptions !== null && p.usedCount >= p.maxRedemptions) return { valid: false, reason: 'Code épuisé' }
   const label = p.discountType === 'percent' ? `-${p.discountValue} %` : `-${Math.round(p.discountValue / 100)} €`
