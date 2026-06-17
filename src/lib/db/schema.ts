@@ -159,6 +159,23 @@ export const talentPool = pgTable('talent_pool', {
   createdAt:   now(),
 }, (t) => [unique().on(t.recruiterId, t.candidateId)])
 
+// ── promo_codes (codes de réduction admin, synchronisés Stripe) ───
+export const promoCodes = pgTable('promo_codes', {
+  id:             uuid().primaryKey().default(sql`gen_random_uuid()`),
+  code:           text().notNull().unique(),
+  description:    text(),
+  discountType:   text('discount_type').notNull().default('percent'),  // percent | amount
+  discountValue:  integer('discount_value').notNull(),                  // % (1-100) ou centimes
+  durationType:   text('duration_type').notNull().default('once'),      // once | repeating | forever
+  durationMonths: integer('duration_months'),                           // si repeating
+  endDate:        timestamp('end_date', { withTimezone: true }),        // fin de validité (prolongeable)
+  maxRedemptions: integer('max_redemptions'),
+  usedCount:      integer('used_count').notNull().default(0),
+  active:         boolean().notNull().default(true),
+  stripeCouponId: text('stripe_coupon_id'),
+  createdAt:      now(),
+})
+
 // ── favorites ─────────────────────────────────────────────────────
 export const favorites = pgTable('favorites', {
   id:          uuid().primaryKey().default(sql`gen_random_uuid()`),

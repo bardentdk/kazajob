@@ -4,6 +4,7 @@ import { getStripe } from '@/lib/stripe'
 import { saveStripeState, mapStripeStatus, getCompanyByStripeSubscription } from '@/lib/queries/billing'
 import { activateJobBoost } from '@/lib/queries/jobs'
 import { activateProfileBoost } from '@/lib/queries/profiles'
+import { incrementRedemption } from '@/lib/queries/promos'
 
 // POST /api/billing/webhook — événements Stripe (signature vérifiée, pas d'auth session).
 export async function POST(req: NextRequest) {
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
             subscriptionId: typeof s.subscription === 'string' ? s.subscription : s.subscription?.id ?? null,
             planId: s.metadata?.planId,
           })
+          if (s.metadata?.promoCode) await incrementRedemption(s.metadata.promoCode)
         }
         break
       }

@@ -4,6 +4,7 @@ import { getStripe, STRIPE_ENABLED, APP_URL } from '@/lib/stripe'
 import { getActiveMembership } from '@/lib/queries/companies'
 import { getOwnerBillingContext, saveStripeState } from '@/lib/queries/billing'
 import { SUBSCRIPTION_PLANS } from '@/lib/constants'
+import { validatePromo } from '@/lib/queries/promos'
 
 // POST /api/billing/checkout  { planId? } → { url }
 // Crée une session Stripe Checkout (abonnement mensuel). Réservé à l'owner.
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
   const userId = session?.user?.id
   if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
-  const { planId } = await req.json().catch(() => ({}))
+  const { planId, promoCode } = await req.json().catch(() => ({}))
 
   const membership = await getActiveMembership(userId)
   if (!membership) return NextResponse.json({ error: 'Aucune entreprise active.' }, { status: 400 })
@@ -49,6 +50,13 @@ export async function POST(req: NextRequest) {
     if (remaining > 0) trialDays = remaining
   }
 
+  // Code promo : notre validité fait foi ; Stripe applique le coupon associé.
+  let discount: { coupon: string } | null = null
+  if (promoCode) {
+    const v = await validatePromo(String(promoCode))
+    if (v.valid && v.couponId) discount = { coupon: v.couponId }
+  }
+
   const checkout = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
@@ -67,8 +75,8 @@ export async function POST(req: NextRequest) {
       ...(trialDays ? { trial_period_days: trialDays } : {}),
       metadata: { companyId: ctx.company.id, planId: plan.id },
     },
-    metadata: { companyId: ctx.company.id, planId: plan.id },
-    allow_promotion_codes: true,
+    metadata: { companyId: ctx.company.id, planId: plan.id, ...(discount ? { promoCode: String(promoCode).trim().toUpperCase() } : {}) },
+    ...(discount ? { discounts: [discount] } : { allow_promotion_codes: true }),
     success_url: `${APP_URL}/recruiter/company?billing=success`,
     cancel_url: `${APP_URL}/recruiter/company?billing=cancel`,
   })

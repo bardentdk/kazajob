@@ -84,6 +84,15 @@ export default function CompanySetupPage() {
   const [planId, setPlanId]             = useState('pro')
   const [planSaving, setPlanSaving]     = useState(false)
   const [planError, setPlanError]       = useState('')
+  const [promoCode, setPromoCode]       = useState('')
+  const [promoMsg, setPromoMsg]         = useState<{ ok: boolean; text: string } | null>(null)
+
+  const checkPromo = async () => {
+    if (!promoCode.trim()) { setPromoMsg(null); return }
+    const r = await fetch(`/api/billing/validate-promo?code=${encodeURIComponent(promoCode)}`)
+    const d = await r.json().catch(() => ({}))
+    setPromoMsg(d.valid ? { ok: true, text: `Code valide : ${d.label}` } : { ok: false, text: d.reason ?? 'Code invalide' })
+  }
 
   // Redirige UNIQUEMENT au chargement initial si l'utilisateur a déjà une entreprise.
   // (Ne pas rediriger pendant la création en cours, sinon on saute l'étape Forfait + paiement.)
@@ -186,7 +195,7 @@ export default function CompanySetupPage() {
       const co = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({ planId, promoCode: promoCode.trim() || undefined }),
       })
       const data = await co.json().catch(() => ({}))
       if (co.ok && data.url) { window.location.href = data.url as string; return }
@@ -454,6 +463,19 @@ export default function CompanySetupPage() {
                     </button>
                   )
                 })}
+              </div>
+
+              {/* Code promo */}
+              <div className="mb-3">
+                <label className="block text-sm font-semibold text-[#1A1410] mb-1.5">Code promo (optionnel)</label>
+                <div className="flex gap-2">
+                  <Input className="flex-1" value={promoCode} placeholder="Ex : RENTREE25"
+                    onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoMsg(null) }} />
+                  <Button kind="outline" size="md" type="button" onClick={checkPromo}>Vérifier</Button>
+                </div>
+                {promoMsg && (
+                  <p className="text-xs font-semibold mt-1.5" style={{ color: promoMsg.ok ? KZ.green : '#E54E4E' }}>{promoMsg.text}</p>
+                )}
               </div>
 
               {planError && (
