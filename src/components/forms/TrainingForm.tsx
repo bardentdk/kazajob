@@ -18,6 +18,7 @@ interface TrainingFormProps {
   training?: Partial<TrainingOffer>
   recruiterId: string
   companyId?: string
+  admin?: boolean
   onSuccess?: () => void
 }
 
@@ -26,7 +27,7 @@ const SECTOR_OPTIONS = JOB_SECTORS.map(s => ({ value: s, label: s }))
 const CERT_OPTIONS  = CERTIFICATION_LEVELS.map(c => ({ value: c.id, label: c.label }))
 const UNIT_OPTIONS  = DURATION_UNITS.map(u => ({ value: u.id, label: u.label }))
 
-export function TrainingForm({ training, recruiterId, companyId, onSuccess }: TrainingFormProps) {
+export function TrainingForm({ training, recruiterId, companyId, admin, onSuccess }: TrainingFormProps) {
   const router = useRouter()
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
@@ -54,6 +55,8 @@ export function TrainingForm({ training, recruiterId, companyId, onSuccess }: Tr
   // IC events du recruteur
   const [events, setEvents]     = useState<{ id: string; title: string; date: string }[]>([])
   const [infoSessionId,  setInfoSessionId] = useState(training?.info_session_id ?? '')
+  const [contactEmail,    setContactEmail]    = useState((training as Record<string, unknown>)?.contact_email as string ?? '')
+  const [externalCompany, setExternalCompany] = useState((training as Record<string, unknown>)?.external_company as string ?? '')
 
   useEffect(() => {
     fetch('/api/recruiter/events')
@@ -115,6 +118,7 @@ export function TrainingForm({ training, recruiterId, companyId, onSuccess }: Tr
       image_url:           imageUrl,
       info_session_id:     infoSessionId || null,
       is_active:           true,
+      ...(admin ? { contact_email: contactEmail || null, external_company: externalCompany || null } : {}),
     }
 
     if (training?.id) {
@@ -133,7 +137,7 @@ export function TrainingForm({ training, recruiterId, companyId, onSuccess }: Tr
 
     setSaving(false)
     onSuccess?.()
-    router.push('/recruiter/training')
+    router.push(admin ? '/admin/jobs' : '/recruiter/training')
   }
 
   const hfOk = !title || hasMentionHF(title)
@@ -143,6 +147,17 @@ export function TrainingForm({ training, recruiterId, companyId, onSuccess }: Tr
       {error && (
         <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
           <AlertCircle size={15} />{error}
+        </div>
+      )}
+
+      {admin && (
+        <div className="rounded-xl border-2 p-4" style={{ borderColor: KZ.violet, background: KZ.violetSoft }}>
+          <h3 className="text-sm font-bold text-[#1A1410] mb-1">Annonce administrateur (externe)</h3>
+          <p className="text-xs text-[#6B5A4A] mb-3">Formation publiée par Kazajob sans compte recruteur. Les candidatures sont envoyées par email au contact ci-dessous.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input label="Organisme affiché" value={externalCompany} onChange={(e) => setExternalCompany(e.target.value)} placeholder="Nom de l'organisme" />
+            <Input label="Email de contact (candidatures)" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="contact@organisme.re" />
+          </div>
         </div>
       )}
 

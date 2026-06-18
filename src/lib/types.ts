@@ -175,6 +175,9 @@ export interface Job {
   is_active: boolean
   is_boosted: boolean
   boost_expires_at: string | null
+  missions: string | null
+  benefits: string | null
+  required_level: string | null
   views: number
   applications_count: number
   created_at: string

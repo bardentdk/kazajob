@@ -41,6 +41,7 @@ const FIELDS: Record<string, keyof typeof trainingOffers.$inferInsert> = {
   remote: 'remote', sector: 'sector', start_date: 'startDate', max_participants: 'maxParticipants',
   is_financed: 'isFinanced', financing_options: 'financingOptions', image_url: 'imageUrl',
   info_session_id: 'infoSessionId', is_active: 'isActive',
+  contact_email: 'contactEmail', external_company: 'externalCompany',
 }
 
 function mapPayload(payload: Record<string, unknown>): Record<string, unknown> {

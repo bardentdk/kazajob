@@ -11,13 +11,13 @@ import {
   applicationWithdrawnEmail,
   applicationStatusEmail,
   welcomeEmail,
-  newApplicationEmail,
   newMessageEmail,
   joinRequestEmail,
   joinResponseEmail,
   teamInvitationEmail,
   type ApplicationStatus,
 } from '@/lib/email/templates'
+import { sendApplicationDetail } from '@/lib/email/sendApplication'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = process.env.RESEND_FROM ?? 'Kazajob <contact@velt.re>'
@@ -110,31 +110,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    // ── Nouvelle candidature (→ recruteur) ─────────────────────────
+    // ── Nouvelle candidature (→ recruteur ou contact externe) ──────
     if (type === 'new_application') {
       const { applicationId } = body
       const app = await db.query.applications.findFirst({
         where: eq(applications.id, applicationId),
-        columns: { coverLetter: true },
+        columns: { coverLetter: true, candidateId: true, prequalAnswers: true },
         with: {
-          candidate: { columns: { fullName: true, email: true } },
-          job: { columns: { title: true, recruiterId: true }, with: { company: { columns: { name: true } } } },
+          job: { columns: { title: true, recruiterId: true, contactEmail: true, externalCompany: true }, with: { company: { columns: { name: true } } } },
         },
       })
       if (!app) return NextResponse.json({ error: 'Candidature introuvable' }, { status: 404 })
-      const cand = (app as { candidate: { fullName: string; email: string } }).candidate
-      const job = (app as { job: { title: string; recruiterId: string; company?: { name: string } } }).job
+      const a = app as typeof app & {
+        candidateId: string; prequalAnswers: { label: string; value: string }[] | null
+        job: { title: string; recruiterId: string; contactEmail: string | null; externalCompany: string | null; company?: { name: string } | null }
+      }
 
-      const [recruiter] = await db.select({ fullName: profiles.fullName, email: profiles.email })
-        .from(profiles).where(eq(profiles.id, job.recruiterId)).limit(1)
-      if (!recruiter) return NextResponse.json({ ok: true })
+      // Annonce externe (admin) → email de contact ; sinon recruteur.
+      let toEmail = a.job.contactEmail ?? null
+      let recipientName = a.job.externalCompany ?? 'Recruteur'
+      if (!toEmail) {
+        const [recruiter] = await db.select({ fullName: profiles.fullName, email: profiles.email })
+          .from(profiles).where(eq(profiles.id, a.job.recruiterId)).limit(1)
+        if (!recruiter) return NextResponse.json({ ok: true })
+        toEmail = recruiter.email; recipientName = recruiter.fullName
+      }
 
-      const { subject, html } = newApplicationEmail({
-        recruiterName: recruiter.fullName, candidateName: cand.fullName, candidateEmail: cand.email,
-        jobTitle: job.title, companyName: job.company?.name ?? 'Votre entreprise',
-        applicationId, hasCoverLetter: !!app.coverLetter,
+      await sendApplicationDetail({
+        kind: 'job', toEmail, recipientName, candidateId: a.candidateId,
+        title: a.job.title, companyName: a.job.company?.name ?? a.job.externalCompany ?? '',
+        coverLetter: a.coverLetter, prequal: a.prequalAnswers ?? [],
       })
-      await resend.emails.send({ from: FROM, to: recruiter.email, subject, html })
       return NextResponse.json({ ok: true })
     }
 

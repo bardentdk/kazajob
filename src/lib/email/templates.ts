@@ -1186,6 +1186,82 @@ export function demoBookingEmail(data: {
   return { subject, html: shell(C.violet, body) }
 }
 
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 14 — Candidature détaillée (→ recruteur / contact externe)
+// ══════════════════════════════════════════════════════════════════
+
+export interface ApplicationDetailData {
+  kind: 'job' | 'training'
+  recipientName: string
+  title: string
+  companyName: string
+  candidate: {
+    name: string; email: string; phone?: string | null; location?: string | null; bio?: string | null
+    skills: string[]
+    cvUrl?: string | null; linkedin?: string | null; github?: string | null; portfolio?: string | null; portfolioPdf?: string | null
+  }
+  coverLetter?: string | null
+  prequal?: { label: string; value: string }[]
+}
+
+export function applicationDetailEmail(data: ApplicationDetailData): { subject: string; html: string } {
+  const c = data.candidate
+  const kindLabel = data.kind === 'training' ? 'formation' : 'offre'
+  const subject = `Nouvelle candidature — ${c.name} pour « ${data.title} »`
+
+  const linkBtn = (label: string, href: string) =>
+    `<a href="${href}" target="_blank" style="display:inline-block;margin:0 6px 6px 0;background-color:${C.violetSoft};border:1.5px solid ${C.ink};border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;color:${C.violet};text-decoration:none;font-family:Arial,sans-serif;">${label}</a>`
+
+  const links = [
+    c.cvUrl && linkBtn('📄 CV', c.cvUrl),
+    c.portfolioPdf && linkBtn('📎 Portfolio PDF', c.portfolioPdf),
+    c.linkedin && linkBtn('LinkedIn', c.linkedin),
+    c.github && linkBtn('GitHub', c.github),
+    c.portfolio && linkBtn('Portfolio', c.portfolio),
+  ].filter(Boolean).join('')
+
+  const prequalRows = (data.prequal ?? []).filter((p) => p.value).map((p) => detailRow(p.label, p.value)).join('')
+
+  const body = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td style="padding:24px 32px 16px;">${chip('Nouvelle candidature', C.greenSoft, C.green)}</td></tr>
+      <tr>
+        <td style="padding:0 32px 12px;">
+          <h1 style="margin:0;font-size:24px;font-weight:900;color:${C.ink};letter-spacing:-0.03em;line-height:1.15;font-family:Arial,sans-serif;">
+            ${c.name} a postulé.
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 18px;">
+          <p style="margin:0;font-size:14px;color:#2A2018;line-height:1.6;font-family:Arial,sans-serif;">
+            Bonjour <strong style="color:${C.ink};">${data.recipientName}</strong>,<br><br>
+            Une nouvelle candidature vient d'arriver pour votre ${kindLabel} <strong style="color:${C.ink};">« ${data.title} »</strong>${data.companyName ? ` (${data.companyName})` : ''}.
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 18px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:white;border:2px solid ${C.ink};border-radius:12px;overflow:hidden;">
+            ${detailRow('Candidat', c.name)}
+            ${detailRow('Email', c.email)}
+            ${c.phone ? detailRow('Téléphone', c.phone) : ''}
+            ${c.location ? detailRow('Localisation', c.location) : ''}
+            ${c.skills.length ? detailRow('Compétences', c.skills.join(', ')) : ''}
+            <tr><td colspan="2" style="height:1px;"></td></tr>
+          </table>
+        </td>
+      </tr>
+      ${c.bio ? `<tr><td style="padding:0 32px 18px;"><p style="margin:0 0 4px;font-size:11px;font-weight:700;color:${C.mute};text-transform:uppercase;letter-spacing:0.06em;font-family:Arial,sans-serif;">Présentation</p><p style="margin:0;font-size:13px;color:${C.ink};line-height:1.55;font-family:Arial,sans-serif;">${c.bio}</p></td></tr>` : ''}
+      ${links ? `<tr><td style="padding:0 32px 18px;"><p style="margin:0 0 8px;font-size:11px;font-weight:700;color:${C.mute};text-transform:uppercase;letter-spacing:0.06em;font-family:Arial,sans-serif;">Pièces jointes &amp; liens</p>${links}</td></tr>` : ''}
+      ${prequalRows ? `<tr><td style="padding:0 32px 18px;"><p style="margin:0 0 6px;font-size:11px;font-weight:700;color:${C.mute};text-transform:uppercase;letter-spacing:0.06em;font-family:Arial,sans-serif;">Préqualification</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.cream2};border:1.5px solid ${C.line};border-radius:10px;overflow:hidden;">${prequalRows}<tr><td colspan="2" style="height:1px;"></td></tr></table></td></tr>` : ''}
+      ${data.coverLetter ? `<tr><td style="padding:0 32px 22px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.paper};border:1.5px dashed ${C.line};border-radius:10px;"><tr><td style="padding:14px 16px;"><p style="margin:0 0 6px;font-size:11px;font-weight:700;color:${C.mute};text-transform:uppercase;letter-spacing:0.06em;font-family:Arial,sans-serif;">Lettre de motivation</p><p style="margin:0;font-size:13px;color:${C.ink};line-height:1.55;white-space:pre-wrap;font-family:Arial,sans-serif;">${data.coverLetter}</p></td></tr></table></td></tr>` : ''}
+      <tr><td style="padding:0 32px 28px;text-align:center;">${ctaButton('Répondre au candidat', `mailto:${c.email}`, C.violet, '#FFFFFF')}</td></tr>
+    </table>`
+
+  return { subject, html: shell(C.green, body) }
+}
+
 export function applicationStatusEmail(data: {
   candidateName: string
   jobTitle:      string

@@ -29,19 +29,25 @@ export const SKIN_COLORS = [
 ]
 
 // ── Coiffures ─────────────────────────────────────────────────────
+// IDs = valeurs exactes DiceBear avataaars v9 (validées via schema)
 export const HAIR_STYLES = [
-  { id: 'bigHair',            label: 'Afro'         },
-  { id: 'dreads01',           label: 'Locs'         },
-  { id: 'curly',              label: 'Bouclé'       },
-  { id: 'frizzle',            label: 'Frisé'        },
-  { id: 'straight01',         label: 'Lisse court'  },
-  { id: 'longButNotTooLong',  label: 'Mi-long'      },
-  { id: 'bob',                label: 'Bob'          },
-  { id: 'bun',                label: 'Chignon'      },
-  { id: 'shortCurly',         label: 'Court bouclé' },
-  { id: 'hijab',              label: 'Hijab'        },
-  { id: 'turban',             label: 'Turban'       },
-  { id: 'hat',                label: 'Chapeau'      },
+  { id: 'fro',               label: 'Coupe afro'    },  // afro réel DiceBear
+  { id: 'froBand',           label: 'Afro bandeau'  },  // afro avec bandeau
+  { id: 'dreads01',          label: 'Locs courts'   },
+  { id: 'dreads02',          label: 'Locs longs'    },
+  { id: 'curly',             label: 'Bouclé'        },
+  { id: 'curvy',             label: 'Ondulé'        },
+  { id: 'frizzle',           label: 'Frisé'         },
+  { id: 'bigHair',           label: 'Grand volume'  },  // renommé (≠ afro)
+  { id: 'straight01',        label: 'Lisse court'   },
+  { id: 'longButNotTooLong', label: 'Mi-long'       },
+  { id: 'bob',               label: 'Bob'           },
+  { id: 'bun',               label: 'Chignon'       },
+  { id: 'shortCurly',        label: 'Court bouclé'  },
+  { id: 'shavedSides',       label: 'Dégradé côtés' },
+  { id: 'hijab',             label: 'Hijab'         },
+  { id: 'turban',            label: 'Turban'        },
+  { id: 'hat',               label: 'Chapeau'       },
 ]
 
 // ── Couleurs de cheveux ───────────────────────────────────────────
@@ -153,17 +159,17 @@ export function generateAvatarSvg(config: AvatarConfig): string {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const style = avataaars as any
     const avatar = createAvatar(style, {
-      seed:          config.skinColor + config.top + config.eyes,
-      skinColor:     [config.skinColor],
-      top:           [config.top],
-      hairColor:     [config.hairColor],
-      eyes:          [config.eyes],
-      eyebrows:      [config.eyebrow],      // ← 'eyebrows' (pluriel) dans DiceBear
-      mouth:         [config.mouth],
-      clothing:      [config.clothes],      // ← 'clothing' dans DiceBear (pas 'clothes')
-      clothingColor: [config.clothesColor], // ← 'clothingColor' dans DiceBear
-      accessories:   config.accessories === 'blank' ? [] : [config.accessories],
-      facialHair:    config.facialHair   === 'blank' ? [] : [config.facialHair],
+      seed:         'kazajob-avatar',       // seed fixe → pas de hasard non voulu
+      skinColor:    [config.skinColor],
+      top:          [config.top],
+      hairColor:    [config.hairColor],
+      eyes:         [config.eyes],
+      eyebrows:     [config.eyebrow],       // ← 'eyebrows' (pluriel) dans DiceBear
+      mouth:        [config.mouth],
+      clothing:     [config.clothes],       // ← 'clothing' dans DiceBear
+      clothesColor: [config.clothesColor],  // ← 'clothesColor' (pas 'clothingColor') — bug corrigé
+      accessories:  config.accessories === 'blank' ? [] : [config.accessories],
+      facialHair:   config.facialHair   === 'blank' ? [] : [config.facialHair],
     })
     return avatar.toString()
   } catch {

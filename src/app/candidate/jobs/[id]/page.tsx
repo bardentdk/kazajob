@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, MapPin, Clock, Heart, Briefcase, Sparkles, Building2, Check, Brain, ChevronDown, ChevronUp, Lightbulb, Wallet } from 'lucide-react'
+import { ArrowLeft, MapPin, Clock, Heart, Briefcase, Sparkles, Building2, Check, Brain, ChevronDown, ChevronUp, Lightbulb, Wallet, ListChecks, Gift, GraduationCap } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Tag } from '@/components/ui/Tag'
@@ -226,15 +226,63 @@ export default function JobDetailPage() {
             )}
           </div>
 
-          {/* Description */}
+          {/* ── Description ────────────────────────────────── */}
           <div className="kz-card p-5 bg-white">
-            <h2 className="text-lg font-bold text-[#1A1410] mb-3">Description du poste</h2>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg border border-[#1A1410] flex items-center justify-center shrink-0" style={{ background: KZ.orangeSoft }}>
+                <Briefcase size={13} color="#1A1410" />
+              </div>
+              <h2 className="text-base font-bold text-[#1A1410]">Description du poste</h2>
+            </div>
             <div className="text-sm leading-relaxed text-[#2A2018] whitespace-pre-line">{job.description}</div>
           </div>
+
+          {/* ── Missions ───────────────────────────────────── */}
+          {(job as unknown as { missions?: string | null }).missions && (
+            <div className="kz-card p-5 bg-white">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg border border-[#1A1410] flex items-center justify-center shrink-0" style={{ background: KZ.violetSoft }}>
+                  <ListChecks size={13} color={KZ.violet} />
+                </div>
+                <h2 className="text-base font-bold text-[#1A1410]">Missions attendues</h2>
+              </div>
+              <div className="text-sm leading-relaxed text-[#2A2018] whitespace-pre-line">
+                {(job as unknown as { missions: string }).missions}
+              </div>
+            </div>
+          )}
+
+          {/* ── Profil recherché ───────────────────────────── */}
           {job.requirements && (
             <div className="kz-card p-5 bg-white">
-              <h2 className="text-lg font-bold text-[#1A1410] mb-3">Profil recherche</h2>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg border border-[#1A1410] flex items-center justify-center shrink-0" style={{ background: KZ.greenSoft }}>
+                  <GraduationCap size={13} color={KZ.green} />
+                </div>
+                <h2 className="text-base font-bold text-[#1A1410]">Profil recherché</h2>
+                {(job as unknown as { required_level?: string | null }).required_level && (
+                  <span className="ml-auto text-[11px] font-bold px-2 py-0.5 rounded-full border border-[#1A1410]"
+                    style={{ background: KZ.cream2 }}>
+                    {(job as unknown as { required_level: string }).required_level}
+                  </span>
+                )}
+              </div>
               <div className="text-sm leading-relaxed text-[#2A2018] whitespace-pre-line">{job.requirements}</div>
+            </div>
+          )}
+
+          {/* ── Avantages ──────────────────────────────────── */}
+          {(job as unknown as { benefits?: string | null }).benefits && (
+            <div className="kz-card p-5 bg-white">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg border border-[#1A1410] flex items-center justify-center shrink-0" style={{ background: '#FFF7C2' }}>
+                  <Gift size={13} color="#C9A000" />
+                </div>
+                <h2 className="text-base font-bold text-[#1A1410]">Avantages & bénéfices</h2>
+              </div>
+              <div className="text-sm leading-relaxed text-[#2A2018] whitespace-pre-line">
+                {(job as unknown as { benefits: string }).benefits}
+              </div>
             </div>
           )}
 
@@ -243,8 +291,14 @@ export default function JobDetailPage() {
             <TrainingRecoCard sector={job.sector} />
           )}
 
-          {/* Estimations salariales (données réelles du secteur) */}
-          <SalaryInsightsCard sector={job.sector} salaryMin={job.salary_min} salaryMax={job.salary_max} />
+          {/* Fourchette salariale (offre recruteur ou estimation KazaIA) */}
+          <SalaryInsightsCard
+            sector={job.sector}
+            salaryMin={job.salary_min}
+            salaryMax={job.salary_max}
+            jobTitle={job.title}
+            jobType={job.job_type}
+          />
         </div>
 
         {/* Sidebar desktop */}

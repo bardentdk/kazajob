@@ -219,6 +219,13 @@ export const DURATION_UNITS = [
   { id: 'mois',     label: 'mois'     },
 ]
 
+export const REQUIRED_LEVELS = [
+  { id: 'Débutant',      label: 'Débutant (0-1 an)'       },
+  { id: 'Intermédiaire', label: 'Intermédiaire (2-4 ans)'  },
+  { id: 'Confirmé',      label: 'Confirmé (5-8 ans)'       },
+  { id: 'Expert',        label: 'Expert (8+ ans)'          },
+]
+
 export const TRAINING_STATUS: Record<string, { label: string; color: string }> = {
   pending:   { label: 'En attente',  color: 'yellow' },
   viewed:    { label: 'Dossier vu',  color: 'blue'   },

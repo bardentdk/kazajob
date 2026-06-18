@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
-import { REUNION_CITIES, JOB_TYPES, JOB_SECTORS, KZ, hasMentionHF } from '@/lib/constants'
+import { REUNION_CITIES, JOB_TYPES, JOB_SECTORS, KZ, hasMentionHF, REQUIRED_LEVELS, getSalaryLabel } from '@/lib/constants'
 import { PREQUAL_TYPES, PREQUAL_SUGGESTIONS, MAX_PREQUAL_QUESTIONS, type PrequalQuestion } from '@/lib/prequal'
 import type { Job } from '@/lib/types'
 
@@ -19,10 +19,11 @@ interface JobFormProps {
   job?: Partial<Job>
   recruiterId: string
   companyId?: string
+  admin?: boolean
   onSuccess?: () => void
 }
 
-export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps) {
+export function JobForm({ job, recruiterId, companyId, admin, onSuccess }: JobFormProps) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -36,7 +37,12 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
   const [remote, setRemote] = useState(job?.remote ?? false)
   const [salaryMin, setSalaryMin] = useState(job?.salary_min?.toString() ?? '')
   const [salaryMax, setSalaryMax] = useState(job?.salary_max?.toString() ?? '')
+  const [missions, setMissions] = useState((job as Record<string, unknown>)?.missions as string ?? '')
+  const [benefits, setBenefits] = useState((job as Record<string, unknown>)?.benefits as string ?? '')
+  const [requiredLevel, setRequiredLevel] = useState((job as Record<string, unknown>)?.required_level as string ?? '')
   const [isAnonymous, setIsAnonymous] = useState((job as Record<string, unknown>)?.is_anonymous as boolean ?? false)
+  const [contactEmail, setContactEmail] = useState((job as Record<string, unknown>)?.contact_email as string ?? '')
+  const [externalCompany, setExternalCompany] = useState((job as Record<string, unknown>)?.external_company as string ?? '')
   const [prequal, setPrequal] = useState<PrequalQuestion[]>(
     ((job as Record<string, unknown>)?.prequal_questions as PrequalQuestion[] | undefined) ?? [],
   )
@@ -65,7 +71,10 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
     const payload = {
       title,
       description,
+      missions: missions || null,
       requirements: requirements || null,
+      benefits: benefits || null,
+      required_level: requiredLevel || null,
       location,
       job_type: jobType,
       sector: sector || null,
@@ -75,6 +84,7 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
       salary_currency: '€',
       is_anonymous: isAnonymous,
       is_active: true,
+      ...(admin ? { contact_email: contactEmail || null, external_company: externalCompany || null } : {}),
       prequal_questions: prequal
         .filter((q) => q.label.trim())
         .map((q) => ({ ...q, options: q.type === 'choix' ? (q.options ?? []).filter(Boolean) : undefined })),
@@ -101,13 +111,24 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
 
     setSaving(false)
     onSuccess?.()
-    router.push('/recruiter/jobs')
+    router.push(admin ? '/admin/jobs' : '/recruiter/jobs')
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       {error && (
         <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>
+      )}
+
+      {admin && (
+        <div className="rounded-xl border-2 p-4" style={{ borderColor: KZ.violet, background: KZ.violetSoft }}>
+          <h3 className="text-sm font-bold text-[#1A1410] mb-1">Annonce administrateur (externe)</h3>
+          <p className="text-xs text-[#6B5A4A] mb-3">Annonce publiée par Kazajob sans compte recruteur. Les candidatures sont envoyées par email au contact ci-dessous.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input label="Entreprise affichée" value={externalCompany} onChange={(e) => setExternalCompany(e.target.value)} placeholder="Nom de l'entreprise" />
+            <Input label="Email de contact (candidatures)" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="recrutement@entreprise.re" />
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-2 gap-4">
@@ -166,39 +187,78 @@ export function JobForm({ job, recruiterId, companyId, onSuccess }: JobFormProps
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Input
-          label="Salaire min (€/an)"
-          type="number"
-          value={salaryMin}
-          onChange={(e) => setSalaryMin(e.target.value)}
-          placeholder="30000"
-        />
-        <Input
-          label="Salaire max (€/an)"
-          type="number"
-          value={salaryMax}
-          onChange={(e) => setSalaryMax(e.target.value)}
-          placeholder="45000"
-        />
+      <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-2 gap-4">
+          <Input
+            label="Salaire min (€/an)"
+            type="number"
+            value={salaryMin}
+            onChange={(e) => setSalaryMin(e.target.value)}
+            placeholder="30000"
+          />
+          <Input
+            label="Salaire max (€/an)"
+            type="number"
+            value={salaryMax}
+            onChange={(e) => setSalaryMax(e.target.value)}
+            placeholder="45000"
+          />
+        </div>
+        {/* Mini repère benchmark 974 */}
+        {(salaryMin || salaryMax) && (() => {
+          const sl = getSalaryLabel(salaryMin ? parseInt(salaryMin) : null, salaryMax ? parseInt(salaryMax) : null)
+          return sl ? (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[#1A1410] text-sm font-semibold"
+              style={{ background: sl.bg, color: sl.color }}>
+              <span style={{ background: sl.color, width: 10, height: 10, borderRadius: '50%', display: 'inline-block' }} />
+              <span>{sl.label}</span>
+              <span className="text-xs font-normal text-[#6B5A4A] ml-1">— repère marché La Réunion 974</span>
+            </div>
+          ) : null
+        })()}
       </div>
 
       <Textarea
         label="Description du poste *"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        placeholder="Decrivez le poste, les missions, l'environnement de travail..."
-        rows={6}
+        placeholder="Présentez le poste, l'environnement de travail, le contexte..."
+        rows={5}
         required
+      />
+
+      <Textarea
+        label="Missions attendues"
+        value={missions}
+        onChange={(e) => setMissions(e.target.value)}
+        placeholder="Listez les responsabilités et missions principales du poste (une par ligne) :"
+        rows={5}
       />
 
       <Textarea
         label="Profil recherche"
         value={requirements}
         onChange={(e) => setRequirements(e.target.value)}
-        placeholder="Formation, experience, competences requises..."
+        placeholder="Formation, expérience, compétences requises..."
         rows={4}
       />
+
+      <Textarea
+        label="Avantages & bénéfices"
+        value={benefits}
+        onChange={(e) => setBenefits(e.target.value)}
+        placeholder="Mutuelle, tickets-restaurant, RTT, télétravail, primes, véhicule de fonction..."
+        rows={3}
+      />
+
+      <div>
+        <Select
+          label="Niveau d'expérience requis"
+          options={[{ value: '', label: 'Non précisé' }, ...REQUIRED_LEVELS.map(l => ({ value: l.id, label: l.label }))]}
+          value={requiredLevel}
+          onChange={(e) => setRequiredLevel(e.target.value)}
+        />
+      </div>
 
       {/* Toggle publication anonyme */}
       <button

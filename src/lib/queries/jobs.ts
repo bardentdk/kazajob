@@ -36,9 +36,11 @@ type JobRow = typeof jobs.$inferSelect & {
 
 function mapJob(row: JobRow): Job {
   const { jobSkills, company, ...rest } = row
+  // Annonce externe (admin sans entreprise) → on affiche le nom saisi.
+  const ext = (row as { externalCompany?: string | null }).externalCompany
   return serialize<Job>({
     ...rest,
-    company,
+    company: company ?? (ext ? { name: ext } : null),
     skills: jobSkills?.map((js) => js.skill) ?? [],
   })
 }
@@ -181,6 +183,8 @@ const JOB_FIELDS: Record<string, keyof typeof jobs.$inferInsert> = {
   salary_min: 'salaryMin', salary_max: 'salaryMax', salary_currency: 'salaryCurrency',
   is_anonymous: 'isAnonymous', is_active: 'isActive',
   prequal_questions: 'prequalQuestions',
+  missions: 'missions', benefits: 'benefits', required_level: 'requiredLevel',
+  contact_email: 'contactEmail', external_company: 'externalCompany',
 }
 
 function mapJobPayload(payload: Record<string, unknown>): Record<string, unknown> {

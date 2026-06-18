@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Briefcase, Eye, EyeOff, Trash2 } from 'lucide-react'
+import Link from 'next/link'
+import { Briefcase, Eye, EyeOff, Trash2, Plus, GraduationCap } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { PageLoader } from '@/components/feedback/LoadingSpinner'
@@ -41,9 +42,15 @@ export default function AdminJobsPage() {
 
   return (
     <div className="max-w-[1000px] mx-auto">
-      <div className="mb-6">
-        <h1 className="kz-h2 text-[#1A1410] mb-1">Gestion des offres</h1>
-        <p className="text-sm text-[#6B5A4A]">{jobs.length} offre(s) au total</p>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="kz-h2 text-[#1A1410] mb-1">Gestion des offres</h1>
+          <p className="text-sm text-[#6B5A4A]">{jobs.length} offre(s) au total</p>
+        </div>
+        <div className="flex gap-2">
+          <Link href="/admin/jobs/new"><Button kind="primary" size="md" icon={<Plus size={15} />}>Annonce emploi</Button></Link>
+          <Link href="/admin/trainings/new"><Button kind="outline" size="md" icon={<GraduationCap size={15} />}>Annonce formation</Button></Link>
+        </div>
       </div>
 
       {loading ? <PageLoader /> : jobs.length === 0 ? (

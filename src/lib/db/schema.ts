@@ -114,7 +114,10 @@ export const jobs = pgTable('jobs', {
   perks:        text().array(),
   languages:    text().array(),
   requiredLevel: text('required_level'),
+  missions:         text(),                         // missions / responsabilités attendues (card distincte candidat)
   prequalQuestions: jsonb('prequal_questions'),   // questions de préqualification [{id,label,type,options?,required?}]
+  contactEmail:    text('contact_email'),         // annonce externe (admin) : email destinataire des candidatures
+  externalCompany: text('external_company'),      // annonce externe (admin) : nom entreprise affiché
   startDate:    text('start_date'),
   views:        integer().notNull().default(0),
   applicationsCount: integer('applications_count').notNull().default(0),
@@ -392,6 +395,8 @@ export const trainingOffers = pgTable('training_offers', {
   startDate:          date('start_date'),
   maxParticipants:    integer('max_participants').notNull().default(20),
   isFinanced:         boolean('is_financed').notNull().default(false),
+  contactEmail:       text('contact_email'),        // annonce externe (admin) : email destinataire
+  externalCompany:    text('external_company'),     // annonce externe (admin) : nom organisme affiché
   financingOptions:   text('financing_options').array().notNull().default(emptyArr),
   imageUrl:           text('image_url'),
   infoSessionId:      uuid('info_session_id').references(() => events.id, { onDelete: 'set null' }),
