@@ -1110,6 +1110,82 @@ export function bugReportEmail(data: {
   return { subject, html: shell(accent, body) }
 }
 
+// ══════════════════════════════════════════════════════════════════
+// TEMPLATE 13 — Prise de RDV / démo recruteur
+// ══════════════════════════════════════════════════════════════════
+
+export function demoBookingEmail(data: {
+  recipient: 'prospect' | 'admin'
+  name: string
+  company?: string | null
+  email: string
+  phone?: string | null
+  message?: string | null
+  when?: Date | null
+  durationMin?: number
+}): { subject: string; html: string } {
+  const isProspect = data.recipient === 'prospect'
+  const whenStr = data.when ? `${formatDate(data.when)} à ${formatTime(data.when)}` : 'à convenir'
+
+  const subject = isProspect
+    ? `Votre rendez-vous Kazajob — ${whenStr}`
+    : `Nouvelle demande de démo — ${data.name}${data.company ? ` (${data.company})` : ''}`
+
+  const body = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td style="padding:24px 32px 16px;">${chip(isProspect ? 'Rendez-vous confirmé' : 'Nouvelle demande de démo', C.violetSoft, C.violet)}</td></tr>
+      <tr>
+        <td style="padding:0 32px 12px;">
+          <h1 style="margin:0;font-size:26px;font-weight:900;color:${C.ink};letter-spacing:-0.03em;line-height:1.15;font-family:Arial,sans-serif;">
+            ${isProspect ? 'Votre rendez-vous<br>est confirmé !' : 'Un recruteur<br>veut une démo.'}
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 32px 20px;">
+          <p style="margin:0;font-size:14px;color:#2A2018;line-height:1.6;font-family:Arial,sans-serif;">
+            ${isProspect
+              ? `Bonjour <strong style="color:${C.ink};">${data.name}</strong>,<br><br>Merci pour votre intérêt ! Voici le récapitulatif de votre rendez-vous avec l'équipe Kazajob.`
+              : `Une nouvelle demande de présentation vient d'arriver via la page démo.`}
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 32px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:white;border:2px solid ${C.ink};border-radius:12px;overflow:hidden;">
+            ${detailRow('Date', whenStr)}
+            ${data.durationMin ? detailRow('Durée', `${data.durationMin} minutes`) : ''}
+            ${!isProspect ? detailRow('Nom', data.name) : ''}
+            ${!isProspect && data.company ? detailRow('Entreprise', data.company) : ''}
+            ${!isProspect ? detailRow('Email', data.email) : ''}
+            ${!isProspect && data.phone ? detailRow('Téléphone', data.phone) : ''}
+            <tr><td colspan="2" style="height:1px;"></td></tr>
+          </table>
+        </td>
+      </tr>
+      ${data.message ? `
+      <tr>
+        <td style="padding:0 32px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.cream2};border:1.5px dashed ${C.line};border-radius:10px;">
+            <tr><td style="padding:14px 16px;">
+              <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:${C.mute};text-transform:uppercase;letter-spacing:0.06em;font-family:Arial,sans-serif;">Message</p>
+              <p style="margin:0;font-size:13px;color:${C.ink};line-height:1.55;font-family:Arial,sans-serif;">${data.message}</p>
+            </td></tr>
+          </table>
+        </td>
+      </tr>` : ''}
+      <tr>
+        <td style="padding:4px 32px 28px;text-align:center;">
+          ${isProspect
+            ? ctaButton('Découvrir Kazajob', 'https://kazajob.re', C.violet, '#FFFFFF')
+            : ctaButton('Voir les demandes', 'https://kazajob.re/admin/demo', C.violet, '#FFFFFF')}
+        </td>
+      </tr>
+    </table>`
+
+  return { subject, html: shell(C.violet, body) }
+}
+
 export function applicationStatusEmail(data: {
   candidateName: string
   jobTitle:      string

@@ -177,6 +177,28 @@ export const promoCodes = pgTable('promo_codes', {
   createdAt:      now(),
 })
 
+// ── booking_slots (créneaux de RDV ouverts par l'admin) ───────────
+export const bookingSlots = pgTable('booking_slots', {
+  id:          uuid().primaryKey().default(sql`gen_random_uuid()`),
+  startsAt:    timestamp('starts_at', { withTimezone: true }).notNull(),
+  durationMin: integer('duration_min').notNull().default(30),
+  isBooked:    boolean('is_booked').notNull().default(false),
+  createdAt:   now(),
+})
+
+// ── demo_bookings (demandes de RDV / présentation recruteur) ──────
+export const demoBookings = pgTable('demo_bookings', {
+  id:        uuid().primaryKey().default(sql`gen_random_uuid()`),
+  slotId:    uuid('slot_id').references(() => bookingSlots.id, { onDelete: 'set null' }),
+  name:      text().notNull(),
+  company:   text(),
+  email:     text().notNull(),
+  phone:     text(),
+  message:   text(),
+  status:    text().notNull().default('confirmed'),  // confirmed | cancelled | done
+  createdAt: now(),
+})
+
 // ── favorites ─────────────────────────────────────────────────────
 export const favorites = pgTable('favorites', {
   id:          uuid().primaryKey().default(sql`gen_random_uuid()`),

@@ -16,6 +16,7 @@ const FOOTER_LINKS = [
     title: 'Recruteurs',
     links: [
       { label: 'Publier une offre',    href: '/auth/register?role=recruiter' },
+      { label: 'Demander une démo',    href: '/demo' },
       { label: 'Espace recruteur',     href: '/recruiter/dashboard' },
       { label: 'Voir les candidats',   href: '/recruiter/applications' },
     ],
