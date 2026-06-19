@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, Check, Users, BarChart2, Zap, Shield, Globe, Landmark, Target, Briefcase, Search, Rss } from 'lucide-react'
+import { ArrowRight, Check, Users, BarChart2, Zap, Shield, Globe, Landmark, Target, Briefcase, Search, Rss, Lock, HeartHandshake, Clock, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { KZ, SUBSCRIPTION_PLANS, PARTNERS, MULTIDIFFUSION_ENABLED, planFeatures } from '@/lib/constants'
@@ -190,6 +190,105 @@ export function EnterpriseLanding({ stats }: EnterpriseLandingProps) {
                 <Button kind="primary" size="md" full>Créer mon compte entreprise</Button>
               </Link>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* COMMENT ÇA MARCHE — recruteur ─────────────────────── */}
+      <section className="px-4 sm:px-8 lg:px-16 py-16 lg:py-20 border-t border-[#1A1410]" style={{ background: KZ.cream2 }}>
+        <div className="max-w-[1280px] mx-auto">
+          <div className="text-center mb-12">
+            <p className="kz-eyebrow mb-2" style={{ color: KZ.violet }}>Processus de recrutement</p>
+            <h2 className="text-2xl lg:text-[36px] font-extrabold tracking-tight text-[#1A1410]">
+              Recruter sur Kazajob, c&apos;est simple.
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { n: '1', color: KZ.violetSoft, icon: <Briefcase size={26} />, title: 'Créez votre compte', desc: 'Inscription en 3 minutes. Configurez votre entreprise, logo, secteur, équipe RH.' },
+              { n: '2', color: KZ.yellowSoft, icon: <FileText size={26} />, title: 'Publiez votre offre', desc: 'Formulaire guidé, mention H/F vérifiée, questions de préqualification, fourchette salariale.' },
+              { n: '3', color: KZ.greenSoft, icon: <Users size={26} />, title: 'Recevez les candidatures', desc: 'KazaIA trie et classe les dossiers. Pipeline Kanban intégré. Messagerie directe avec les candidats.' },
+              { n: '4', color: KZ.orangeSoft, icon: <HeartHandshake size={26} />, title: 'Recrutez & mesurez', desc: 'Suivi du temps de réponse (KazaScore), analytics de conversion, historique complet.' },
+            ].map((step) => (
+              <div key={step.n} className="kz-card p-6 relative pt-10 bg-white">
+                <div className="absolute -top-5 left-6 w-11 h-11 rounded-full flex items-center justify-center text-lg font-extrabold border border-[#1A1410]"
+                  style={{ background: KZ.ink, color: KZ.cream, boxShadow: '3px 3px 0 #FF6B35' }}>
+                  {step.n}
+                </div>
+                <div className="w-12 h-12 rounded-xl border border-[#1A1410] flex items-center justify-center mb-4 text-[#1A1410]"
+                  style={{ background: step.color }}>
+                  {step.icon}
+                </div>
+                <h3 className="text-base font-bold text-[#1A1410] mb-2">{step.title}</h3>
+                <p className="text-sm text-[#6B5A4A] leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* GARANTIES ──────────────────────────────────────────── */}
+      <section className="px-4 sm:px-8 lg:px-16 py-14 lg:py-16 border-t border-[#1A1410]" style={{ background: KZ.ink }}>
+        <div className="max-w-[1280px] mx-auto">
+          <div className="text-center mb-10">
+            <p className="kz-eyebrow mb-2" style={{ color: KZ.orange }}>Nos engagements</p>
+            <h2 className="text-2xl lg:text-[32px] font-extrabold tracking-tight" style={{ color: KZ.cream }}>
+              Ce que Kazajob garantit à chaque recruteur.
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              { icon: <Lock size={22} />, color: KZ.violetSoft, title: 'RGPD & Données sécurisées', desc: 'Hébergement européen (Neon/Vercel EU). Chiffrement en transit et au repos. Droit à l\'oubli sur simple demande. Aucune revente de données candidates.' },
+              { icon: <Clock size={22} />, color: KZ.greenSoft, title: 'Disponibilité 99,9 %', desc: 'Infrastructure serverless Vercel. Pas de maintenance programmée. Monitoring temps réel. Vos offres restent en ligne même en pic d\'activité.' },
+              { icon: <HeartHandshake size={22} />, color: KZ.yellowSoft, title: 'Support local réactif', desc: 'Une équipe réunionnaise disponible du lundi au vendredi. Réponse garantie sous 24h. Accompagnement à l\'onboarding inclus dans tous les plans.' },
+              { icon: <BarChart2 size={22} />, color: KZ.orangeSoft, title: 'Transparence des données', desc: 'Statistiques réelles affichées : vues, candidatures, taux d\'ouverture. Aucune donnée gonflée. Vos performances, telles qu\'elles sont.' },
+              { icon: <Shield size={22} />, color: KZ.blueSoft, title: 'Conformité légale 974', desc: 'Mention H/F vérifiée à la publication. Aide à la rédaction d\'offres conformes au Code du Travail. Archivage légal des candidatures pendant 2 ans.' },
+              { icon: <Users size={22} />, color: KZ.cream2, title: 'Candidats qualifiés locaux', desc: 'Plateforme 100% tournée vers La Réunion et Mayotte. Chaque candidat inscrit est un habitant local. Matching géographique inclus d\'office.' },
+            ].map((g) => (
+              <div key={g.title} className="flex gap-4 p-5 rounded-2xl border border-white/10"
+                style={{ background: 'rgba(255,255,255,0.06)' }}>
+                <div className="w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center shrink-0"
+                  style={{ background: g.color, color: KZ.ink }}>
+                  {g.icon}
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold mb-1" style={{ color: KZ.cream }}>{g.title}</h3>
+                  <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,247,238,0.6)' }}>{g.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ RECRUTEUR ──────────────────────────────────────── */}
+      <section className="px-4 sm:px-8 lg:px-16 py-14 lg:py-16 border-t border-[#1A1410]" style={{ background: KZ.cream }}>
+        <div className="max-w-[860px] mx-auto">
+          <div className="text-center mb-10">
+            <p className="kz-eyebrow mb-2" style={{ color: KZ.violet }}>Questions fréquentes</p>
+            <h2 className="text-2xl lg:text-[32px] font-extrabold tracking-tight text-[#1A1410]">
+              Vous avez des questions. On a les réponses.
+            </h2>
+          </div>
+          <div className="flex flex-col gap-3">
+            {[
+              { q: 'Puis-je annuler à tout moment ?', a: 'Oui. L\'annulation est effective immédiatement depuis votre espace recruteur. Aucun frais de résiliation, aucun engagement. Le prochain débit est simplement annulé.' },
+              { q: 'Combien de recruteurs peuvent utiliser le même compte ?', a: 'Cela dépend de votre plan. Le plan Starter inclut 1 recruteur, Pro 3, Studio 5 et Agency est illimité. Vous pouvez inviter des membres depuis Paramètres > Équipe.' },
+              { q: 'Mes offres sont-elles visibles immédiatement après publication ?', a: 'Oui, dès la validation du formulaire votre offre est en ligne. Les candidats la voient en temps réel. Les offres boostées apparaissent en tête de liste pendant la durée du boost.' },
+              { q: 'Que se passe-t-il à la fin des 30 jours d\'essai ?', a: 'Votre carte est débitée automatiquement du montant du plan choisi. Vous recevez un email de rappel 3 jours avant. Si vous annulez avant la fin de l\'essai, aucun débit n\'est effectué.' },
+              { q: 'Les données de mes candidats sont-elles sécurisées ?', a: 'Absolument. Les données sont hébergées en Europe, chiffrées en transit (HTTPS/TLS) et au repos. Kazajob est conforme RGPD. Les candidats peuvent exercer leur droit à l\'effacement à tout moment.' },
+              { q: 'Puis-je créer des offres pour une autre entreprise (cabinet RH) ?', a: 'Oui. Le plan Agency est conçu pour les cabinets de recrutement. Vous gérez plusieurs entreprises clientes depuis un seul tableau de bord, avec des offres anonymisées si besoin.' },
+            ].map((item) => (
+              <div key={item.q} className="kz-card p-5 bg-white">
+                <h3 className="text-sm font-bold text-[#1A1410] mb-2">{item.q}</h3>
+                <p className="text-sm text-[#6B5A4A] leading-relaxed">{item.a}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <p className="text-sm text-[#6B5A4A]">Une autre question ?{' '}
+              <a href="mailto:contact@kazajob.re" className="font-bold text-[#1A1410] hover:underline">contact@kazajob.re</a>
+            </p>
           </div>
         </div>
       </section>

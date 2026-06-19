@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Menu, X, ArrowRight, LayoutDashboard, LogOut, User, Sparkles, Building2, Users } from 'lucide-react'
@@ -28,21 +28,39 @@ const LINKS: Record<View, { href: string; label: string }[]> = {
 
 function ViewToggle({ view, onNavigate }: { view: View; onNavigate?: () => void }) {
   const router = useRouter()
-  const go = (v: View) => { onNavigate?.(); router.push(`/?view=${v}`) }
+  // État local optimiste → réponse visuelle IMMÉDIATE avant que le serveur réponde
+  const [active, setActive] = useState<View>(view)
+
+  // Resync quand la navigation côté serveur se règle
+  useEffect(() => { setActive(view) }, [view])
+
+  // Prefetch les deux vues dès le montage → navigation quasi-instantanée
+  useEffect(() => {
+    router.prefetch('/')
+    router.prefetch('/?view=entreprise')
+  }, [router])
+
+  const go = (v: View) => {
+    if (active === v) return            // déjà actif, on ignore les doubles clics
+    setActive(v)                        // feedback visuel immédiat
+    onNavigate?.()
+    router.push(v === 'candidat' ? '/' : '/?view=entreprise', { scroll: false })
+  }
+
   return (
     <div className="inline-flex items-center gap-0.5 p-0.5 rounded-full border border-[#1A1410] shrink-0" style={{ background: KZ.paper }}>
       <button
         onClick={() => go('candidat')}
-        className="flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold transition-all"
-        style={view === 'candidat' ? { background: KZ.orange, color: KZ.ink, boxShadow: '2px 2px 0 #1A1410' } : { color: KZ.mute }}
+        className="flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold transition-colors duration-100"
+        style={active === 'candidat' ? { background: KZ.orange, color: KZ.ink, boxShadow: '2px 2px 0 #1A1410' } : { color: KZ.mute }}
       >
         <Users size={12} />
         <span className="hidden md:inline">Je cherche un emploi</span><span className="md:hidden">Emploi</span>
       </button>
       <button
         onClick={() => go('entreprise')}
-        className="flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold transition-all"
-        style={view === 'entreprise' ? { background: KZ.violet, color: 'white', boxShadow: '2px 2px 0 #1A1410' } : { color: KZ.mute }}
+        className="flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold transition-colors duration-100"
+        style={active === 'entreprise' ? { background: KZ.violet, color: 'white', boxShadow: '2px 2px 0 #1A1410' } : { color: KZ.mute }}
       >
         <Building2 size={12} />
         <span className="hidden md:inline">Je recrute</span><span className="md:hidden">Recruter</span>
