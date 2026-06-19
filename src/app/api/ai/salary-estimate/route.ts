@@ -4,9 +4,9 @@ import { generateText } from '@/lib/ai/provider'
 // GET /api/ai/salary-estimate?sector=…&job_type=…&title=…
 // Renvoie { min, max, median, source: 'ia' } ou null
 export async function GET(req: NextRequest) {
-  const sector   = req.nextUrl.searchParams.get('sector') ?? ''
-  const job_type = req.nextUrl.searchParams.get('job_type') ?? 'CDI'
-  const title    = req.nextUrl.searchParams.get('title') ?? ''
+  const sector   = (req.nextUrl.searchParams.get('sector') ?? '').slice(0, 100)
+  const job_type = (req.nextUrl.searchParams.get('job_type') ?? 'CDI').slice(0, 50)
+  const title    = (req.nextUrl.searchParams.get('title') ?? '').slice(0, 100)
 
   if (!sector && !title) return NextResponse.json(null)
 

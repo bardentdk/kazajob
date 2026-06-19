@@ -2,8 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
 import { auth } from '@/lib/auth'
 
-// Dossiers autorisés (un par type d'asset).
-const FOLDERS = ['avatars', 'cvs', 'video-pitches', 'company-logos', 'training-images', 'bug-reports']
+// Dossiers autorisés avec leurs MIME types acceptés.
+const FOLDER_MIME: Record<string, string[]> = {
+  'avatars':         ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+  'company-logos':   ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'],
+  'training-images': ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+  'bug-reports':     ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+  'cvs':             ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  'video-pitches':   ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'],
+}
+const FOLDERS = Object.keys(FOLDER_MIME)
 const MAX_BYTES = 12 * 1024 * 1024 // 12 Mo
 
 // POST /api/upload (multipart) { file, folder } → { url }
@@ -19,6 +27,11 @@ export async function POST(req: NextRequest) {
   if (!(file instanceof File)) return NextResponse.json({ error: 'Fichier requis' }, { status: 400 })
   if (!FOLDERS.includes(folder)) return NextResponse.json({ error: 'Dossier invalide' }, { status: 400 })
   if (file.size > MAX_BYTES) return NextResponse.json({ error: 'Fichier trop volumineux' }, { status: 413 })
+
+  const allowedMimes = FOLDER_MIME[folder] ?? []
+  if (!allowedMimes.includes(file.type)) {
+    return NextResponse.json({ error: 'Type de fichier non autorisé' }, { status: 415 })
+  }
 
   const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_').slice(-64)
   const pathname = `${folder}/${userId}/${safeName}`

@@ -7,10 +7,22 @@ import type { AIMessage } from '@/lib/ai/provider'
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, jobContext } = await req.json() as {
-      messages: AIMessage[]
-      jobContext?: { title?: string; company?: string }
+    const body = await req.json().catch(() => null)
+    if (!body || !Array.isArray(body.messages)) {
+      return new Response(JSON.stringify({ error: 'Requête invalide' }), { status: 400 })
     }
+
+    const rawMessages = body.messages as AIMessage[]
+    const jobContext = body.jobContext as { title?: string; company?: string } | undefined
+
+    // Limites anti-abus : max 20 échanges, max 4 000 chars par message
+    if (rawMessages.length > 20) {
+      return new Response(JSON.stringify({ error: 'Trop de messages' }), { status: 429 })
+    }
+    const VALID_ROLES = new Set(['user', 'assistant'])
+    const messages = rawMessages
+      .filter(m => VALID_ROLES.has(m.role))
+      .map(m => ({ ...m, content: String(m.content ?? '').slice(0, 4000) }))
 
     // Auth (optionnelle pour le chat — enrichit le contexte si connecté)
     const session = await auth()
