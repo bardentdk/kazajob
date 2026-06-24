@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { listTrialsForReminder, setTrialReminder } from '@/lib/queries/billing'
+import { processLaunchReminders } from '@/lib/queries/launch'
 import { trialReminderEmail } from '@/lib/email/templates'
 import { SUBSCRIPTION_PLANS } from '@/lib/constants'
 
@@ -65,8 +66,11 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    console.log(`[Trial Reminders Cron] Envoyé: ${sent} / Erreurs: ${errors.length}`)
-    return NextResponse.json({ ok: true, sent, errors: errors.length > 0 ? errors : undefined })
+    // Rappels d'expiration KazaLaunch (in-app, idempotents, J-30/15/7/3/1/0).
+    const launchReminders = await processLaunchReminders()
+
+    console.log(`[Trial Reminders Cron] Email: ${sent} / KazaLaunch: ${launchReminders} / Erreurs: ${errors.length}`)
+    return NextResponse.json({ ok: true, sent, launchReminders, errors: errors.length > 0 ? errors : undefined })
 
   } catch (err) {
     console.error('[Trial Reminders Cron]', err)

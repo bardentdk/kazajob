@@ -7,12 +7,12 @@
  * - Expiration à 3 mois calendaires, sans prélèvement automatique.
  * - Toutes les vérifications d'éligibilité sont faites côté serveur.
  */
-import { and, eq, lt, sql } from 'drizzle-orm'
+import { and, eq, isNotNull, lt, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { companies, companySubscriptions, jobs, launchEligibility, subscriptionPlans } from '@/lib/db/schema'
+import { companies, companySubscriptions, jobs, launchEligibility, notifications, subscriptionPlans } from '@/lib/db/schema'
 import { LAUNCH_PLAN_ID } from '@/lib/constants'
 import {
-  launchExpiry, launchGloballyAvailable, daysUntil, launchAlertLevel,
+  launchExpiry, launchGloballyAvailable, daysUntil, launchAlertLevel, dueLaunchReminder,
   type LaunchEligibility, type PlanAvailability,
 } from '@/lib/launch'
 import { writeAudit } from './audit'
@@ -170,6 +170,50 @@ export async function expireLaunchSubscriptions(now: Date = new Date()): Promise
     await writeAudit({ action: 'launch_plan.auto_expired', targetType: 'system', newValues: { count: expiredSubs.length } })
   }
   return expiredSubs.length
+}
+
+/**
+ * Cron : envoie les rappels d'expiration KazaLaunch (J-30/15/7/3/1/0) en notification
+ * in-app, sans doublon (clé d'idempotence = palier stocké dans last_launch_reminder).
+ * Renvoie le nombre de rappels envoyés.
+ */
+export async function processLaunchReminders(now: Date = new Date()): Promise<number> {
+  const rows = await db.select({
+    companyId: companySubscriptions.companyId,
+    expiresAt: companySubscriptions.launchExpiresAt,
+    lastReminder: companySubscriptions.lastLaunchReminder,
+    ownerId: companies.ownerId,
+    companyName: companies.name,
+  })
+    .from(companySubscriptions)
+    .innerJoin(companies, eq(companySubscriptions.companyId, companies.id))
+    .where(and(
+      eq(companySubscriptions.planId, LAUNCH_PLAN_ID),
+      eq(companySubscriptions.status, 'active'),
+      isNotNull(companySubscriptions.launchExpiresAt),
+    ))
+
+  let sent = 0
+  for (const r of rows) {
+    if (!r.expiresAt || !r.ownerId) continue
+    const daysLeft = daysUntil(r.expiresAt, now)
+    const palier = dueLaunchReminder(daysLeft, r.lastReminder ?? null)
+    if (palier === null) continue
+
+    const dateStr = r.expiresAt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    const title = palier === 0 ? 'KazaLaunch expire aujourd\'hui' : `KazaLaunch expire dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`
+    const message = `Votre offre gratuite se termine le ${dateStr}. À cette date, la publication de nouvelles offres sera bloquée jusqu'au choix d'un forfait payant. Vos candidatures et données restent accessibles. Aucun prélèvement automatique n'aura lieu.`
+
+    await db.insert(notifications).values({
+      userId: r.ownerId, type: 'launch_reminder', title, message,
+      link: '/recruiter/company', data: { palier, expiresAt: r.expiresAt.toISOString() },
+    })
+    await db.update(companySubscriptions)
+      .set({ lastLaunchReminder: palier })
+      .where(eq(companySubscriptions.companyId, r.companyId))
+    sent++
+  }
+  return sent
 }
 
 /** Compteurs d'impact pour l'administration (avant désactivation/migration). */
