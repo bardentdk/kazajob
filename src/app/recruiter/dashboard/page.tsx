@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { KazaScoreCard } from '@/components/ui/KazaScoreBadge'
+import { LaunchBanner } from '@/components/recruiter/LaunchBanner'
 import { useAuth } from '@/features/auth/useAuth'
 import { APPLICATION_STATUSES, KZ } from '@/lib/constants'
 import { timeAgo } from '@/lib/utils'
@@ -61,6 +62,7 @@ export default function RecruiterDashboard() {
 
   return (
     <div className="max-w-[1100px] mx-auto">
+      <LaunchBanner />
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
           <p className="kz-eyebrow mb-1.5" style={{ color: KZ.violet }}>Bonjour {profile?.full_name?.split(' ')[0]} · <span className="capitalize">{today}</span></p>
