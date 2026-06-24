@@ -41,50 +41,60 @@ export function PricingSection() {
           </p>
         </div>
 
-        {/* Offre de lancement KazaLaunch — visible uniquement si active/publique */}
-        {launchOn && (
-          <div className="kz-card p-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-            style={{ background: KZ.violet, color: 'white', boxShadow: '6px 6px 0 #1A1410' }}>
-            <div className="flex items-start gap-3">
-              <div className="w-11 h-11 rounded-xl border border-white/30 flex items-center justify-center shrink-0" style={{ background: 'rgba(255,255,255,0.15)' }}>
-                <Rocket size={20} color="white" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg font-extrabold">{LAUNCH_PLAN.name}</span>
+        {/* Bento recruteur : grande tuile KazaLaunch (bloc 2×2) + 4 forfaits payants */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+
+          {/* Offre de lancement — grande tuile, visible uniquement si active/publique */}
+          {launchOn && (
+            <div className="md:col-span-2 lg:col-span-2 lg:row-span-2 kz-card p-6 flex flex-col"
+              style={{ background: KZ.violet, color: 'white', boxShadow: '6px 6px 0 #1A1410' }}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-11 h-11 rounded-xl border border-white/30 flex items-center justify-center shrink-0" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                  <Rocket size={20} color="white" />
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xl font-extrabold">{LAUNCH_PLAN.name}</span>
                   <Badge color="orange" size="sm">{LAUNCH_PLAN.badge}</Badge>
                 </div>
-                <div className="text-sm text-white/90">{LAUNCH_PLAN.subtitle} · {LAUNCH_PLAN.maxJobs} offres actives · 1 recruteur</div>
-                <div className="text-xs text-white/70 mt-1">À la fin des 3 mois, choisissez un forfait payant pour continuer à publier. Aucun prélèvement automatique.</div>
               </div>
+              <div className="text-[44px] font-extrabold tracking-tight leading-none mb-1">
+                0€<span className="text-base font-semibold opacity-70"> / 3 mois</span>
+              </div>
+              <div className="text-xs text-white/70 mb-4">{LAUNCH_PLAN.subtitle} · sans engagement · aucun prélèvement automatique</div>
+              <div className="grid sm:grid-cols-2 gap-x-5 gap-y-2 mb-6 flex-1">
+                {LAUNCH_PLAN.features.map((f) => (
+                  <div key={f} className="flex items-start gap-2 text-sm">
+                    <Check size={14} className="mt-0.5 shrink-0" style={{ color: KZ.orange }} />
+                    <span className="opacity-90">{f}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href={`/auth/register?role=recruiter&plan=${LAUNCH_PLAN_ID}`}>
+                <Button kind="primary" size="lg" full iconRight={<ArrowRight size={14} />}>{LAUNCH_PLAN.cta}</Button>
+              </Link>
+              <p className="text-[11px] text-white/60 mt-2 leading-snug">
+                À la fin des 3 mois, choisissez un forfait payant pour continuer à publier. Offre utilisable une seule fois par entreprise — vos données restent accessibles.
+              </p>
             </div>
-            <Link href={`/auth/register?role=recruiter&plan=${LAUNCH_PLAN_ID}`} className="shrink-0">
-              <Button kind="primary" size="lg" iconRight={<ArrowRight size={14} />}>{LAUNCH_PLAN.cta}</Button>
-            </Link>
-          </div>
-        )}
+          )}
 
-        {/* Grille recruteur payante — source unique : PAID_PLANS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-end mb-8">
+          {/* Forfaits payants — source unique : PAID_PLANS */}
           {PAID_PLANS.map((plan) => {
             const euros = Math.floor(plan.priceCts / 100)
             const hl = plan.highlight
             return (
-              <div key={plan.id} className="kz-card p-6 flex flex-col relative"
+              <div key={plan.id} className="kz-card p-6 flex flex-col"
                 style={{
                   background: hl ? KZ.violet : 'white',
                   color: hl ? 'white' : KZ.ink,
                   boxShadow: hl ? '6px 6px 0 #1A1410' : '3px 3px 0 #1A1410',
-                  transform: hl ? 'scale(1.03)' : 'none',
                 }}>
-                {hl && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                    <Badge color="orange" size="md">⭐ Le plus populaire</Badge>
-                  </div>
-                )}
-                <div className="text-sm font-bold mb-1 opacity-70">{plan.name}</div>
-                <div className="text-[42px] font-extrabold tracking-tight leading-none mb-1">
-                  {euros}€<span className="text-base font-semibold opacity-60">/mois</span>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="text-sm font-bold opacity-80">{plan.name}</span>
+                  {hl && <Badge color="orange" size="sm">Populaire</Badge>}
+                </div>
+                <div className="text-[36px] font-extrabold tracking-tight leading-none mb-1">
+                  {euros}€<span className="text-sm font-semibold opacity-60">/mois</span>
                 </div>
                 <div className="text-xs opacity-60 mb-4">30 jours d&apos;essai · 1er débit après l&apos;essai</div>
                 <div className="flex flex-col gap-2 mb-6 flex-1">
