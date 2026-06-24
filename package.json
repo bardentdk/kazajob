@@ -7,7 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --env-file=.env.local --test src/lib/launch.test.ts src/lib/entitlements.test.ts",
+    "db:migrate:launch": "tsx --env-file=.env.local src/lib/db/migrate-kazalaunch.ts",
+    "db:seed": "tsx --env-file=.env.local src/lib/db/seed.ts",
+    "db:seed:admin": "tsx --env-file=.env.local src/lib/db/seed-admin.ts",
+    "db:backup": "tsx --env-file=.env.local -e \"import('./src/lib/db/backup-export').then(m=>m.exportBackup()).then(r=>console.log(r.file,r.total,'lignes'))\"",
+    "db:reset:launch:dry": "tsx --env-file=.env.local scripts/reset-launch-database.ts --dry-run",
+    "db:reset:launch": "tsx --env-file=.env.local scripts/reset-launch-database.ts"
   },
   "dependencies": {
     "@dicebear/collection": "^9.4.2",

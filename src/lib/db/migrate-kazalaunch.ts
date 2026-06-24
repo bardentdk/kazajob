@@ -48,7 +48,7 @@ const STATEMENTS: string[] = [
      status text NOT NULL DEFAULT 'active',
      activated_by uuid REFERENCES profiles(id) ON DELETE SET NULL,
      revoked_reason text,
-     created_at timestamptz NOT NULL DEFAULT now()
+     "createdAt" timestamptz NOT NULL DEFAULT now()
    )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS launch_eligibility_company_id_key ON launch_eligibility(company_id)`,
 
@@ -64,7 +64,7 @@ const STATEMENTS: string[] = [
      new_values jsonb,
      correlation_id text,
      context jsonb,
-     created_at timestamptz NOT NULL DEFAULT now()
+     "createdAt" timestamptz NOT NULL DEFAULT now()
    )`,
 ]
 
