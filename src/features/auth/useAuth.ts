@@ -17,7 +17,13 @@ export function useAuth() {
   const fetchProfile = useCallback(async () => {
     try {
       const res = await fetch('/api/me')
-      if (!res.ok) {
+      if (res.status === 401) {
+        // Session JWT valide mais profil introuvable (compte supprimé / base réinitialisée).
+        // Session obsolète → on déconnecte pour éviter une boucle de redirection infinie.
+        setProfile(null)
+        await nextSignOut({ redirect: false })
+      } else if (!res.ok) {
+        // Erreur transitoire (5xx) : on n'éjecte pas l'utilisateur.
         setProfile(null)
       } else {
         setProfile((await res.json()) as Profile)
