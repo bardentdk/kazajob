@@ -140,7 +140,9 @@ export async function setCompanySubscription(
 
 // ── Forfait & quotas ───────────────────────────────────────────────
 
-const DEFAULT_PLAN = SUBSCRIPTION_PLANS[0] // Starter = repli le plus restrictif
+// Repli explicite Starter (et non SUBSCRIPTION_PLANS[0], désormais KazaLaunch gratuit
+// qui ne doit jamais être attribué sans activation volontaire).
+const DEFAULT_PLAN = SUBSCRIPTION_PLANS.find((p) => p.id === 'starter') ?? SUBSCRIPTION_PLANS[1]
 
 /**
  * Appartenance « active » du recruteur (multi-entreprises).

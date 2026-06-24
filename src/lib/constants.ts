@@ -121,30 +121,57 @@ export interface SubscriptionPlan {
   highlight:  boolean
   trialDays:  number
   features:   string[]
+  // ── Métadonnées de monétisation (source de vérité ; reflétées en base) ──
+  isFree:               boolean   // gratuit → ne passe JAMAIS par Stripe
+  requiresPaymentMethod: boolean  // carte bancaire requise à la souscription
+  durationMonths:       number    // 0 = abonnement récurrent ; >0 = offre à durée fixe (KazaLaunch = 3)
+  sortOrder:            number     // ordre d'affichage public
+  badge?:               string    // libellé de badge (ex. « Offre de lancement »)
+  subtitle?:            string     // sous-titre marketing
+  cta?:                 string     // libellé du bouton d'appel à l'action
 }
+
+/** Slug stable de l'offre gratuite de lancement (jamais Stripe). */
+export const LAUNCH_PLAN_ID = 'launch_free'
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
-    id: 'starter', name: 'Starter', priceCts: 2900, maxMembers: 1, maxJobs: 3,
-    partners: [], apiAccess: false, highlight: false, trialDays: 30,
-    features: ['1 recruteur', '3 offres actives', 'Diffusion Kazajob uniquement', 'KazaScore recruteur', 'Messagerie candidats'],
+    id: LAUNCH_PLAN_ID, name: 'KazaLaunch', priceCts: 0, maxMembers: 1, maxJobs: 3,
+    partners: [], apiAccess: false, highlight: true, trialDays: 0,
+    isFree: true, requiresPaymentMethod: false, durationMonths: 3, sortOrder: 1,
+    badge: 'Offre de lancement', subtitle: '3 mois gratuits · Sans carte bancaire', cta: 'Activer mes 3 mois gratuits',
+    features: ['1 recruteur', '3 offres actives', 'Réception des candidatures', 'Messagerie candidats', 'Pipeline de candidatures', 'KazaScore recruteur', 'Statistiques essentielles'],
   },
   {
-    id: 'pro', name: 'Pro', priceCts: 8900, maxMembers: 3, maxJobs: 10,
+    id: 'starter', name: 'Starter', priceCts: 2900, maxMembers: 1, maxJobs: 5,
+    partners: [], apiAccess: false, highlight: false, trialDays: 30,
+    isFree: false, requiresPaymentMethod: true, durationMonths: 0, sortOrder: 2,
+    features: ['1 recruteur', '5 offres actives', 'Diffusion Kazajob uniquement', 'KazaScore recruteur', 'Messagerie candidats'],
+  },
+  {
+    id: 'pro', name: 'Pro', priceCts: 8900, maxMembers: 3, maxJobs: 15,
     partners: ['france_travail'], apiAccess: false, highlight: true, trialDays: 30,
-    features: ['3 recruteurs', '10 offres actives', 'Diffusion France Travail', 'KazaScore + Analytics', 'Gestion d\'équipe', 'Support prioritaire'],
+    isFree: false, requiresPaymentMethod: true, durationMonths: 0, sortOrder: 3,
+    features: ['3 recruteurs', '15 offres actives', 'Diffusion France Travail', 'KazaScore + Analytics avancés', 'Résumé IA des candidatures', 'Gestion d\'équipe', 'Support prioritaire'],
   },
   {
     id: 'business', name: 'Business', priceCts: 17900, maxMembers: 10, maxJobs: -1,
     partners: ['france_travail', 'mission_locale', 'apec'], apiAccess: false, highlight: false, trialDays: 30,
-    features: ['10 recruteurs', 'Offres illimitées', 'France Travail · Mission Locale · APEC', 'Analytics avancés', 'Rôles & permissions', 'SLA 24h'],
+    isFree: false, requiresPaymentMethod: true, durationMonths: 0, sortOrder: 4,
+    features: ['10 recruteurs', 'Offres illimitées', 'France Travail · Mission Locale · APEC', 'Analytics avancés', 'Rôles & permissions avancés', 'SLA 24h'],
   },
   {
     id: 'enterprise', name: 'Entreprise', priceCts: 34900, maxMembers: 50, maxJobs: -1,
     partners: ['france_travail', 'mission_locale', 'apec', 'indeed', 'aggregator'], apiAccess: true, highlight: false, trialDays: 30,
+    isFree: false, requiresPaymentMethod: true, durationMonths: 0, sortOrder: 5,
     features: ['50 recruteurs', 'Offres illimitées', 'Toutes plateformes + flux XML', 'API entrante/sortante', 'Intégration ATS', 'CSM dédié', 'Contrat sur-mesure'],
   },
 ]
+
+/** Le plan KazaLaunch (offre gratuite de lancement). */
+export const LAUNCH_PLAN = SUBSCRIPTION_PLANS.find((p) => p.id === LAUNCH_PLAN_ID)!
+/** Plans payants uniquement (passent par Stripe). */
+export const PAID_PLANS = SUBSCRIPTION_PLANS.filter((p) => !p.isFree)
 
 // ── Multidiffusion (désactivée visuellement — réactivation = passer à true) ──
 // Le code de diffusion (lib/partners/*) reste en place ; seul l'affichage est masqué.

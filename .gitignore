@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Worklog mission KazaLaunch (lu à la demande)
+.claude/worklogs/

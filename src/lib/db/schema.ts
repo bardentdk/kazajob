@@ -344,6 +344,51 @@ export const subscriptionPlans = pgTable('subscription_plans', {
   trialDays:  integer('trial_days').notNull().default(30),
   highlight:  boolean().notNull().default(false),
   isActive:   boolean('is_active').notNull().default(true),
+  // ── Monétisation & pilotage admin (KazaLaunch) ──
+  isFree:               boolean('is_free').notNull().default(false),                 // gratuit → jamais Stripe
+  requiresPaymentMethod: boolean('requires_payment_method').notNull().default(true), // carte requise à la souscription
+  durationMonths:       integer('duration_months').notNull().default(0),             // 0 = récurrent ; 3 = KazaLaunch
+  sortOrder:            integer('sort_order').notNull().default(100),
+  isPublic:             boolean('is_public').notNull().default(true),                // visible sur les pages publiques
+  isSelectable:         boolean('is_selectable').notNull().default(true),            // sélectionnable à l'inscription
+  isFeatured:           boolean('is_featured').notNull().default(false),             // mise en avant visuelle
+  startsAt:             timestamp('starts_at', { withTimezone: true }),              // disponibilité globale (début)
+  endsAt:               timestamp('ends_at', { withTimezone: true }),                // disponibilité globale (fin)
+  stripeProductId:      text('stripe_product_id'),
+  stripePriceId:        text('stripe_price_id'),
+  updatedBy:            uuid('updated_by').references(() => profiles.id, { onDelete: 'set null' }),
+  updatedAt:            timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+// ── launch_eligibility (historique immuable d'activation KazaLaunch) ──
+// Une seule activation par entreprise (contrainte unique). Survit à la suppression
+// de l'abonnement applicatif : empêche une seconde activation de l'offre gratuite.
+export const launchEligibility = pgTable('launch_eligibility', {
+  id:               uuid().primaryKey().default(sql`gen_random_uuid()`),
+  companyId:        uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  siret:            text(),                                              // identifiant légal (signal anti-abus)
+  planSlug:         text('plan_slug').notNull().default('launch_free'),
+  firstActivatedAt: timestamp('first_activated_at', { withTimezone: true }).notNull().defaultNow(),
+  expiresAt:        timestamp('expires_at', { withTimezone: true }).notNull(),
+  status:           text().notNull().default('active'),                 // active | expired | migrated | revoked
+  activatedBy:      uuid('activated_by').references(() => profiles.id, { onDelete: 'set null' }),
+  revokedReason:    text('revoked_reason'),                             // motif d'un override super admin
+  createdAt:        now(),
+}, (t) => [unique().on(t.companyId)])
+
+// ── audit_logs (traçabilité des actions sensibles : monétisation, reset, admin) ──
+export const auditLogs = pgTable('audit_logs', {
+  id:            uuid().primaryKey().default(sql`gen_random_uuid()`),
+  actorId:       uuid('actor_id').references(() => profiles.id, { onDelete: 'set null' }),
+  actorEmail:    text('actor_email'),                                   // snapshot (survit à la suppression)
+  action:        text().notNull(),                                      // ex. launch_plan.disabled, db.reset
+  targetType:    text('target_type'),
+  targetId:      text('target_id'),
+  oldValues:     jsonb('old_values'),
+  newValues:     jsonb('new_values'),
+  correlationId: text('correlation_id'),
+  context:       jsonb(),
+  createdAt:     now(),
 })
 
 // ── bug_reports (signalements de bug candidat/recruteur) ──────────
@@ -373,6 +418,10 @@ export const companySubscriptions = pgTable('company_subscriptions', {
   stripeCustomerId:     text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
   lastTrialReminder:    integer('last_trial_reminder'),  // dernier palier de relance envoyé (15/7/3/0)
+  // ── KazaLaunch (offre gratuite à durée fixe) ──
+  launchActivatedAt:    timestamp('launch_activated_at', { withTimezone: true }),
+  launchExpiresAt:      timestamp('launch_expires_at', { withTimezone: true }),
+  lastLaunchReminder:   integer('last_launch_reminder'),  // palier de rappel d'expiration KazaLaunch (30/15/7/3/1/0)
   createdAt:        now(),
 }, (t) => [unique().on(t.companyId)])
 
