@@ -6,12 +6,13 @@ import { randomBytes } from 'crypto'
 import { and, eq, gt, ilike, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import {
-  companies, companyInvitations, companyJoinRequests, companyMembers, companySubscriptions, jobs, profiles,
+  companies, companyInvitations, companyJoinRequests, companyMembers, companySubscriptions, jobs, profiles, trainingOffers,
 } from '@/lib/db/schema'
 import type {
   Company, CompanyInvitation, CompanyJoinRequest, CompanyMember, CompanySubscription, Membership,
 } from '@/lib/types'
 import { SUBSCRIPTION_PLANS } from '@/lib/constants'
+import { resolvePublishingAccess } from '@/lib/entitlements'
 import { serialize } from './_serialize'
 
 const INVITE_TTL_DAYS = 7
@@ -140,9 +141,9 @@ export async function setCompanySubscription(
 
 // ── Forfait & quotas ───────────────────────────────────────────────
 
-// Repli explicite Starter (et non SUBSCRIPTION_PLANS[0], désormais KazaLaunch gratuit
-// qui ne doit jamais être attribué sans activation volontaire).
-const DEFAULT_PLAN = SUBSCRIPTION_PLANS.find((p) => p.id === 'starter') ?? SUBSCRIPTION_PLANS[1]
+// Repli explicite Starter, utilisé UNIQUEMENT pour les limites de sièges (équipe) —
+// jamais pour les droits de publication (voir resolvePublishingAccess, entitlements.ts).
+const DEFAULT_PLAN = SUBSCRIPTION_PLANS.find((p) => p.id === 'starter') ?? SUBSCRIPTION_PLANS[0]
 
 /**
  * Appartenance « active » du recruteur (multi-entreprises).
@@ -236,6 +237,14 @@ async function countActiveJobs(companyId: string): Promise<number> {
   return value
 }
 
+async function countActiveTrainings(companyId: string): Promise<number> {
+  const [{ value }] = await db
+    .select({ value: sql<number>`count(*)::int` })
+    .from(trainingOffers)
+    .where(and(eq(trainingOffers.companyId, companyId), eq(trainingOffers.isActive, true)))
+  return value
+}
+
 async function countActiveMembers(companyId: string): Promise<number> {
   const [{ value }] = await db
     .select({ value: sql<number>`count(*)::int` })
@@ -244,18 +253,37 @@ async function countActiveMembers(companyId: string): Promise<number> {
   return value
 }
 
-/** L'entreprise peut-elle publier/activer une offre de plus (forfait + statut d'abonnement) ? */
+/**
+ * L'entreprise peut-elle publier/activer une offre d'emploi de plus ?
+ * Délègue la décision au service central (abonnement payant > campagne de lancement > aucun accès) —
+ * voir resolvePublishingAccess (entitlements.ts). Ne compte ici que l'usage (domaine jobs).
+ */
 export async function canPublishJob(
   companyId: string,
 ): Promise<{ ok: boolean; max: number; used: number; planName: string; reason?: 'limit' | 'expired' }> {
-  const { maxJobs, planName, status } = await getPlanLimits(companyId)
-  // Essai/abonnement expiré ou annulé → accès coupé.
-  if (status === 'expired' || status === 'cancelled') {
-    return { ok: false, max: maxJobs, used: 0, planName, reason: 'expired' }
-  }
-  if (maxJobs === -1) return { ok: true, max: -1, used: 0, planName }
   const used = await countActiveJobs(companyId)
-  return { ok: used < maxJobs, max: maxJobs, used, planName, reason: 'limit' }
+  const decision = await resolvePublishingAccess(companyId, 'job', used)
+  return {
+    ok: decision.allowed, max: decision.max, used: decision.used,
+    planName: decision.planName ?? decision.campaignName ?? 'Aucun accès',
+    reason: decision.allowed ? undefined : decision.reasonCode === 'read_only' ? 'expired' : 'limit',
+  }
+}
+
+/**
+ * L'entreprise peut-elle publier/activer une formation de plus ?
+ * Même service central que canPublishJob, juste un domaine de comptage différent.
+ */
+export async function canPublishTraining(
+  companyId: string,
+): Promise<{ ok: boolean; max: number; used: number; planName: string; reason?: 'limit' | 'expired' }> {
+  const used = await countActiveTrainings(companyId)
+  const decision = await resolvePublishingAccess(companyId, 'training', used)
+  return {
+    ok: decision.allowed, max: decision.max, used: decision.used,
+    planName: decision.planName ?? decision.campaignName ?? 'Aucun accès',
+    reason: decision.allowed ? undefined : decision.reasonCode === 'read_only' ? 'expired' : 'limit',
+  }
 }
 
 // ── Équipe ────────────────────────────────────────────────────────

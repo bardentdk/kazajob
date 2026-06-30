@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { useAuth } from '@/features/auth/useAuth'
 import { uploadFile } from '@/features/profile/useUpload'
-import { KZ, SUBSCRIPTION_PLANS, PAID_PLANS, LAUNCH_PLAN, LAUNCH_PLAN_ID, JOB_SECTORS, MULTIDIFFUSION_ENABLED } from '@/lib/constants'
+import { KZ, SUBSCRIPTION_PLANS, PAID_PLANS, JOB_SECTORS, MULTIDIFFUSION_ENABLED } from '@/lib/constants'
 import type { Company } from '@/lib/types'
 
 const fmtDate = (iso: string) =>
@@ -90,12 +90,14 @@ export default function CompanySetupPage() {
   const [promoCode, setPromoCode]       = useState('')
   const [promoMsg, setPromoMsg]         = useState<{ ok: boolean; text: string } | null>(null)
 
-  // KazaLaunch (offre gratuite) — éligibilité serveur + confirmation obligatoire
-  const [launchElig, setLaunchElig]     = useState<{ status: string; expiresAt: string | null } | null>(null)
+  // Campagne de lancement (accès gratuit temporaire, indépendant des forfaits) — éligibilité
+  // serveur + confirmation obligatoire. N'est jamais un forfait : sélection distincte de planId.
+  const [launchElig, setLaunchElig]     = useState<{ status: string; expiresAt: string | null; campaignName?: string } | null>(null)
+  const [campaignSelected, setCampaignSelected] = useState(false)
   const [launchConfirmed, setLaunchConfirmed] = useState(false)
   const [launchBusy, setLaunchBusy]     = useState(false)
   const launchAvailable = launchElig?.status === 'eligible'
-  const launchSelected  = planId === LAUNCH_PLAN_ID
+  const launchSelected  = campaignSelected
 
   const checkPromo = async () => {
     if (!promoCode.trim()) { setPromoMsg(null); return }
@@ -230,7 +232,7 @@ export default function CompanySetupPage() {
       .then((d) => {
         if (!d) return
         setLaunchElig(d)
-        if (d.status === 'eligible') setPlanId(LAUNCH_PLAN_ID)  // l'offre de lancement est mise en avant
+        if (d.status === 'eligible') setCampaignSelected(true)  // l'accès gratuit est mis en avant
       })
       .catch(() => {})
   }, [mode])
@@ -469,14 +471,14 @@ export default function CompanySetupPage() {
               <h2 className="text-lg font-bold text-[#1A1410] mb-1">Choisissez votre forfait</h2>
               <p className="text-sm text-[#6B5A4A] mb-5">
                 {launchAvailable
-                  ? 'Démarrez gratuitement avec KazaLaunch, ou choisissez un forfait payant (30 jours d’essai, carte requise).'
+                  ? `Démarrez gratuitement avec ${launchElig?.campaignName ?? 'notre offre de lancement'}, ou choisissez un forfait payant (30 jours d’essai, carte requise).`
                   : '30 jours d’essai · Carte bancaire requise · 1er débit à la fin de l’essai · Annulable avant la fin.'}
               </p>
 
-              {/* Offre gratuite de lancement */}
+              {/* Accès gratuit temporaire (campagne de lancement) — jamais un forfait Stripe */}
               {launchAvailable && (
                 <button
-                  onClick={() => setPlanId(LAUNCH_PLAN_ID)}
+                  onClick={() => setCampaignSelected(true)}
                   className="w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all mb-3"
                   style={{ borderColor: launchSelected ? KZ.violet : KZ.line, background: launchSelected ? KZ.violetSoft : KZ.cream2 }}
                 >
@@ -486,16 +488,16 @@ export default function CompanySetupPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-[#1A1410]">{LAUNCH_PLAN.name}</span>
+                      <span className="text-sm font-bold text-[#1A1410]">{launchElig?.campaignName ?? 'Offre de lancement'}</span>
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-[#1A1410]" style={{ background: KZ.yellowSoft }}>
-                        {LAUNCH_PLAN.badge}
+                        Gratuit
                       </span>
                     </div>
-                    <div className="text-xs text-[#6B5A4A]">{LAUNCH_PLAN.subtitle} · {LAUNCH_PLAN.maxJobs} offres actives</div>
+                    <div className="text-xs text-[#6B5A4A]">Accès gratuit temporaire · sans carte bancaire</div>
                   </div>
                   <div className="text-right shrink-0">
                     <div className="text-lg font-extrabold text-[#1A1410]">0€</div>
-                    <div className="text-[10px] text-[#6B5A4A]">3 mois</div>
+                    {launchElig?.expiresAt && <div className="text-[10px] text-[#6B5A4A]">jusqu&apos;au {fmtDate(launchElig.expiresAt)}</div>}
                   </div>
                 </button>
               )}
@@ -503,11 +505,11 @@ export default function CompanySetupPage() {
               <div className="flex flex-col gap-3 mb-5">
                 {PAID_PLANS.map(plan => {
                   const euros = Math.floor(plan.priceCts / 100)
-                  const isSelected = planId === plan.id
+                  const isSelected = !campaignSelected && planId === plan.id
                   return (
                     <button
                       key={plan.id}
-                      onClick={() => setPlanId(plan.id)}
+                      onClick={() => { setCampaignSelected(false); setPlanId(plan.id) }}
                       className="w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all"
                       style={{
                         borderColor: isSelected ? KZ.violet : KZ.line,
@@ -547,12 +549,11 @@ export default function CompanySetupPage() {
                 /* ── Écran d'information obligatoire avant activation KazaLaunch ── */
                 <div>
                   <div className="kz-card p-4 mb-4" style={{ background: KZ.violetSoft }}>
-                    <h3 className="font-extrabold text-[#1A1410] mb-2">Vos 3 mois gratuits avec KazaLaunch</h3>
+                    <h3 className="font-extrabold text-[#1A1410] mb-2">Votre accès gratuit avec {launchElig?.campaignName ?? 'l’offre de lancement'}</h3>
                     <ul className="text-sm text-[#1A1410] space-y-1 mb-3">
-                      <li>• 0 € pendant 3 mois</li>
+                      <li>• 0 € pendant toute la durée de l&apos;accès</li>
                       <li>• Aucune carte bancaire demandée</li>
                       <li>• Aucun prélèvement automatique</li>
-                      <li>• 3 offres actives maximum</li>
                       <li>• Offre utilisable une seule fois par entreprise</li>
                       {launchElig?.expiresAt && <li>• Fin estimée le <b>{fmtDate(launchElig.expiresAt)}</b></li>}
                     </ul>
@@ -565,13 +566,13 @@ export default function CompanySetupPage() {
                   <label className="flex items-start gap-2 mb-4 cursor-pointer text-sm text-[#1A1410]">
                     <input type="checkbox" checked={launchConfirmed} onChange={(e) => setLaunchConfirmed(e.target.checked)}
                       className="mt-0.5 w-4 h-4 shrink-0" />
-                    <span>J&apos;ai compris que KazaLaunch est valable 3 mois, qu&apos;il ne peut être activé
+                    <span>J&apos;ai compris que cet accès gratuit est temporaire, qu&apos;il ne peut être activé
                       qu&apos;une seule fois par entreprise et qu&apos;aucun paiement ne sera déclenché
                       automatiquement à son expiration.</span>
                   </label>
                   <Button kind="primary" size="lg" full loading={launchBusy} disabled={!launchConfirmed}
                     onClick={handleActivateLaunch} icon={<ArrowRight size={15} />}>
-                    {LAUNCH_PLAN.cta}
+                    Activer mon accès gratuit
                   </Button>
                 </div>
               ) : (

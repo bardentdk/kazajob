@@ -9,23 +9,20 @@ import { profiles, skills, subscriptionPlans } from './schema'
 import { SUBSCRIPTION_PLANS } from '../constants'
 import { PROFESSION_CATEGORIES } from '../onboarding-categories'
 
-/** (Ré)injecte les forfaits (KazaLaunch inclus) + le référentiel de compétences. Idempotent. */
+/** (Ré)injecte les forfaits payants + le référentiel de compétences. Idempotent. */
 export async function seedSystemData(): Promise<{ plans: number; skills: number }> {
   for (const p of SUBSCRIPTION_PLANS) {
     await db.insert(subscriptionPlans).values({
       id: p.id, name: p.name, priceCts: p.priceCts, maxMembers: p.maxMembers,
       maxJobs: p.maxJobs, partners: p.partners, apiAccess: p.apiAccess,
       trialDays: p.trialDays, highlight: p.highlight, isActive: true,
-      isFree: p.isFree, requiresPaymentMethod: p.requiresPaymentMethod,
-      durationMonths: p.durationMonths, sortOrder: p.sortOrder,
-      isPublic: true, isSelectable: true, isFeatured: p.highlight,
+      sortOrder: p.sortOrder, isPublic: true, isSelectable: true, isFeatured: p.highlight,
     }).onConflictDoUpdate({
       target: subscriptionPlans.id,
       set: {
         name: p.name, priceCts: p.priceCts, maxMembers: p.maxMembers, maxJobs: p.maxJobs,
         partners: p.partners, apiAccess: p.apiAccess, trialDays: p.trialDays, highlight: p.highlight,
-        isFree: p.isFree, requiresPaymentMethod: p.requiresPaymentMethod,
-        durationMonths: p.durationMonths, sortOrder: p.sortOrder, updatedAt: new Date(),
+        sortOrder: p.sortOrder, updatedAt: new Date(),
       },
     })
   }

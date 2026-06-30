@@ -26,7 +26,7 @@ import {
   talentPool, trainingApplications, trainingOffers, eventRegistrations, events, referrals,
   notifications, bugReports, demoBookings, bookingSlots, pageViews, jobs,
   companyInvitations, companyJoinRequests, companyMembers, companySubscriptions,
-  launchEligibility, auditLogs, promoCodes, companies, profiles,
+  launchCampaignEnrollments, auditLogs, promoCodes, companies, profiles,
 } from '../src/lib/db/schema'
 import { exportBackup, countRows } from '../src/lib/db/backup-export'
 import { stripePreflight } from '../src/lib/db/stripe-preflight'
@@ -39,7 +39,8 @@ const EXPECTED_HOST_HINT = process.env.EXPECTED_DB_HOST ?? 'neon.tech'
 const DRY_RUN = process.argv.includes('--dry-run')
 
 // Ordre de suppression respectant les clés étrangères (enfants → parents).
-// subscription_plans et skills NE SONT PAS supprimés (données système réinjectées).
+// subscription_plans, skills et launch_campaigns NE SONT PAS supprimés (config système,
+// pas des données client) — seuls les enrôlements (launch_campaign_enrollments) le sont.
 const DELETE_ORDER = [
   { name: 'messages', t: messages }, { name: 'conversations', t: conversations },
   { name: 'interviews', t: interviews }, { name: 'applications', t: applications },
@@ -52,7 +53,8 @@ const DELETE_ORDER = [
   { name: 'booking_slots', t: bookingSlots }, { name: 'page_views', t: pageViews },
   { name: 'jobs', t: jobs }, { name: 'company_invitations', t: companyInvitations },
   { name: 'company_join_requests', t: companyJoinRequests }, { name: 'company_members', t: companyMembers },
-  { name: 'company_subscriptions', t: companySubscriptions }, { name: 'launch_eligibility', t: launchEligibility },
+  { name: 'company_subscriptions', t: companySubscriptions },
+  { name: 'launch_campaign_enrollments', t: launchCampaignEnrollments },
   { name: 'audit_logs', t: auditLogs }, { name: 'promo_codes', t: promoCodes },
   { name: 'companies', t: companies },
 ] satisfies { name: string; t: PgTable }[]
@@ -115,7 +117,7 @@ async function main() {
     console.log('\n🧪 DRY-RUN : aucune suppression effectuée.')
     console.log('   Tables qui seraient vidées (ordre FK) :')
     console.log('     ' + DELETE_ORDER.map((d) => d.name).join(', ') + (process.env.RESET_AUTH_USERS !== 'false' ? ', profiles' : ''))
-    console.log('   Conservées (réinjectées) : subscription_plans, skills + compte admin unique.')
+    console.log('   Conservées : subscription_plans, skills (réinjectées) + launch_campaigns (config) + compte admin unique.')
     console.log(`\n   Pour exécuter réellement : ALLOW_DATABASE_RESET=true DATABASE_RESET_CONFIRMATION=${CONFIRMATION_PHRASE}`)
     process.exit(0)
   }
@@ -169,7 +171,7 @@ async function main() {
 
   // 10. Vérification post-reset.
   const after = await countRows()
-  const residual = Object.entries(after).filter(([k, v]) => v > 0 && !['subscription_plans', 'skills', 'profiles', 'audit_logs'].includes(k))
+  const residual = Object.entries(after).filter(([k, v]) => v > 0 && !['subscription_plans', 'skills', 'profiles', 'audit_logs', 'launch_campaigns'].includes(k))
   console.log('\n✅ Reset terminé.')
   console.log(`   profiles=${after['profiles']} (admin) · subscription_plans=${after['subscription_plans']} · skills=${after['skills']}`)
   if (residual.length) {

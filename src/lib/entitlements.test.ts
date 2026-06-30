@@ -5,27 +5,15 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { resolvePlanEntitlements, planHasFeature, FEATURES } from './entitlements'
-import { LAUNCH_PLAN_ID } from './constants'
 
-test('KazaLaunch : limites et droits de base', () => {
-  const e = resolvePlanEntitlements(LAUNCH_PLAN_ID)
-  assert.equal(e.isFree, true)
-  assert.equal(e.maxJobs, 3)
-  assert.equal(e.maxMembers, 1)
+test('Starter : forfait de base, pas de premium', () => {
+  const e = resolvePlanEntitlements('starter')
+  assert.equal(e.maxJobs, 5)
   assert.equal(e.features.has(FEATURES.applicationsReceive), true)
   assert.equal(e.features.has(FEATURES.messagingAccess), true)
   assert.equal(e.features.has(FEATURES.analyticsBasic), true)
-  // Aucune fonctionnalité premium
-  assert.equal(e.features.has(FEATURES.analyticsAdvanced), false)
-  assert.equal(e.features.has(FEATURES.aiApplicationSummary), false)
-  assert.equal(e.features.has(FEATURES.apiAccess), false)
-})
-
-test('Starter : payant, pas de premium', () => {
-  const e = resolvePlanEntitlements('starter')
-  assert.equal(e.isFree, false)
-  assert.equal(e.maxJobs, 5)
   assert.equal(planHasFeature('starter', FEATURES.teamManagement), false)
+  assert.equal(planHasFeature('starter', FEATURES.apiAccess), false)
 })
 
 test('Pro : analytics avancés + IA + équipe', () => {
@@ -44,10 +32,9 @@ test('Enterprise : API + ATS + multi-entreprises + illimité', () => {
   assert.equal(e.features.has(FEATURES.accountMultiCompany), true)
 })
 
-test('forfait inconnu → repli Starter (jamais KazaLaunch gratuit)', () => {
+test('forfait inconnu → repli Starter (jamais d\'accès gratuit implicite)', () => {
   const e = resolvePlanEntitlements('inconnu')
   assert.equal(e.planId, 'starter')
-  assert.equal(e.isFree, false)
 })
 
 test('héritage croissant des droits', () => {

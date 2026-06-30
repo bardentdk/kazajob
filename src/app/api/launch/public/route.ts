@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server'
-import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { subscriptionPlans } from '@/lib/db/schema'
-import { LAUNCH_PLAN_ID } from '@/lib/constants'
-import { launchGloballyAvailable } from '@/lib/launch'
+import { launchCampaigns } from '@/lib/db/schema'
+import { effectiveCampaignStatus, type CampaignState } from '@/lib/launch'
 
-// GET /api/launch/public → disponibilité publique de KazaLaunch (sans auth, sans données entreprise).
-// Sert au wording dynamique des pages publiques (afficher/masquer l'offre gratuite).
+// GET /api/launch/public → disponibilité publique de la campagne de lancement (sans auth, sans données entreprise).
+// Sert au wording dynamique des pages publiques (afficher/masquer l'annonce de campagne).
 export async function GET() {
-  const [p] = await db.select({
-    isActive: subscriptionPlans.isActive, isPublic: subscriptionPlans.isPublic,
-    isSelectable: subscriptionPlans.isSelectable, startsAt: subscriptionPlans.startsAt, endsAt: subscriptionPlans.endsAt,
-  }).from(subscriptionPlans).where(eq(subscriptionPlans.id, LAUNCH_PLAN_ID)).limit(1)
+  const rows = await db.select({
+    state: launchCampaigns.state, startsAt: launchCampaigns.startsAt, endsAt: launchCampaigns.endsAt,
+    freePublishingEnabled: launchCampaigns.freePublishingEnabled, name: launchCampaigns.name,
+  }).from(launchCampaigns)
 
-  const available = !!p && launchGloballyAvailable(p) === 'ok'
-  return NextResponse.json({ available })
+  const active = rows.find((c) => c.freePublishingEnabled && effectiveCampaignStatus(c.state as CampaignState, c.startsAt, c.endsAt) === 'active')
+  return NextResponse.json({ available: !!active, campaignName: active?.name ?? null })
 }

@@ -7,20 +7,17 @@ import { db } from '@/lib/db'
 import { subscriptionPlans } from '@/lib/db/schema'
 import { serialize } from './_serialize'
 import { writeAudit } from './audit'
-import { getLaunchUsage } from './launch'
 
 export interface AdminPlanRow {
   id: string; name: string; price_cts: number; max_jobs: number; max_members: number
-  is_free: boolean; is_active: boolean; is_public: boolean; is_selectable: boolean
-  is_featured: boolean; requires_payment_method: boolean; duration_months: number
+  is_active: boolean; is_public: boolean; is_selectable: boolean; is_featured: boolean
   sort_order: number; starts_at: string | null; ends_at: string | null; updated_at: string | null
 }
 
-/** Tous les forfaits (ordre d'affichage) + impact KazaLaunch. */
-export async function listPlansAdmin(): Promise<{ plans: AdminPlanRow[]; launchUsage: { companies: number; activeJobs: number } }> {
+/** Tous les forfaits payants, par ordre d'affichage. */
+export async function listPlansAdmin(): Promise<{ plans: AdminPlanRow[] }> {
   const rows = await db.select().from(subscriptionPlans).orderBy(asc(subscriptionPlans.sortOrder))
-  const launchUsage = await getLaunchUsage()
-  return { plans: serialize<AdminPlanRow[]>(rows), launchUsage }
+  return { plans: serialize<AdminPlanRow[]>(rows) }
 }
 
 /** Champs modifiables par l'administration (jamais le prix/limite côté API publique). */
@@ -61,7 +58,7 @@ export async function updatePlanSettings(
   await db.update(subscriptionPlans).set(set).where(eq(subscriptionPlans.id, planId))
 
   await writeAudit({
-    actorId, actorEmail, action: 'launch_plan.settings_updated', targetType: 'plan', targetId: planId,
+    actorId, actorEmail, action: 'subscription_plan.settings_updated', targetType: 'plan', targetId: planId,
     oldValues: {
       isActive: before.isActive, isPublic: before.isPublic, isSelectable: before.isSelectable,
       isFeatured: before.isFeatured, sortOrder: before.sortOrder,

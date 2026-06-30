@@ -2,21 +2,21 @@
 
 /**
  * Administration > Monétisation > Forfaits.
- * Pilotage de la disponibilité des forfaits (et de l'offre gratuite KazaLaunch)
- * sans toucher au code ni redéployer. Toute modification est auditée côté serveur.
+ * Pilotage de la disponibilité des forfaits payants sans toucher au code ni redéployer.
+ * Toute modification est auditée côté serveur. La campagne de lancement (accès gratuit
+ * temporaire) est administrée séparément dans Administration > Lancement.
  */
 import { useEffect, useState } from 'react'
-import { Rocket, Building2, Briefcase, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
-import { KZ, LAUNCH_PLAN_ID } from '@/lib/constants'
+import { KZ } from '@/lib/constants'
 
 interface PlanRow {
   id: string; name: string; price_cts: number; max_jobs: number; max_members: number
-  is_free: boolean; is_active: boolean; is_public: boolean; is_selectable: boolean
-  is_featured: boolean; duration_months: number; sort_order: number
+  is_active: boolean; is_public: boolean; is_selectable: boolean
+  is_featured: boolean; sort_order: number
   starts_at: string | null; ends_at: string | null; updated_at: string | null
 }
-interface ApiData { plans: PlanRow[]; launchUsage: { companies: number; activeJobs: number } }
+interface ApiData { plans: PlanRow[] }
 
 const TOGGLES: { key: keyof PlanRow; label: string; help: string }[] = [
   { key: 'is_active',     label: 'Activé',         help: 'Utilisable par le moteur de droits' },
@@ -66,16 +66,6 @@ export default function AdminPlansPage() {
 
   const toggle = (plan: PlanRow, key: keyof PlanRow) => {
     const next = !plan[key]
-    // Garde-fou : désactivation de KazaLaunch → prévisualisation d'impact + confirmation.
-    if (plan.id === LAUNCH_PLAN_ID && !next && (key === 'is_active' || key === 'is_selectable' || key === 'is_public')) {
-      const u = data?.launchUsage
-      const ok = window.confirm(
-        `Désactiver « ${TOGGLES.find((t) => t.key === key)?.label} » sur KazaLaunch ?\n\n` +
-        `Impact : ${u?.companies ?? 0} entreprise(s) rattachée(s), ${u?.activeJobs ?? 0} offre(s) active(s).\n` +
-        `Les comptes existants CONSERVENT leur offre et leur échéance ; seuls les nouveaux parcours sont affectés. Aucune donnée n'est supprimée.`,
-      )
-      if (!ok) return
-    }
     const map: Record<string, string> = {
       is_active: 'isActive', is_public: 'isPublic', is_selectable: 'isSelectable', is_featured: 'isFeatured',
     }
@@ -88,36 +78,12 @@ export default function AdminPlansPage() {
     patch(plan.id, { [apiKey]: iso } as Partial<PlanRow>, { [field]: iso } as Partial<PlanRow>)
   }
 
-  const launch = data?.plans.find((p) => p.id === LAUNCH_PLAN_ID)
-
   return (
     <div className="max-w-[1100px] mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-extrabold text-[#1A1410]">Monétisation · Forfaits</h1>
         <p className="text-sm text-[#6B5A4A] mt-1">Activez, masquez ou planifiez la disponibilité des forfaits. Les modifications sont auditées.</p>
       </div>
-
-      {/* Bandeau KazaLaunch — impact en direct */}
-      {launch && (
-        <div className="kz-card p-4 mb-6 flex flex-wrap items-center gap-4" style={{ background: KZ.violetSoft }}>
-          <div className="flex items-center gap-2">
-            <Rocket size={20} className="text-[#6D3BEB]" />
-            <span className="font-extrabold text-[#1A1410]">KazaLaunch</span>
-            <Badge color={launch.is_active && launch.is_selectable ? 'green' : 'orange'} size="sm">
-              {launch.is_active && launch.is_selectable ? 'En ligne' : 'Restreint'}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-1.5 text-sm text-[#1A1410]">
-            <Building2 size={15} /> <b>{data?.launchUsage.companies ?? 0}</b> entreprise(s)
-          </div>
-          <div className="flex items-center gap-1.5 text-sm text-[#1A1410]">
-            <Briefcase size={15} /> <b>{data?.launchUsage.activeJobs ?? 0}</b> offre(s) active(s)
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-[#6B5A4A]">
-            <AlertTriangle size={14} /> Désactiver n'affecte que les nouveaux parcours, jamais les comptes existants.
-          </div>
-        </div>
-      )}
 
       {loading ? (
         <div className="kz-card p-8 text-center text-[#6B5A4A] bg-white">Chargement…</div>
@@ -130,9 +96,7 @@ export default function AdminPlansPage() {
               <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                 <div className="flex items-center gap-2">
                   <span className="font-extrabold text-[#1A1410]">{plan.name}</span>
-                  {plan.is_free
-                    ? <Badge color="violet" size="sm">Gratuit · {plan.duration_months} mois</Badge>
-                    : <Badge color="cream" size="sm">{Math.round(plan.price_cts / 100)} €/mois</Badge>}
+                  <Badge color="cream" size="sm">{Math.round(plan.price_cts / 100)} €/mois</Badge>
                   <span className="text-xs text-[#6B5A4A]">
                     {plan.max_jobs === -1 ? 'offres ∞' : `${plan.max_jobs} offres`} · {plan.max_members === -1 ? 'sièges ∞' : `${plan.max_members} siège(s)`}
                   </span>

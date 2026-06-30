@@ -26,12 +26,12 @@ const FAQ_ITEMS = [
     a: 'Oui. Kazajob s\'appuie sur une infrastructure PostgreSQL hébergée en Europe, avec chiffrement des données au repos et en transit. Ton CV est stocké dans un espace privé sécurisé. Nous sommes RGPD conformes et ne revendons jamais tes données. Tu peux demander la suppression de ton compte à tout moment.',
   },
   {
-    q: 'Qu\'est-ce que l\'offre KazaLaunch ?',
-    a: 'KazaLaunch est notre offre d\'inauguration : 3 mois gratuits pour publier vos premières offres, sans carte bancaire et sans aucun prélèvement automatique. Elle inclut 1 recruteur et jusqu\'à 3 offres actives. À la fin des 3 mois, vous choisissez un forfait payant pour continuer à publier — vos candidatures et vos données restent accessibles. L\'offre est utilisable une seule fois par entreprise et sa disponibilité pour les nouvelles inscriptions peut être suspendue à tout moment.',
+    q: 'Qu\'est-ce que l\'offre de lancement pour les recruteurs ?',
+    a: 'De temps à autre, Kazajob ouvre une campagne de lancement : un accès gratuit temporaire pour publier vos premières offres, sans carte bancaire et sans aucun prélèvement automatique. Sa durée et ses limites sont précisées au moment de l\'inscription. À l\'issue de la période gratuite, vous choisissez un forfait payant pour continuer à publier — vos candidatures et vos données restent accessibles. Cette offre est utilisable une seule fois par entreprise et sa disponibilité pour les nouvelles inscriptions est laissée à la discrétion de Kazajob.',
   },
   {
     q: 'En tant que recruteur, puis-je tester avant de payer ?',
-    a: 'Oui, de deux façons. Avec KazaLaunch, vous publiez gratuitement pendant 3 mois sans carte bancaire (offre de lancement). Sinon, tous les forfaits payants incluent un essai de 30 jours : vous enregistrez votre carte à l\'activation (paiement sécurisé Stripe), mais aucun débit n\'a lieu pendant l\'essai — le 1er prélèvement intervient à la fin des 30 jours, sauf résiliation avant. Sans engagement, annulable à tout moment.',
+    a: 'Oui, de deux façons. Si une campagne de lancement est ouverte, vous pouvez publier gratuitement pendant sa durée, sans carte bancaire. Sinon, tous les forfaits payants incluent un essai de 30 jours : vous enregistrez votre carte à l\'activation (paiement sécurisé Stripe), mais aucun débit n\'a lieu pendant l\'essai — le 1er prélèvement intervient à la fin des 30 jours, sauf résiliation avant. Sans engagement, annulable à tout moment.',
   },
   {
     q: 'Quelle est la différence avec les autres sites d\'emploi ?',

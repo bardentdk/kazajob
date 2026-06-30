@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Check, Building2, ArrowRight, Rocket } from 'lucide-react'
+import { Check, Building2, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { KZ, PAID_PLANS, LAUNCH_PLAN, LAUNCH_PLAN_ID, planFeatures } from '@/lib/constants'
+import { KZ, PAID_PLANS, planFeatures } from '@/lib/constants'
 
 const CANDIDATE_FEATURES = [
   'Accès à toutes les offres La Réunion',
@@ -16,10 +16,11 @@ const CANDIDATE_FEATURES = [
 ]
 
 export function PricingSection() {
-  // Affichage dynamique de l'offre gratuite : reflète l'état piloté par l'admin.
-  const [launchOn, setLaunchOn] = useState(false)
+  // Bandeau d'annonce (texte seul, jamais une tuile tarifaire) : reflète la campagne
+  // de lancement pilotée par l'admin, indépendante des forfaits ci-dessous.
+  const [campaignName, setCampaignName] = useState<string | null>(null)
   useEffect(() => {
-    fetch('/api/launch/public').then((r) => (r.ok ? r.json() : null)).then((d) => setLaunchOn(!!d?.available)).catch(() => {})
+    fetch('/api/launch/public').then((r) => (r.ok ? r.json() : null)).then((d) => setCampaignName(d?.available ? d.campaignName : null)).catch(() => {})
   }, [])
 
   return (
@@ -35,49 +36,19 @@ export function PricingSection() {
           </h2>
           <p className="text-base text-[#6B5A4A] max-w-[520px] mx-auto">
             Les candidats accèdent à <strong className="text-[#1A1410]">100% des fonctionnalités gratuitement</strong>, pour toujours.
-            {launchOn
-              ? <> Recruteurs : démarrez avec <strong className="text-[#1A1410]">KazaLaunch, 3 mois gratuits sans carte bancaire</strong>, puis choisissez votre forfait.</>
-              : <> Les recruteurs choisissent leur forfait selon leurs besoins. Essai 30 jours, carte requise à l&apos;activation.</>}
+            {' '}Les recruteurs choisissent leur forfait selon leurs besoins. Essai 30 jours, carte requise à l&apos;activation.
           </p>
+          {campaignName && (
+            <p className="mt-3 inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-full" style={{ background: KZ.violetSoft, color: KZ.violet }}>
+              <Badge color="orange" size="sm">Campagne en cours</Badge>
+              {campaignName} : accès gratuit temporaire pour les entreprises éligibles, sans carte bancaire.
+              <Link href="/recruiter/company" className="underline">En savoir plus</Link>
+            </p>
+          )}
         </div>
 
-        {/* Bento recruteur : grande tuile KazaLaunch (bloc 2×2) + 4 forfaits payants */}
+        {/* Forfaits recruteur — grille 4 colonnes, source unique : PAID_PLANS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-
-          {/* Offre de lancement — grande tuile, visible uniquement si active/publique */}
-          {launchOn && (
-            <div className="md:col-span-2 lg:col-span-2 lg:row-span-2 kz-card p-6 flex flex-col"
-              style={{ background: KZ.violet, color: 'white', boxShadow: '6px 6px 0 #1A1410' }}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-11 h-11 rounded-xl border border-white/30 flex items-center justify-center shrink-0" style={{ background: 'rgba(255,255,255,0.15)' }}>
-                  <Rocket size={20} color="white" />
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xl font-extrabold">{LAUNCH_PLAN.name}</span>
-                  <Badge color="orange" size="sm">{LAUNCH_PLAN.badge}</Badge>
-                </div>
-              </div>
-              <div className="text-[44px] font-extrabold tracking-tight leading-none mb-1">
-                0€<span className="text-base font-semibold opacity-70"> / 3 mois</span>
-              </div>
-              <div className="text-xs text-white/70 mb-4">{LAUNCH_PLAN.subtitle} · sans engagement · aucun prélèvement automatique</div>
-              <div className="grid sm:grid-cols-2 gap-x-5 gap-y-2 mb-6 flex-1">
-                {LAUNCH_PLAN.features.map((f) => (
-                  <div key={f} className="flex items-start gap-2 text-sm">
-                    <Check size={14} className="mt-0.5 shrink-0" style={{ color: KZ.orange }} />
-                    <span className="opacity-90">{f}</span>
-                  </div>
-                ))}
-              </div>
-              <Link href={`/auth/register?role=recruiter&plan=${LAUNCH_PLAN_ID}`}>
-                <Button kind="primary" size="lg" full iconRight={<ArrowRight size={14} />}>{LAUNCH_PLAN.cta}</Button>
-              </Link>
-              <p className="text-[11px] text-white/60 mt-2 leading-snug">
-                À la fin des 3 mois, choisissez un forfait payant pour continuer à publier. Offre utilisable une seule fois par entreprise — vos données restent accessibles.
-              </p>
-            </div>
-          )}
-
           {/* Forfaits payants — source unique : PAID_PLANS */}
           {PAID_PLANS.map((plan) => {
             const euros = Math.floor(plan.priceCts / 100)
@@ -98,7 +69,7 @@ export function PricingSection() {
                 </div>
                 <div className="text-xs opacity-60 mb-4">30 jours d&apos;essai · 1er débit après l&apos;essai</div>
                 <div className="flex flex-col gap-2 mb-6 flex-1">
-                  {planFeatures(plan).map((f) => (
+                  {planFeatures(plan).map((f: string) => (
                     <div key={f} className="flex items-start gap-2 text-sm">
                       <Check size={14} className="mt-0.5 shrink-0" style={{ color: hl ? KZ.orange : KZ.green }} />
                       <span style={{ opacity: hl ? 0.9 : 0.85 }}>{f}</span>

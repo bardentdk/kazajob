@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Bannière persistante KazaLaunch (dashboard recruteur).
+ * Bannière persistante de la campagne de lancement (dashboard recruteur).
  * Compte à rebours réel (jamais factice), consommation, et niveau d'alerte
  * progressif selon les jours restants. Non intrusive.
  */
@@ -16,7 +16,8 @@ interface Status {
   daysLeft?: number
   expiresAt?: string | null
   alertLevel?: 'info' | 'reminder' | 'warning' | 'urgent' | 'expired'
-  jobsUsed?: number; jobsMax?: number; seatsUsed?: number; seatsMax?: number
+  campaignName?: string
+  jobsUsed?: number; jobsMax?: number
 }
 
 const STYLE: Record<string, { bg: string; border: string }> = {
@@ -53,7 +54,7 @@ export function LaunchBanner() {
           </div>
           <div>
             <div className="font-extrabold text-[#1A1410] text-sm flex items-center gap-1.5">
-              KazaLaunch
+              {s.campaignName ?? 'Accès gratuit'}
               {s.expired
                 ? <span className="text-[#E54E4E]">· offre expirée</span>
                 : <span className="flex items-center gap-1 text-[#6B5A4A]"><Clock size={12} /> {s.daysLeft} j restants</span>}
@@ -61,7 +62,7 @@ export function LaunchBanner() {
             <div className="text-xs text-[#6B5A4A]">
               {s.expired
                 ? 'Choisissez un forfait payant pour publier à nouveau. Vos données restent accessibles.'
-                : `Gratuit jusqu'au ${endStr} · ${s.jobsUsed}/${s.jobsMax} offres · ${s.seatsUsed}/${s.seatsMax} siège`}
+                : `Gratuit jusqu'au ${endStr} · ${s.jobsUsed}/${s.jobsMax} offres actives`}
             </div>
           </div>
         </div>

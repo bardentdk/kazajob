@@ -20,8 +20,8 @@ async function main() {
     .returning({ email: profiles.email })
   console.log(`🗑️  Comptes de test supprimés : ${deleted.length}`)
 
-  // 2. Plans d'abonnement — grille tarifaire RÉELLE (src/lib/constants), KazaLaunch inclus.
-  //    Sur conflit : on met à jour la structure (prix, limites, features, flags de monétisation)
+  // 2. Plans d'abonnement — grille tarifaire RÉELLE (src/lib/constants), tous payants.
+  //    Sur conflit : on met à jour la structure (prix, limites, features)
   //    mais PAS la disponibilité pilotée par l'admin (is_active/is_public/is_selectable/dates),
   //    pour ne pas écraser un réglage d'administration à chaque re-seed.
   for (const p of SUBSCRIPTION_PLANS) {
@@ -29,16 +29,13 @@ async function main() {
       id: p.id, name: p.name, priceCts: p.priceCts, maxMembers: p.maxMembers,
       maxJobs: p.maxJobs, partners: p.partners, apiAccess: p.apiAccess,
       trialDays: p.trialDays, highlight: p.highlight, isActive: true,
-      isFree: p.isFree, requiresPaymentMethod: p.requiresPaymentMethod,
-      durationMonths: p.durationMonths, sortOrder: p.sortOrder,
-      isPublic: true, isSelectable: true, isFeatured: p.highlight,
+      sortOrder: p.sortOrder, isPublic: true, isSelectable: true, isFeatured: p.highlight,
     }).onConflictDoUpdate({
       target: subscriptionPlans.id,
       set: {
         name: p.name, priceCts: p.priceCts, maxMembers: p.maxMembers, maxJobs: p.maxJobs,
         partners: p.partners, apiAccess: p.apiAccess, trialDays: p.trialDays, highlight: p.highlight,
-        isFree: p.isFree, requiresPaymentMethod: p.requiresPaymentMethod,
-        durationMonths: p.durationMonths, sortOrder: p.sortOrder, updatedAt: new Date(),
+        sortOrder: p.sortOrder, updatedAt: new Date(),
       },
     })
   }

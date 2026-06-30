@@ -344,10 +344,7 @@ export const subscriptionPlans = pgTable('subscription_plans', {
   trialDays:  integer('trial_days').notNull().default(30),
   highlight:  boolean().notNull().default(false),
   isActive:   boolean('is_active').notNull().default(true),
-  // ── Monétisation & pilotage admin (KazaLaunch) ──
-  isFree:               boolean('is_free').notNull().default(false),                 // gratuit → jamais Stripe
-  requiresPaymentMethod: boolean('requires_payment_method').notNull().default(true), // carte requise à la souscription
-  durationMonths:       integer('duration_months').notNull().default(0),             // 0 = récurrent ; 3 = KazaLaunch
+  // ── Pilotage admin de la disponibilité publique des forfaits payants ──
   sortOrder:            integer('sort_order').notNull().default(100),
   isPublic:             boolean('is_public').notNull().default(true),                // visible sur les pages publiques
   isSelectable:         boolean('is_selectable').notNull().default(true),            // sélectionnable à l'inscription
@@ -360,21 +357,53 @@ export const subscriptionPlans = pgTable('subscription_plans', {
   updatedAt:            timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-// ── launch_eligibility (historique immuable d'activation KazaLaunch) ──
-// Une seule activation par entreprise (contrainte unique). Survit à la suppression
-// de l'abonnement applicatif : empêche une seconde activation de l'offre gratuite.
-export const launchEligibility = pgTable('launch_eligibility', {
-  id:               uuid().primaryKey().default(sql`gen_random_uuid()`),
-  companyId:        uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  siret:            text(),                                              // identifiant légal (signal anti-abus)
-  planSlug:         text('plan_slug').notNull().default('launch_free'),
-  firstActivatedAt: timestamp('first_activated_at', { withTimezone: true }).notNull().defaultNow(),
-  expiresAt:        timestamp('expires_at', { withTimezone: true }).notNull(),
-  status:           text().notNull().default('active'),                 // active | expired | migrated | revoked
-  activatedBy:      uuid('activated_by').references(() => profiles.id, { onDelete: 'set null' }),
-  revokedReason:    text('revoked_reason'),                             // motif d'un override super admin
-  createdAt:        now(),
-}, (t) => [unique().on(t.companyId)])
+// ── launch_campaigns (campagne d'accès gratuit temporaire — PAS un forfait) ──
+// Indépendante des abonnements commerciaux : ne touche jamais Stripe. Pilotée par
+// l'admin (état + dates + limites). Voir src/lib/launch.ts pour le calcul du statut
+// effectif (combine `state` et les dates).
+export const launchCampaigns = pgTable('launch_campaigns', {
+  id:                          uuid().primaryKey().default(sql`gen_random_uuid()`),
+  name:                        text().notNull(),
+  slug:                        text().notNull().unique(),
+  state:                       text().notNull().default('draft'),   // draft|scheduled|active|paused|ended|cancelled
+  startsAt:                    timestamp('starts_at', { withTimezone: true }),
+  endsAt:                      timestamp('ends_at', { withTimezone: true }),
+  endMode:                     text('end_mode').notNull().default('fixed_date'),  // fixed_date | manual
+  freePublishingEnabled:       boolean('free_publishing_enabled').notNull().default(true),   // arrêt d'urgence
+  newSubscriptionsEnabled:     boolean('new_subscriptions_enabled').notNull().default(true),  // bloque Checkout si false
+  jobsAllowed:                 boolean('jobs_allowed').notNull().default(true),
+  trainingsAllowed:            boolean('trainings_allowed').notNull().default(true),
+  maxActiveJobsPerCompany:     integer('max_active_jobs_per_company').notNull().default(3),
+  maxActiveTrainingsPerCompany: integer('max_active_trainings_per_company').notNull().default(3),
+  grantDurationDays:           integer('grant_duration_days').notNull().default(90),  // durée individuelle par entreprise enrôlée
+  requireAdminApproval:        boolean('require_admin_approval').notNull().default(false),
+  autoPublish:                 boolean('auto_publish').notNull().default(true),
+  endOfCampaignBehavior:       text('end_of_campaign_behavior').notNull().default('keep_until_listing_expiry'),
+  reminderDaysBeforeEnd:       integer('reminder_days_before_end').array().notNull().default(sql`'{30,15,7,3,1,0}'`),
+  recruiterMessage:            text('recruiter_message'),
+  createdBy:                   uuid('created_by').references(() => profiles.id, { onDelete: 'set null' }),
+  updatedBy:                   uuid('updated_by').references(() => profiles.id, { onDelete: 'set null' }),
+  version:                     integer().notNull().default(1),    // concurrence optimiste
+  createdAt:                   now(),
+  updatedAt:                   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+// ── launch_campaign_enrollments (CampaignEnrollment — historique d'activation) ──
+// Une activation par (entreprise, campagne). Index partiel : une seule campagne
+// active par entreprise à la fois.
+export const launchCampaignEnrollments = pgTable('launch_campaign_enrollments', {
+  id:                   uuid().primaryKey().default(sql`gen_random_uuid()`),
+  campaignId:           uuid('campaign_id').notNull().references(() => launchCampaigns.id, { onDelete: 'cascade' }),
+  companyId:            uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  siret:                text(),                                              // identifiant légal (signal anti-abus)
+  firstActivatedAt:     timestamp('first_activated_at', { withTimezone: true }).notNull().defaultNow(),
+  expiresAt:            timestamp('expires_at', { withTimezone: true }).notNull(),
+  status:               text().notNull().default('active'),                 // active | expired | revoked
+  lastReminderMilestone: integer('last_reminder_milestone'),
+  activatedBy:          uuid('activated_by').references(() => profiles.id, { onDelete: 'set null' }),
+  revokedReason:        text('revoked_reason'),
+  createdAt:            now(),
+}, (t) => [unique().on(t.companyId, t.campaignId)])
 
 // ── audit_logs (traçabilité des actions sensibles : monétisation, reset, admin) ──
 export const auditLogs = pgTable('audit_logs', {
@@ -418,10 +447,6 @@ export const companySubscriptions = pgTable('company_subscriptions', {
   stripeCustomerId:     text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
   lastTrialReminder:    integer('last_trial_reminder'),  // dernier palier de relance envoyé (15/7/3/0)
-  // ── KazaLaunch (offre gratuite à durée fixe) ──
-  launchActivatedAt:    timestamp('launch_activated_at', { withTimezone: true }),
-  launchExpiresAt:      timestamp('launch_expires_at', { withTimezone: true }),
-  lastLaunchReminder:   integer('last_launch_reminder'),  // palier de rappel d'expiration KazaLaunch (30/15/7/3/1/0)
   createdAt:        now(),
 }, (t) => [unique().on(t.companyId)])
 

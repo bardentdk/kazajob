@@ -5,6 +5,7 @@ import { getActiveMembership } from '@/lib/queries/companies'
 import { getOwnerBillingContext, saveStripeState } from '@/lib/queries/billing'
 import { SUBSCRIPTION_PLANS } from '@/lib/constants'
 import { validatePromo } from '@/lib/queries/promos'
+import { checkNewSubscriptionsAllowed } from '@/lib/queries/launch'
 
 // POST /api/billing/checkout  { planId? } → { url }
 // Crée une session Stripe Checkout (abonnement mensuel). Réservé à l'owner.
@@ -15,6 +16,15 @@ export async function POST(req: NextRequest) {
   const session = await auth()
   const userId = session?.user?.id
   if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
+  // Une campagne de lancement active peut suspendre temporairement les nouveaux abonnements payants.
+  const subsGate = await checkNewSubscriptionsAllowed()
+  if (!subsGate.allowed) {
+    return NextResponse.json(
+      { error: `Les nouveaux abonnements payants sont temporairement suspendus pendant la campagne « ${subsGate.campaignName} ». Activez votre accès gratuit depuis votre tableau de bord.` },
+      { status: 403 },
+    )
+  }
 
   const { planId, promoCode } = await req.json().catch(() => ({}))
 

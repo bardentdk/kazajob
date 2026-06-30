@@ -2,10 +2,9 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { getActiveMembership, getCompanyOverview } from '@/lib/queries/companies'
 import { getLaunchStatus } from '@/lib/queries/launch'
-import { LAUNCH_PLAN } from '@/lib/constants'
 
-// GET /api/launch/status → état KazaLaunch de l'entreprise active (bannière dashboard).
-// Renvoie null-ish si l'entreprise n'est pas sur l'offre gratuite.
+// GET /api/launch/status → état de la campagne de lancement de l'entreprise active (bannière dashboard).
+// Renvoie onLaunch:false si l'entreprise n'est pas enrôlée dans une campagne active.
 export async function GET() {
   const session = await auth()
   const userId = session?.user?.id
@@ -22,8 +21,6 @@ export async function GET() {
     onLaunch: true,
     ...status,
     jobsUsed: overview.job_count,
-    jobsMax: LAUNCH_PLAN.maxJobs,
     seatsUsed: overview.member_count,
-    seatsMax: LAUNCH_PLAN.maxMembers,
   })
 }

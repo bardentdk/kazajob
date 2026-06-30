@@ -11,7 +11,8 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { companySubscriptions } from '@/lib/db/schema'
-import { SUBSCRIPTION_PLANS, LAUNCH_PLAN_ID, type SubscriptionPlan } from '@/lib/constants'
+import { SUBSCRIPTION_PLANS, type SubscriptionPlan } from '@/lib/constants'
+import { getActiveCampaignEnrollment } from '@/lib/queries/launch'
 
 // ── Clés de fonctionnalités typées ────────────────────────────────
 export const FEATURES = {
@@ -72,7 +73,6 @@ const ENTERPRISE_FEATURES: FeatureKey[] = [
 
 /** Matrice forfait → fonctionnalités autorisées. */
 const PLAN_FEATURES: Record<string, FeatureKey[]> = {
-  [LAUNCH_PLAN_ID]: BASE_FEATURES,
   starter:          BASE_FEATURES,
   pro:              PRO_FEATURES,
   business:         BUSINESS_FEATURES,
@@ -85,7 +85,6 @@ const READ_ONLY_STATUSES = new Set(['expired', 'cancelled'])
 export interface PlanEntitlements {
   planId:      string
   planName:    string
-  isFree:      boolean
   maxJobs:     number   // -1 = illimité
   maxMembers:  number   // -1 = illimité
   features:    Set<FeatureKey>
@@ -103,7 +102,6 @@ export function resolvePlanEntitlements(planSlug?: string | null): PlanEntitleme
   return {
     planId:     plan.id,
     planName:   plan.name,
-    isFree:     plan.isFree,
     maxJobs:    plan.maxJobs,
     maxMembers: plan.maxMembers,
     features:   new Set(PLAN_FEATURES[plan.id] ?? BASE_FEATURES),
@@ -179,4 +177,74 @@ export async function assertUsageLimit(
   const max = resource === 'job.active' ? ent.maxJobs : ent.maxMembers
   if (max === -1) return { ok: true, max: -1, used, planName: ent.planName }
   return { ok: used < max, max, used, planName: ent.planName, reason: 'limit' }
+}
+
+// ── Droit de publication (offres / formations) — service central unique ──
+// Priorité : abonnement payant actif > campagne de lancement active. Aucune des deux
+// → publication refusée. Une campagne n'est JAMAIS un forfait : elle ne crée aucune
+// ligne d'abonnement et ne passe jamais par Stripe.
+export type ListingType = 'job' | 'training'
+
+export interface PublishingAccessDecision {
+  allowed:       boolean
+  source:        'subscription' | 'campaign' | 'none'
+  reasonCode:    'ok' | 'limit_reached' | 'read_only' | 'campaign_type_disabled' | 'campaign_ended' | 'no_access'
+  max:           number          // -1 = illimité
+  used:          number
+  planName?:     string
+  campaignId?:   string
+  campaignName?: string
+  expiresAt?:    string | null
+}
+
+/**
+ * Décision serveur unique pour autoriser ou non la publication d'une offre/formation.
+ * `used` = nombre actuellement actif pour ce type (fourni par l'appelant, qui connaît
+ * le domaine — jobs ou trainingOffers — pour rester découplé ici).
+ */
+export async function resolvePublishingAccess(
+  companyId: string,
+  listingType: ListingType,
+  used: number,
+): Promise<PublishingAccessDecision> {
+  const [sub] = await db
+    .select({ planId: companySubscriptions.planId, status: companySubscriptions.status })
+    .from(companySubscriptions)
+    .where(eq(companySubscriptions.companyId, companyId))
+    .limit(1)
+
+  if (sub) {
+    const plan = resolvePlanEntitlements(sub.planId)
+    if (READ_ONLY_STATUSES.has(sub.status)) {
+      return { allowed: false, source: 'subscription', reasonCode: 'read_only', max: 0, used, planName: plan.planName }
+    }
+    // Les forfaits payants ne limitent que les offres d'emploi actives ; pas de plafond formations.
+    const max = listingType === 'job' ? plan.maxJobs : -1
+    if (max !== -1 && used >= max) {
+      return { allowed: false, source: 'subscription', reasonCode: 'limit_reached', max, used, planName: plan.planName }
+    }
+    return { allowed: true, source: 'subscription', reasonCode: 'ok', max, used, planName: plan.planName }
+  }
+
+  // Pas d'abonnement payant → campagne de lancement active ?
+  const enrollment = await getActiveCampaignEnrollment(companyId)
+  if (!enrollment) return { allowed: false, source: 'none', reasonCode: 'no_access', max: 0, used }
+
+  const typeAllowed = listingType === 'job' ? enrollment.jobsAllowed : enrollment.trainingsAllowed
+  const max = listingType === 'job' ? enrollment.maxActiveJobsPerCompany : enrollment.maxActiveTrainingsPerCompany
+  const common = {
+    source: 'campaign' as const, max, used,
+    campaignId: enrollment.campaignId, campaignName: enrollment.campaignName,
+    expiresAt: enrollment.expiresAt.toISOString(),
+  }
+  if (!enrollment.freePublishingEnabled || !enrollment.effectiveActive) {
+    return { allowed: false, reasonCode: 'campaign_ended', ...common }
+  }
+  if (!typeAllowed) {
+    return { allowed: false, reasonCode: 'campaign_type_disabled', ...common }
+  }
+  if (max !== -1 && used >= max) {
+    return { allowed: false, reasonCode: 'limit_reached', ...common }
+  }
+  return { allowed: true, reasonCode: 'ok', ...common }
 }
